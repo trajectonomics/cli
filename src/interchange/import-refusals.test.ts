@@ -1,26 +1,9 @@
 import { describe, expect, it } from "bun:test"
-import { type AppError, isAppError } from "../errors"
-import type { Store } from "../store"
 import { mustOpen, tempHome } from "../store/testing"
-import { importJsonl } from "./index"
-import { goldenJsonl, tableDump } from "./testing"
+import { edit, goldenJsonl, refused } from "./testing"
 
 const LUNCH = "0194b000-0004-7000-8000-000000000004"
 const MISSING = "0194ffff-0000-7000-8000-000000000000"
-
-/** Imports into a fresh store and asserts the refusal left every table as it was. */
-function refused(text: string, store: Store = mustOpen(tempHome())): AppError["body"] {
-	const before = tableDump(store)
-	const outcome = importJsonl(text, store)
-	if (!isAppError(outcome)) throw new Error("the import was accepted")
-	expect(tableDump(store)).toEqual(before)
-	return outcome.body
-}
-
-function edit(text: string, from: string, to: string): string {
-	if (!text.includes(from)) throw new Error(`the fixture does not contain ${from}`)
-	return text.replace(from, to)
-}
 
 describe("importJsonl refusals", () => {
 	it("rolls back the whole import and names a dangling reference", async () => {

@@ -3,6 +3,7 @@ import { type AppError, fail } from "../errors"
 import type { Ctx } from "./context"
 import { danglingReferences } from "./dangling"
 import { abort, write } from "./guard"
+import { checkLedger } from "./restore-ledger"
 import { INSERTS, type Table } from "./restore-sql"
 import type { RestoreCounts, RestoreRows } from "./types"
 
@@ -39,6 +40,8 @@ export function restore(ctx: Ctx, rows: RestoreRows): RestoreCounts | AppError {
 		for (const table of TABLES) insertAll(ctx, table, rows[table])
 		const dangling = danglingReferences(ctx.db)
 		if (dangling) return dangling
+		const broken = checkLedger(ctx)
+		if (broken) return broken
 		return Object.fromEntries(TABLES.map((t) => [t, rows[t].length])) as RestoreCounts
 	})
 }
