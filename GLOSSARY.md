@@ -48,6 +48,10 @@ _Avoid_: Delete, cancel, remove
 A void of an earlier transaction plus a linked replacement.
 _Avoid_: Edit, update
 
+**Archive**:
+The state that `account close` produces: the account stops accepting postings and stays in history, reports and exports. Closing never deletes.
+_Avoid_: Delete, remove
+
 **Dimension**:
 A tag on a posting that slices reports without changing any balance.
 _Avoid_: Tag, label
@@ -59,6 +63,10 @@ _Avoid_: Business
 **Entity**:
 A legally separate party whose books balance on their own. Only the personal entity exists today.
 _Avoid_: Company, tenant
+
+**Personal entity**:
+The one seeded entity that owns every account and scenario today. It is addressed by a fixed id, never by the core's `"default"` fallback.
+_Avoid_: Default entity, main entity
 
 ### Scenario
 
