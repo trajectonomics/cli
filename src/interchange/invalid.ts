@@ -1,4 +1,5 @@
 import { type AppError, fail } from "../errors"
+import { isPlainObject } from "../json"
 
 /** `invalid_input` at `path` (`line.<n>[.<key>]`), with the path leading the message. */
 export function invalid(path: string, reason: string, details?: unknown): AppError {
@@ -17,8 +18,7 @@ export function parseLine(line: string, path: string): Record<string, unknown> |
 	} catch {
 		return invalid(path, "is not valid JSON")
 	}
-	const isObject = typeof value === "object" && value !== null && !Array.isArray(value)
-	return isObject ? (value as Record<string, unknown>) : invalid(path, "is not a JSON object")
+	return isPlainObject(value) ? value : invalid(path, "is not a JSON object")
 }
 
 /** Refuses a record whose keys are not exactly `expected`, in that order. */

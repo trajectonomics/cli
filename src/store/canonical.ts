@@ -1,11 +1,6 @@
 import { fail } from "../errors"
+import { isPlainObject } from "../json"
 import { abort } from "./guard"
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	if (typeof value !== "object" || value === null) return false
-	const proto = Object.getPrototypeOf(value)
-	return proto === Object.prototype || proto === null
-}
 
 function unsupported(path: string, reason: string): never {
 	return abort(fail("invalid_input", { path, message: `${path}: ${reason}` }))

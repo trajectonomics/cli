@@ -1,4 +1,5 @@
 import { type AppError, isAppError } from "../errors"
+import { isPlainObject } from "../json"
 import { canonicalScenarioDocument, formatMinorUnits, parseMinorUnits } from "../store"
 import type { FieldKind } from "./format"
 import { invalid } from "./invalid"
@@ -42,8 +43,7 @@ function amount(value: unknown, path: string, record: Record<string, unknown>): 
 }
 
 function dimensions(value: unknown, path: string): unknown | AppError {
-	const isObject = typeof value === "object" && value !== null && !Array.isArray(value)
-	if (!isObject) return invalid(path, "must be an object of strings or null")
+	if (!isPlainObject(value)) return invalid(path, "must be an object of strings or null")
 	const entries = Object.values(value)
 	if (entries.length === 0) return invalid(path, "must be null when empty, never {}")
 	if (!entries.every((v) => typeof v === "string")) return invalid(path, "values must be strings")

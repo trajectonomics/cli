@@ -1,11 +1,10 @@
 import { type AppError, isAppError } from "../errors"
 import { ACCOUNT_TYPES, contentHash, isAccountType, type RestoreRows } from "../store"
 import { DECODERS } from "./fields"
-import { FIELDS, RECORD_ORDER, type RecordRows, type RecordType } from "./format"
+import { FIELDS, RECORD_ORDER, type RecordRows, type RecordType, type RowList } from "./format"
 import { exactKeys, invalid } from "./invalid"
 
 export type Decoded = { [T in RecordType]: { type: T; row: RecordRows[T] } }[RecordType]
-type Rows = { [T in RecordType]: RecordRows[T][] }
 
 function recordType(record: Record<string, unknown>, path: string): RecordType | AppError {
 	const type = record["record"]
@@ -60,11 +59,11 @@ export function identityOf(decoded: Decoded): { key: string; field: string } {
 	return { key: `${decoded.type}\u0000${decoded.row.id}`, field: "id" }
 }
 
-export function emptyRows(): Rows {
+export function emptyRows(): RowList {
 	return { entity: [], account: [], tx: [], posting: [], scenario: [] }
 }
 
-export function addRow(rows: Rows, decoded: Decoded): RestoreRows {
+export function addRow(rows: RowList, decoded: Decoded): RestoreRows {
 	;(rows[decoded.type] as RecordRows[RecordType][]).push(decoded.row)
 	return rows
 }
