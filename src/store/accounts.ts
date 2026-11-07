@@ -5,6 +5,7 @@ import { ACCOUNT_COLUMNS, ACCOUNT_ORDER, liveOnly } from "./columns"
 import type { Ctx } from "./context"
 import { guard, write } from "./guard"
 import { iso, newId } from "./ids"
+import { supportedCurrency } from "./money"
 import type { AccountCreated, AccountRow, AccountSort, ListOptions, NewAccount } from "./types"
 
 /** The live (non-tombstoned) account with this id in the entity, if any. */
@@ -65,6 +66,8 @@ export function createAccount(ctx: Ctx, input: NewAccount): AccountCreated | App
 		const message = `type: must be one of ${ACCOUNT_TYPES.join(", ")}`
 		return fail("invalid_input", { path: "type", message })
 	}
+	const currency = supportedCurrency(input.currency)
+	if (currency) return currency
 	return write(ctx.db, () => {
 		const taken = liveByName(ctx, input.name)
 		if (taken) return { status: "name_taken", account: taken }

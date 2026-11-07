@@ -1,11 +1,23 @@
 import { type AppError, fail } from "../errors"
+import { supportedCurrency } from "./money"
 import type { RestoreRows } from "./types"
 
 const OWNED = ["account", "tx", "scenario"] as const
 
+/** The first account or posting whose currency v1 does not support (ADR-0005). */
+function unsupportedCurrency(rows: RestoreRows): AppError | null {
+	for (const table of ["account", "posting"] as const) {
+		for (const [index, row] of rows[table].entries()) {
+			const failure = supportedCurrency(row.currency, `${table}.${index}.currency`)
+			if (failure) return failure
+		}
+	}
+	return null
+}
+
 /**
  * The restore's own shape rules, checked before any write: exactly one entity, the personal one,
- * and every account, transaction and scenario owned by it.
+ * every account, transaction and scenario owned by it, and THB as the only currency.
  */
 export function checkRows(entityId: string, rows: RestoreRows): AppError | null {
 	const [entity, ...more] = rows.entity
@@ -26,5 +38,5 @@ export function checkRows(entityId: string, rows: RestoreRows): AppError | null 
 			message: `${path}: must be the personal entity ${entityId}`,
 		})
 	}
-	return null
+	return unsupportedCurrency(rows)
 }

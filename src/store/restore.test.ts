@@ -65,4 +65,14 @@ describe("restore", () => {
 			path: "account.0.entityId",
 		})
 	})
+	it("refuses a currency other than THB (ADR-0005)", () => {
+		const account = [{ ...ACCOUNT, currency: "USD" }]
+		expect(refusedBody({ ...ROWS, account })).toMatchObject({
+			code: "invalid_input",
+			path: "account.0.currency",
+			message: "account.0.currency: v1 supports THB only, not USD",
+		})
+		const unknown = [{ ...ACCOUNT, currency: "ZZZ" }]
+		expect(refusedBody({ ...ROWS, account: unknown })).toMatchObject({ code: "INVALID_CURRENCY" })
+	})
 })

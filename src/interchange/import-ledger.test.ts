@@ -47,4 +47,19 @@ describe("importJsonl ledger validation", () => {
 		expect(postings.filter((p) => p.accountId === OLD_WALLET)).toHaveLength(2)
 		expect(must(store.listAccounts({ sort: "id" })).map((a) => a.id)).toContain(ASSETS)
 	})
+	it("refuses a USD account or posting, because v1 is THB only", async () => {
+		const golden = await goldenJsonl()
+		const account = edit(
+			golden,
+			`"currency":"THB","parentId":"${ASSETS}"`,
+			`"currency":"USD","parentId":"${ASSETS}"`,
+		)
+		expect(refused(account)).toMatchObject({ code: "invalid_input", path: "account.0.currency" })
+		const posting = edit(
+			golden,
+			'"currency":"THB","dimensions":null}',
+			'"currency":"USD","dimensions":null}',
+		)
+		expect(refused(posting)).toMatchObject({ code: "invalid_input", path: "posting.0.currency" })
+	})
 })
