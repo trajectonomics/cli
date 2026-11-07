@@ -2,8 +2,40 @@ import { describe, expect, it } from "bun:test"
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { type ErrorCode, registry } from "./errors"
-import { capture } from "./test-support"
+import { z } from "zod"
+import { defineCommand, defineGroup } from "./command"
+import { type ErrorCode, isAppError, registry } from "./errors"
+import { type StoreRaised, storeTriggers, type Trigger } from "./store/store-triggers"
+import { type Captured, capture } from "./test-support"
+
+/**
+ * Runs a store trigger and returns its AppError from a test-only `probe` command, so the envelope
+ * and exit code still come from the real `run()`. No shipped command raises these codes yet.
+ */
+function probed(
+	triggers: Record<StoreRaised, Trigger>,
+): Record<StoreRaised, () => Promise<Captured>> {
+	const entries = Object.entries(triggers).map(([code, trigger]) => [
+		code,
+		async () => {
+			const outcome = await (trigger as Trigger)()
+			if (!isAppError(outcome)) throw new Error(`${code}: the trigger did not fail`)
+			const probe = defineCommand({
+				name: "probe",
+				summary: "Return a store failure",
+				positionals: [],
+				input: z.strictObject({}),
+				output: z.null(),
+				examples: [],
+				errorCodes: [],
+				run: () => outcome,
+			})
+			const root = defineGroup({ name: "traj", summary: "probe tree", children: [probe] })
+			return capture(["probe", "--json"], {}, root)
+		},
+	])
+	return Object.fromEntries(entries) as Record<StoreRaised, () => Promise<Captured>>
+}
 
 describe("contract", () => {
 	// Typed over ErrorCode: registering a new code fails to compile until a trigger is added here.
@@ -18,6 +50,7 @@ describe("contract", () => {
 		unknown_flag: () => capture(["--nope", "--json"]),
 		// An unknown format is reported in text by design, so read the code from the text.
 		unknown_format: () => capture(["version"], { TRAJ_FORMAT: "yaml" }),
+		...probed(storeTriggers),
 	}
 
 	it("makes every envelope's exitCode equal the value run() returns", async () => {
