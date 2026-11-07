@@ -1,6 +1,7 @@
+import { Database } from "bun:sqlite"
 import { describe, expect, it, setSystemTime } from "bun:test"
 import { must, mustOpen, tempHome } from "../store/testing"
-import { exportJsonl } from "./index"
+import { exportJsonl, FIELDS, RECORD_ORDER } from "./index"
 import { goldenJsonl, goldenStore } from "./testing"
 
 const SEEDED =
@@ -32,5 +33,18 @@ describe("exportJsonl", () => {
 		setSystemTime()
 		expect(second).toBe(first)
 		expect(first).toBe(await goldenJsonl())
+	})
+	it("declares every column of every table, in column order", () => {
+		// A column added to the schema but to neither FIELDS nor the golden fixture fails here.
+		const snake = (key: string) => key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)
+		const db = new Database(mustOpen(tempHome()).path, { readonly: true })
+		for (const type of RECORD_ORDER) {
+			const columns = db.query<{ name: string }, []>(`PRAGMA table_info(${type})`).all()
+			expect({ type, columns: columns.map((c) => c.name) }).toEqual({
+				type,
+				columns: Object.keys(FIELDS[type]).map(snake),
+			})
+		}
+		db.close()
 	})
 })
