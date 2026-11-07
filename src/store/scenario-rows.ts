@@ -1,8 +1,8 @@
-import { fail } from "../errors"
+import { type AppError, fail } from "../errors"
 import { canonicalJson, contentHash } from "./canonical"
 import { SCENARIO_COLUMNS } from "./columns"
 import type { Ctx } from "./context"
-import { abort } from "./guard"
+import { abort, guard } from "./guard"
 import { iso, newId } from "./ids"
 import type { ScenarioRow } from "./types"
 
@@ -19,18 +19,25 @@ export function liveScenario(ctx: Ctx, column: "id" | "name", value: string): Sc
  * The document as canonical text. `sim-core` does not exist, so a scenario is opaque apart from
  * being an object with an integer `schemaVersion`. Must run inside `guard`.
  */
-export function canonicalDocument(document: unknown): string {
+export function canonicalDocument(document: unknown, path = "document"): string {
 	const isObject = typeof document === "object" && document !== null && !Array.isArray(document)
-	if (!isObject)
-		return abort(
-			fail("invalid_input", { path: "document", message: "document: must be a JSON object" }),
-		)
+	if (!isObject) {
+		return abort(fail("invalid_input", { path, message: `${path}: must be a JSON object` }))
+	}
 	const version = (document as Record<string, unknown>)["schemaVersion"]
 	if (!Number.isSafeInteger(version) || (version as number) < 1) {
-		const path = "document.schemaVersion"
-		return abort(fail("invalid_input", { path, message: `${path}: must be a positive integer` }))
+		const at = `${path}.schemaVersion`
+		return abort(fail("invalid_input", { path: at, message: `${at}: must be a positive integer` }))
 	}
-	return canonicalJson(document)
+	return canonicalJson(document, path)
+}
+
+/**
+ * The scenario document's canonical text, validated exactly as `saveScenario` validates it, or
+ * `invalid_input` pointing under `path`.
+ */
+export function canonicalScenarioDocument(document: unknown, path?: string): string | AppError {
+	return guard(() => canonicalDocument(document, path))
 }
 
 export type ScenarioDraft = { name: string; document: string; forkedFrom: string | null }

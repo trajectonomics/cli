@@ -5,6 +5,7 @@ import { ENTITY_COLUMNS, ENTITY_ORDER, liveOnly } from "./columns"
 import type { Ctx } from "./context"
 import { guard } from "./guard"
 import { userVersion } from "./migrations"
+import { restore } from "./restore"
 import { deleteScenario, forkScenario, listScenarios, saveScenario } from "./scenarios"
 import { addTransaction, listPostings, listTransactions } from "./transactions"
 import type { EntityRow, EntitySort, ListOptions, Store } from "./types"
@@ -38,6 +39,7 @@ export function storeOver(path: string, ctx: Ctx): Store {
 		forkScenario: (id, name) => forkScenario(ctx, id, name),
 		deleteScenario: (id) => deleteScenario(ctx, id),
 		listScenarios: (options) => listScenarios(ctx, options),
+		restore: (rows) => restore(ctx, rows),
 		close: () => ctx.db.close(),
 	}
 }

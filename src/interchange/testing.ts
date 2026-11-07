@@ -20,3 +20,24 @@ export async function goldenStore(clock: Clock = steppingClock()): Promise<Store
 	db.close()
 	return store
 }
+
+const TABLES = {
+	entity: "id",
+	account: "id",
+	tx: "id",
+	posting: "tx_id, ordinal",
+	scenario: "id",
+} as const
+
+/** Every table's `SELECT *`, read through a separate connection, keyed by table. */
+export function tableDump(store: Store): Record<string, unknown[]> {
+	const db = new Database(store.path, { readonly: true })
+	const dump = Object.fromEntries(
+		Object.entries(TABLES).map(([table, key]) => [
+			table,
+			db.query(`SELECT * FROM ${table} ORDER BY ${key}`).all(),
+		]),
+	)
+	db.close()
+	return dump
+}
