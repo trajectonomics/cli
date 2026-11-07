@@ -54,6 +54,10 @@ describe("importJsonl refusals", () => {
 		const cases: [string, string, string, string][] = [
 			['"amount":"-125.50"', '"amount":"-125.505"', "INVALID_AMOUNT", "line.18.amount"],
 			['"amount":"-125.50"', '"amount":-12550', "invalid_input", "line.18.amount"],
+			['"amount":"-125.50"', '"amount":"-125.500"', "invalid_input", "line.18.amount"],
+			['"amount":"-125.50"', '"amount":"-125.5"', "invalid_input", "line.18.amount"],
+			['"amount":"50000.00"', '"amount":"50000"', "invalid_input", "line.16.amount"],
+			['"amount":"50000.00"', '"amount":"-0.00"', "invalid_input", "line.16.amount"],
 			[
 				'"currency":"THB","dimensions":null}',
 				'"currency":"THB","dimensions":{}}',

@@ -1,5 +1,5 @@
-import type { AppError } from "../errors"
-import { canonicalScenarioDocument, parseMinorUnits } from "../store"
+import { type AppError, isAppError } from "../errors"
+import { canonicalScenarioDocument, formatMinorUnits, parseMinorUnits } from "../store"
 import type { FieldKind } from "./format"
 import { invalid } from "./invalid"
 
@@ -30,7 +30,15 @@ function amount(value: unknown, path: string, record: Record<string, unknown>): 
 	if (typeof value !== "string") return invalid(path, "must be a decimal string such as 1234.56")
 	if (typeof currency !== "string")
 		return invalid(path.replace(/amount$/, "currency"), "must be a string")
-	return parseMinorUnits(value, currency, path)
+	const minor = parseMinorUnits(value, currency, path)
+	if (isAppError(minor)) return minor
+	// Only the writer's own form, so a restored row re-exports as the same bytes.
+	const canonical = formatMinorUnits(minor, currency)
+	if (canonical === value) return minor
+	return invalid(path, `must be the canonical decimal "${canonical}"`, {
+		expected: canonical,
+		actual: value,
+	})
 }
 
 function dimensions(value: unknown, path: string): unknown | AppError {
