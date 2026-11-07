@@ -1,28 +1,7 @@
-/** The coarse class of a finished run. Closed: nothing outside this union can be constructed. */
-export type ExitCode = 0 | 1 | 2 | 3 | 4 | 5
+import { type ErrorCode, type ExitCode, registry } from "./registry"
 
-/** Every registered failure name. snake_case, never reused. */
-export type ErrorCode =
-	| "internal"
-	| "invalid_input"
-	| "unknown_command"
-	| "unknown_flag"
-	| "unknown_format"
-
-export type ErrorSpec = { exit: ExitCode; message: string }
-
-/**
- * The single source of truth for failures. The envelope's `exitCode`, `run()`'s return value,
- * `traj schema` and the tests all read this table. A code carries exactly one class; a case that
- * seems to need two classes is two codes.
- */
-export const registry: Record<ErrorCode, ErrorSpec> = {
-	internal: { exit: 1, message: "Unexpected internal error." },
-	invalid_input: { exit: 2, message: "The input is invalid." },
-	unknown_command: { exit: 2, message: "Unknown command." },
-	unknown_flag: { exit: 2, message: "Unknown flag." },
-	unknown_format: { exit: 2, message: "Unknown output format." },
-}
+export type { ErrorCode, ErrorSpec, ExitCode } from "./registry"
+export { registry }
 
 export type FailOptions = {
 	/** Replaces the registry message with a more specific one. */

@@ -5,6 +5,7 @@
     "": {
       "name": "@excited-live/cli",
       "dependencies": {
+        "@trajectonomics/ledger": "0.1.0-alpha.0",
         "zod": "^4.6.7",
       },
       "devDependencies": {
@@ -36,6 +37,8 @@
     "@biomejs/cli-win32-arm64": ["@biomejs/cli-win32-arm64@2.6.3", "", { "os": "win32", "cpu": "arm64" }, "sha512-00SthDxBPwNiT7IL/mOneif6fiEU1PXK875zhr+InpeZjovY1mF5tCuDhXo1Hh0GYyiKHKzLbItzn58SAyLhJQ=="],
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.6.3", "", { "os": "win32", "cpu": "x64" }, "sha512-GhtOPphBWlnCepqpNk/w5eGN5oGRCzL20EbAkL1XCIpyboeVC9R642noyT43l8LSenGS4qz9IL8sKPfwY37V/Q=="],
+
+    "@trajectonomics/ledger": ["@trajectonomics/ledger@0.1.0-alpha.0", "", {}, "sha512-v6a+UStSjDBoomBcrCNt7BJTcnwm/GFjQhQ+ZkBh3GopnVuehifnpWhUoTh/NCG1xD7OimD8E/W4HsWMF7krJg=="],
 
     "@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
