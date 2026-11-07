@@ -29,7 +29,9 @@ function insertAll<T extends Table>(ctx: Ctx, table: T, rows: RestoreRows[T]): v
 		for (const row of rows) statement.run(...values(row))
 	} catch (error) {
 		if (!(error instanceof SQLiteError && error.code?.startsWith("SQLITE_CONSTRAINT"))) throw error
-		abort(fail("invalid_input", { path: table, message: `${table}: ${error.message}` }))
+		// SQLite's own text varies by runtime and version, so the envelope names only the table.
+		const message = `${table}: a row breaks a constraint of the ${table} table.`
+		abort(fail("invalid_input", { path: table, message, details: { table } }))
 	}
 }
 

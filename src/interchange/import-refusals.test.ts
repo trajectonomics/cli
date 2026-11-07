@@ -146,6 +146,12 @@ describe("importJsonl refusals", () => {
 	it("refuses rows the schema rejects, such as two live accounts with one name", async () => {
 		const golden = await goldenJsonl()
 		const body = refused(edit(golden, '"name":"Salary"', '"name":"อาหาร"'))
-		expect(body).toMatchObject({ code: "invalid_input", path: "account" })
+		expect(body).toEqual({
+			code: "invalid_input",
+			exitCode: 2,
+			path: "account",
+			message: "account: a row breaks a constraint of the account table.",
+			details: { table: "account" },
+		})
 	})
 })

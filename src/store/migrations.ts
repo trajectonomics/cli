@@ -24,9 +24,11 @@ export function tooNew(version: number): AppError {
 function runStep(db: Database, version: number, step: (db: Database) => void): void {
 	try {
 		step(db)
-	} catch (error) {
-		const details = { from: version, to: version + 1, reason: String(error) }
-		abort(fail("migration_failed", { details }))
+	} catch {
+		// SQLite's own text varies by runtime and version, so only the stable fields are kept.
+		const to = version + 1
+		const message = `Migrating the database from schema version ${version} to ${to} failed; it was left at ${version}.`
+		abort(fail("migration_failed", { message, details: { from: version, to } }))
 	}
 	db.run(`PRAGMA user_version = ${version + 1}`)
 }

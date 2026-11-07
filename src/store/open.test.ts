@@ -94,4 +94,19 @@ describe("openStore", () => {
 		expect(store.body.details).toEqual({ version: HEAD + 1, head: HEAD })
 		expect(readFileSync(join(home, "traj.db")).equals(before)).toBe(true)
 	})
+	it("reports a failed step with fixed text and only the stable version fields", async () => {
+		const home = tempHome()
+		await capture(["init"], { TRAJ_HOME: home })
+		const db = new Database(join(home, "traj.db"))
+		db.run("CREATE TABLE account (x)")
+		db.close()
+		const store = openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+		if (!isAppError(store)) throw new Error("expected migration_failed")
+		expect(store.body).toEqual({
+			code: "migration_failed",
+			exitCode: 1,
+			message: "Migrating the database from schema version 0 to 1 failed; it was left at 0.",
+			details: { from: 0, to: 1 },
+		})
+	})
 })
