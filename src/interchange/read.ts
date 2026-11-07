@@ -16,6 +16,8 @@ function checkHeader(line: string, schemaVersion: number): AppError | null {
 	if (header["record"] !== "header") return invalid(`${path}.record`, 'must be "header"')
 	const wrongKeys = exactKeys(header, HEADER_KEYS, path)
 	if (wrongKeys) return wrongKeys
+	// Exact equality on purpose, for the schema version too: this build knows only the current
+	// schema's record shape, so an older backup needs an explicit migration path, not a guess.
 	const known = { formatVersion: FORMAT_VERSION, schemaVersion }
 	for (const [key, expected] of Object.entries(known)) {
 		if (header[key] !== expected) {
