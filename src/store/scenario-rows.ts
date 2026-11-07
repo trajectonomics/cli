@@ -1,4 +1,5 @@
 import { type AppError, fail } from "../errors"
+import { isPlainObject } from "../json"
 import { canonicalJson, contentHash } from "./canonical"
 import { SCENARIO_COLUMNS } from "./columns"
 import type { Ctx } from "./context"
@@ -20,11 +21,10 @@ export function liveScenario(ctx: Ctx, column: "id" | "name", value: string): Sc
  * being an object with an integer `schemaVersion`. Must run inside `guard`.
  */
 export function canonicalDocument(document: unknown, path = "document"): string {
-	const isObject = typeof document === "object" && document !== null && !Array.isArray(document)
-	if (!isObject) {
+	if (!isPlainObject(document)) {
 		return abort(fail("invalid_input", { path, message: `${path}: must be a JSON object` }))
 	}
-	const version = (document as Record<string, unknown>)["schemaVersion"]
+	const version = document["schemaVersion"]
 	if (!Number.isSafeInteger(version) || (version as number) < 1) {
 		const at = `${path}.schemaVersion`
 		return abort(fail("invalid_input", { path: at, message: `${at}: must be a positive integer` }))

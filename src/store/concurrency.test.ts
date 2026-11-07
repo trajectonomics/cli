@@ -47,6 +47,17 @@ describe("concurrency", () => {
 		})
 	})
 
+	it("exits a writer process non-zero with the envelope when the store refuses it", async () => {
+		const home = tempHome()
+		mustOpen(home).close()
+		const db = new Database(join(home, "traj.db"))
+		db.run(`PRAGMA user_version = ${HEAD + 1}`)
+		db.close()
+		const [result] = await spawnWriters(home, 1, 1)
+		expect(result?.code).toBe(1)
+		expect(JSON.parse(result?.err ?? "")).toMatchObject({ code: "database_too_new" })
+	})
+
 	it("loses no write when N processes write in parallel", async () => {
 		const home = tempHome()
 		const setup = mustOpen(home)

@@ -26,8 +26,9 @@ export const init: Leaf = defineCommand({
 		const database = join(directory, "traj.db")
 		const created = !existsSync(database)
 		mkdirSync(directory, { recursive: true })
-		// No tables yet: the schema belongs to a later change. `user_version` stays 0. Setting WAL
-		// on a database that already has it is a no-op, so a half-finished earlier run is repaired.
+		// Deliberately an empty database at `user_version` 0: the first `openStore()` migrates it
+		// to head, so `init` never needs to know the schema. Setting WAL on a database that already
+		// has it is a no-op, so a half-finished earlier run is repaired.
 		const db = new Database(database, { create: true })
 		db.run("PRAGMA journal_mode = WAL")
 		db.close()

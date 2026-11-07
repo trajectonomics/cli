@@ -1,9 +1,7 @@
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
 import { formatMinorUnits, type Store } from "../store"
-import { FIELDS, FORMAT_VERSION, RECORD_ORDER, type RecordRows, type RecordType } from "./format"
-
-type Rows = { [T in RecordType]: RecordRows[T][] }
+import { FIELDS, FORMAT_VERSION, RECORD_ORDER, type RecordType, type RowList } from "./format"
 
 function encode(type: RecordType, row: Record<string, unknown>): string {
 	const members = Object.entries(FIELDS[type]).map(([key, kind]) => {
@@ -19,7 +17,7 @@ function encode(type: RecordType, row: Record<string, unknown>): string {
 	return `{"record":${JSON.stringify(type)},${members.join(",")}}`
 }
 
-function readAll(store: Store): Rows | AppError {
+function readAll(store: Store): RowList | AppError {
 	const lists = {
 		entity: store.listEntities({ sort: "id", includeDeleted: true }),
 		account: store.listAccounts({ sort: "id", includeDeleted: true }),
@@ -28,7 +26,7 @@ function readAll(store: Store): Rows | AppError {
 		scenario: store.listScenarios({ sort: "id", includeDeleted: true }),
 	}
 	for (const list of Object.values(lists)) if (isAppError(list)) return list
-	return lists as Rows
+	return lists as RowList
 }
 
 /**

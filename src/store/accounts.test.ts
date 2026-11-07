@@ -108,4 +108,15 @@ describe("accounts", () => {
 		const kind = store.createAccount({ name: "Z", type: "cash" as "asset", currency: "THB" })
 		expect(isAppError(kind) && kind.body).toMatchObject({ code: "invalid_input", path: "type" })
 	})
+	it("accepts THB only in v1 (ADR-0005), after the core accepts the code", () => {
+		const store = mustOpen(tempHome())
+		const usd = store.createAccount({ name: "Dollars", type: "asset", currency: "USD" })
+		expect(isAppError(usd) && usd.body).toMatchObject({
+			code: "invalid_input",
+			exitCode: 2,
+			path: "currency",
+			message: "currency: v1 supports THB only, not USD",
+		})
+		expect(must(store.listAccounts({ sort: "id" }))).toEqual([])
+	})
 })

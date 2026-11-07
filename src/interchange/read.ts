@@ -1,6 +1,6 @@
 import { type AppError, isAppError } from "../errors"
 import type { RestoreCounts, Store } from "../store"
-import { addRow, checkRecord, decodeRecord, emptyRows } from "./decode"
+import { addRow, checkRecord, type Decoded, decodeRecord, emptyRows, identityOf } from "./decode"
 import { FORMAT_VERSION } from "./format"
 import { exactKeys, invalid, parseLine } from "./invalid"
 
@@ -16,6 +16,8 @@ function checkHeader(line: string, schemaVersion: number): AppError | null {
 	if (header["record"] !== "header") return invalid(`${path}.record`, 'must be "header"')
 	const wrongKeys = exactKeys(header, HEADER_KEYS, path)
 	if (wrongKeys) return wrongKeys
+	// Exact equality on purpose, for the schema version too: this build knows only the current
+	// schema's record shape, so an older backup needs an explicit migration path, not a guess.
 	const known = { formatVersion: FORMAT_VERSION, schemaVersion }
 	for (const [key, expected] of Object.entries(known)) {
 		if (header[key] !== expected) {
@@ -30,17 +32,34 @@ function linesOf(text: string): string[] {
 	return (text.endsWith("\n") ? text.slice(0, -1) : text).split("\n")
 }
 
+/** Refuses a record whose identity an earlier line already used. */
+function repeated(decoded: Decoded, seen: Map<string, number>, line: number): AppError | null {
+	const { key, field } = identityOf(decoded)
+	const firstLine = seen.get(key)
+	if (firstLine === undefined) {
+		seen.set(key, line)
+		return null
+	}
+	const reason = `repeats the ${decoded.type} ${field} of line ${firstLine}`
+	return invalid(`line.${line}.${field}`, reason, { firstLine })
+}
+
 function decodeAll(lines: readonly string[], entityId: string) {
 	const rows = emptyRows()
-	for (const [index, line] of lines.entries()) {
-		const path = `line.${index + 2}`
-		const record = parseLine(line, path)
+	const seen = new Map<string, number>()
+	for (const [index, text] of lines.entries()) {
+		const line = index + 2
+		const path = `line.${line}`
+		const record = parseLine(text, path)
 		if (isAppError(record)) return record
 		const decoded = decodeRecord(record, path)
 		if (isAppError(decoded)) return decoded
-		const broken = checkRecord(decoded, entityId, path)
+		const broken = checkRecord(decoded, entityId, path) ?? repeated(decoded, seen, line)
 		if (broken) return broken
 		addRow(rows, decoded)
+	}
+	if (rows.entity.length === 0) {
+		return invalid("entity", "the file must hold exactly one entity record, the personal entity")
 	}
 	return rows
 }

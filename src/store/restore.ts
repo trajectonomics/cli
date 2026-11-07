@@ -3,6 +3,8 @@ import { type AppError, fail } from "../errors"
 import type { Ctx } from "./context"
 import { danglingReferences } from "./dangling"
 import { abort, write } from "./guard"
+import { checkLedger } from "./restore-ledger"
+import { checkRows } from "./restore-rows"
 import { INSERTS, type Table } from "./restore-sql"
 import type { RestoreCounts, RestoreRows } from "./types"
 
@@ -27,11 +29,15 @@ function insertAll<T extends Table>(ctx: Ctx, table: T, rows: RestoreRows[T]): v
 		for (const row of rows) statement.run(...values(row))
 	} catch (error) {
 		if (!(error instanceof SQLiteError && error.code?.startsWith("SQLITE_CONSTRAINT"))) throw error
-		abort(fail("invalid_input", { path: table, message: `${table}: ${error.message}` }))
+		// SQLite's own text varies by runtime and version, so the envelope names only the table.
+		const message = `${table}: a row breaks a constraint of the ${table} table.`
+		abort(fail("invalid_input", { path: table, message, details: { table } }))
 	}
 }
 
 export function restore(ctx: Ctx, rows: RestoreRows): RestoreCounts | AppError {
+	const malformed = checkRows(ctx.entityId, rows)
+	if (malformed) return malformed
 	return write(ctx.db, () => {
 		const occupied = notEmpty(ctx)
 		if (occupied) return occupied
@@ -39,6 +45,8 @@ export function restore(ctx: Ctx, rows: RestoreRows): RestoreCounts | AppError {
 		for (const table of TABLES) insertAll(ctx, table, rows[table])
 		const dangling = danglingReferences(ctx.db)
 		if (dangling) return dangling
+		const broken = checkLedger(ctx)
+		if (broken) return broken
 		return Object.fromEntries(TABLES.map((t) => [t, rows[t].length])) as RestoreCounts
 	})
 }

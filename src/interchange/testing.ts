@@ -1,6 +1,9 @@
 import { Database } from "bun:sqlite"
+import { expect } from "bun:test"
+import { type AppError, isAppError } from "../errors"
 import type { Clock, Store } from "../store"
 import { mustOpen, steppingClock, tempHome } from "../store/testing"
+import { importJsonl } from "./read"
 
 const FIXTURES = new URL("./fixtures/", import.meta.url)
 
@@ -40,4 +43,19 @@ export function tableDump(store: Store): Record<string, unknown[]> {
 	)
 	db.close()
 	return dump
+}
+
+/** Imports into a fresh store and asserts the refusal left every table as it was. */
+export function refused(text: string, store: Store = mustOpen(tempHome())): AppError["body"] {
+	const before = tableDump(store)
+	const outcome = importJsonl(text, store)
+	if (!isAppError(outcome)) throw new Error("the import was accepted")
+	expect(tableDump(store)).toEqual(before)
+	return outcome.body
+}
+
+/** `text` with the first `from` replaced by `to`; fails when the fixture lacks `from`. */
+export function edit(text: string, from: string, to: string): string {
+	if (!text.includes(from)) throw new Error(`the fixture does not contain ${from}`)
+	return text.replace(from, to)
 }

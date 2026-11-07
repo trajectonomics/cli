@@ -1,5 +1,6 @@
-import type { AppError } from "../errors"
-import { canonicalScenarioDocument, parseMinorUnits } from "../store"
+import { type AppError, isAppError } from "../errors"
+import { isPlainObject } from "../json"
+import { canonicalScenarioDocument, formatMinorUnits, parseMinorUnits } from "../store"
 import type { FieldKind } from "./format"
 import { invalid } from "./invalid"
 
@@ -30,12 +31,19 @@ function amount(value: unknown, path: string, record: Record<string, unknown>): 
 	if (typeof value !== "string") return invalid(path, "must be a decimal string such as 1234.56")
 	if (typeof currency !== "string")
 		return invalid(path.replace(/amount$/, "currency"), "must be a string")
-	return parseMinorUnits(value, currency, path)
+	const minor = parseMinorUnits(value, currency, path)
+	if (isAppError(minor)) return minor
+	// Only the writer's own form, so a restored row re-exports as the same bytes.
+	const canonical = formatMinorUnits(minor, currency)
+	if (canonical === value) return minor
+	return invalid(path, `must be the canonical decimal "${canonical}"`, {
+		expected: canonical,
+		actual: value,
+	})
 }
 
 function dimensions(value: unknown, path: string): unknown | AppError {
-	const isObject = typeof value === "object" && value !== null && !Array.isArray(value)
-	if (!isObject) return invalid(path, "must be an object of strings or null")
+	if (!isPlainObject(value)) return invalid(path, "must be an object of strings or null")
 	const entries = Object.values(value)
 	if (entries.length === 0) return invalid(path, "must be null when empty, never {}")
 	if (!entries.every((v) => typeof v === "string")) return invalid(path, "values must be strings")

@@ -1,5 +1,5 @@
 import { parseCurrency } from "@trajectonomics/ledger"
-import { type AppError, fail } from "../errors"
+import { type AppError, fail, isAppError } from "../errors"
 import { guard } from "./guard"
 
 // The core's own toMinorUnits/fromMinorUnits go through `number` division and rounding; nothing
@@ -57,4 +57,19 @@ export function formatMinorUnits(minor: number, currency: string): string {
 	const whole = text.slice(0, text.length - digits)
 	const sign = minor < 0 ? "-" : ""
 	return digits === 0 ? `${sign}${whole}` : `${sign}${whole}.${text.slice(-digits)}`
+}
+
+/**
+ * THB only in v1 (ADR-0005). The core checks the code first, so an unknown code is still the
+ * core's `INVALID_CURRENCY`; any other valid code is `invalid_input` at `path`.
+ */
+export function supportedCurrency(currency: string, path = "currency"): AppError | null {
+	const code = guard(() => parseCurrency(currency, path))
+	if (isAppError(code)) return code
+	if (code === "THB") return null
+	return fail("invalid_input", {
+		path,
+		message: `${path}: v1 supports THB only, not ${code}`,
+		details: { supported: ["THB"], actual: code },
+	})
 }
