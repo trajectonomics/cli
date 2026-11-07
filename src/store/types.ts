@@ -54,6 +54,16 @@ export type ScenarioForked =
 	| { status: "not_found" }
 export type ScenarioDeleted = { status: "deleted"; scenario: ScenarioRow } | { status: "not_found" }
 
+/** Every row of a lossless dump, by table, exactly as the list methods return them. */
+export type RestoreRows = {
+	entity: readonly EntityRow[]
+	account: readonly AccountRow[]
+	tx: readonly TxRow[]
+	posting: readonly PostingRow[]
+	scenario: readonly ScenarioRow[]
+}
+export type RestoreCounts = { [Table in keyof RestoreRows]: number }
+
 /**
  * The only code that reads or writes `traj.db`. Every method returns its value or an `AppError`
  * built by `fail()`; none throws for an expected failure.
@@ -77,5 +87,11 @@ export interface Store {
 	forkScenario(id: string, name: string): ScenarioForked | AppError
 	deleteScenario(id: string): ScenarioDeleted | AppError
 	listScenarios(options: ListOptions<ScenarioSort>): ScenarioRow[] | AppError
+	/**
+	 * Writes `rows` verbatim (ids, versions, timestamps, tombstones) into a database holding only
+	 * the seeded personal entity, in one transaction that reads no clock. References may point
+	 * forward; any left dangling roll the whole restore back.
+	 */
+	restore(rows: RestoreRows): RestoreCounts | AppError
 	close(): void
 }
