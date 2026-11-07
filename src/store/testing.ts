@@ -1,7 +1,7 @@
 import { mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { isAppError } from "../errors"
+import { type AppError, isAppError } from "../errors"
 import { openStore } from "./index"
 import type { Clock, Store } from "./types"
 
@@ -28,7 +28,7 @@ export function mustOpen(home: string, clock: Clock = steppingClock()): Store {
 }
 
 /** Unwraps a store outcome or fails the test with the error envelope. */
-export function must<T>(outcome: T): Exclude<T, import("../errors").AppError> {
+export function must<T>(outcome: T): Exclude<T, AppError> {
 	if (isAppError(outcome)) throw new Error(JSON.stringify(outcome.body))
-	return outcome as Exclude<T, import("../errors").AppError>
+	return outcome as Exclude<T, AppError>
 }
