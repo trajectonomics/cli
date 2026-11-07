@@ -8,6 +8,7 @@ import { PERSONAL_ENTITY_ID } from "./ids"
 import { storeOver } from "./store"
 import type { Clock, Store } from "./types"
 
+export { ACCOUNT_TYPES, isAccountType } from "./accounts"
 export { contentHash } from "./canonical"
 export { PERSONAL_ENTITY_ID } from "./ids"
 export { fromLedgerError } from "./ledger-errors"

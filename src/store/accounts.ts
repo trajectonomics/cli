@@ -1,3 +1,4 @@
+import type { AccountType } from "@trajectonomics/ledger"
 import { type AppError, fail } from "../errors"
 import { chartOf } from "./chart"
 import { ACCOUNT_COLUMNS, ACCOUNT_ORDER, liveOnly } from "./columns"
@@ -39,13 +40,29 @@ function insert(ctx: Ctx, input: NewAccount): AccountRow {
 	return liveAccount(ctx, id)!
 }
 
-// The core types `type` but does not check it at runtime, so the store does.
-const TYPES: readonly string[] = ["asset", "liability", "equity", "income", "expense"]
+// Keyed by the core's type, so a type the core adds fails typecheck until it is listed here.
+const TYPES: Record<AccountType, null> = {
+	asset: null,
+	liability: null,
+	equity: null,
+	income: null,
+	expense: null,
+}
+
+/**
+ * Every account type, in a fixed order. The core types `type` but does not check it at runtime,
+ * so the store and the importer do. The schema's CHECK constraint is the database's own copy.
+ */
+export const ACCOUNT_TYPES = Object.keys(TYPES) as readonly AccountType[]
+
+export function isAccountType(value: unknown): value is AccountType {
+	return typeof value === "string" && Object.hasOwn(TYPES, value)
+}
 
 export function createAccount(ctx: Ctx, input: NewAccount): AccountCreated | AppError {
 	if (input.name === "") return fail("invalid_input", { path: "name", message: "name is empty" })
-	if (!TYPES.includes(input.type)) {
-		const message = `type: must be one of ${TYPES.join(", ")}`
+	if (!isAccountType(input.type)) {
+		const message = `type: must be one of ${ACCOUNT_TYPES.join(", ")}`
 		return fail("invalid_input", { path: "type", message })
 	}
 	return write(ctx.db, () => {

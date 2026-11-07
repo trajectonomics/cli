@@ -4,6 +4,7 @@ import type { Ctx } from "./context"
 import { danglingReferences } from "./dangling"
 import { abort, write } from "./guard"
 import { checkLedger } from "./restore-ledger"
+import { checkRows } from "./restore-rows"
 import { INSERTS, type Table } from "./restore-sql"
 import type { RestoreCounts, RestoreRows } from "./types"
 
@@ -33,6 +34,8 @@ function insertAll<T extends Table>(ctx: Ctx, table: T, rows: RestoreRows[T]): v
 }
 
 export function restore(ctx: Ctx, rows: RestoreRows): RestoreCounts | AppError {
+	const malformed = checkRows(ctx.entityId, rows)
+	if (malformed) return malformed
 	return write(ctx.db, () => {
 		const occupied = notEmpty(ctx)
 		if (occupied) return occupied

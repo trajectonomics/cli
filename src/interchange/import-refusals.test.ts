@@ -94,10 +94,58 @@ describe("importJsonl refusals", () => {
 		}
 	})
 
-	it("refuses rows the schema rejects, such as a repeated id", async () => {
+	it("refuses a repeated id of any record type at its line, before any write", async () => {
 		const golden = await goldenJsonl()
-		const line = golden.split("\n").find((l) => l.includes('"name":"Assets"'))!
-		const body = refused(`${golden}${line}\n`)
+		const lines = golden.split("\n")
+		const cases: [string, string][] = [
+			['"record":"entity"', "line.25.id"],
+			['"name":"Assets"', "line.25.id"],
+			['"record":"tx"', "line.25.id"],
+			['"record":"posting"', "line.25.ordinal"],
+			['"name":"base"', "line.25.id"],
+		]
+		for (const [needle, path] of cases) {
+			const line = lines.find((l) => l.includes(needle))!
+			const body = refused(`${golden}${line}\n`)
+			expect(body).toMatchObject({
+				code: "invalid_input",
+				path,
+				details: { firstLine: expect.any(Number) },
+			})
+		}
+	})
+
+	it("refuses any entity other than exactly one personal entity", async () => {
+		const golden = await goldenJsonl()
+		const personal = '"record":"entity","id":"00000000-0000-7000-8000-000000000001"'
+		const other = '"record":"entity","id":"0194d000-0001-7000-8000-000000000001"'
+		expect(refused(edit(golden, personal, other))).toMatchObject({
+			code: "invalid_input",
+			path: "line.2.id",
+		})
+		const withoutEntity = golden.split("\n").filter((l) => !l.includes('"record":"entity"'))
+		expect(refused(withoutEntity.join("\n"))).toMatchObject({
+			code: "invalid_input",
+			path: "entity",
+		})
+	})
+
+	it("refuses an empty name and an unknown account type at the line path", async () => {
+		const golden = await goldenJsonl()
+		const cases: [string, string, string][] = [
+			['"name":"ส่วนตัว"', '"name":""', "line.2.name"],
+			['"name":"Salary"', '"name":""', "line.4.name"],
+			['"name":"base"', '"name":""', "line.23.name"],
+			['"name":"Salary","type":"income"', '"name":"Salary","type":"revenue"', "line.4.type"],
+		]
+		for (const [from, to, path] of cases) {
+			expect(refused(edit(golden, from, to))).toMatchObject({ code: "invalid_input", path })
+		}
+	})
+
+	it("refuses rows the schema rejects, such as two live accounts with one name", async () => {
+		const golden = await goldenJsonl()
+		const body = refused(edit(golden, '"name":"Salary"', '"name":"อาหาร"'))
 		expect(body).toMatchObject({ code: "invalid_input", path: "account" })
 	})
 })
