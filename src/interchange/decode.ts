@@ -28,11 +28,8 @@ export function decodeRecord(record: Record<string, unknown>, path: string): Dec
 	return { type, row } as Decoded
 }
 
-/**
- * Cross-field rules: the personal entity, a name that is not empty, a known account type, and a
- * hash that matches the document.
- */
-export function checkRecord(decoded: Decoded, entityId: string, path: string): AppError | null {
+/** The personal entity owns every record, and no name is empty. */
+function identityProblem(decoded: Decoded, entityId: string, path: string): AppError | null {
 	const { type, row } = decoded
 	if (type === "entity" && row.id !== entityId) {
 		return invalid(`${path}.id`, `must be the personal entity ${entityId}`)
@@ -41,9 +38,31 @@ export function checkRecord(decoded: Decoded, entityId: string, path: string): A
 		return invalid(`${path}.entityId`, `must be the personal entity ${entityId}`)
 	}
 	if ("name" in row && row.name === "") return invalid(`${path}.name`, "must not be empty")
+	return null
+}
+
+/** A linked row must say what it is; otherwise a reversal could be read as a replacement. */
+function correctionKindProblem(decoded: Decoded, path: string): AppError | null {
+	if (decoded.type !== "tx") return null
+	const { linkedTo, correctionKind } = decoded.row
+	if ((linkedTo === null) === (correctionKind === null)) return null
+	const reason = "must be set exactly when linkedTo is, and null otherwise"
+	return invalid(`${path}.correctionKind`, reason)
+}
+
+/**
+ * Cross-field rules: the personal entity, a name that is not empty, a known account type, a
+ * correction's kind, and a hash that matches the document.
+ */
+export function checkRecord(decoded: Decoded, entityId: string, path: string): AppError | null {
+	const { type, row } = decoded
+	const identity = identityProblem(decoded, entityId, path)
+	if (identity) return identity
 	if (type === "account" && !isAccountType(row.type)) {
 		return invalid(`${path}.type`, `must be one of ${ACCOUNT_TYPES.join(", ")}`)
 	}
+	const kind = correctionKindProblem(decoded, path)
+	if (kind) return kind
 	if (type === "scenario" && row.contentHash !== contentHash(row.document)) {
 		const details = { expected: contentHash(row.document), actual: row.contentHash }
 		return invalid(`${path}.contentHash`, "does not match the canonical document", details)

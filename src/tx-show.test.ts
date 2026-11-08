@@ -35,7 +35,7 @@ describe("tx show", () => {
 				},
 			],
 		})
-		expect(data.links).toEqual({ corrects: null, correctedBy: [] })
+		expect(data.links).toEqual({ corrects: null, correction: null, correctedBy: [] })
 	})
 
 	it("reports links in both directions", async () => {
@@ -52,6 +52,7 @@ describe("tx show", () => {
 			store.addTransaction({
 				date: "2026-03-02",
 				linkedTo: original.id,
+				correctionKind: "reversal",
 				postings: postings.map((p) => ({ ...p, amount: -p.amount })),
 			}),
 		).tx
@@ -65,11 +66,13 @@ describe("tx show", () => {
 		const shown = JSON.parse((await traj(["tx", "show", original.id, "--json"])).out)
 		expect(shown.links).toEqual({
 			corrects: null,
-			correctedBy: [{ id: reversal.id, date: "2026-03-02" }],
+			correction: null,
+			correctedBy: [{ id: reversal.id, date: "2026-03-02", correction: "reversal" }],
 		})
 		const back = JSON.parse((await traj(["tx", "show", reversal.id, "--json"])).out)
 		expect(back.links).toEqual({
 			corrects: { id: original.id, date: "2026-03-01" },
+			correction: "reversal",
 			correctedBy: [],
 		})
 	})

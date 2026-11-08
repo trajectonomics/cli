@@ -1,6 +1,12 @@
 import { type AppError, isAppError } from "../errors"
 import { isPlainObject } from "../json"
-import { canonicalScenarioDocument, formatMinorUnits, parseMinorUnits } from "../store"
+import {
+	canonicalScenarioDocument,
+	formatMinorUnits,
+	isTxCorrection,
+	parseMinorUnits,
+	TX_CORRECTIONS,
+} from "../store"
 import type { FieldKind } from "./format"
 import { invalid } from "./invalid"
 
@@ -54,6 +60,11 @@ function document(value: unknown, path: string): unknown | AppError {
 	return canonicalScenarioDocument(value, path)
 }
 
+function correction(value: unknown, path: string): unknown | AppError {
+	if (value === null || isTxCorrection(value)) return value
+	return invalid(path, `must be null or one of ${TX_CORRECTIONS.join(", ")}`)
+}
+
 /** How each field kind is checked and turned back into the store's row value. */
 export const DECODERS: Record<FieldKind, Decode> = {
 	text,
@@ -64,4 +75,5 @@ export const DECODERS: Record<FieldKind, Decode> = {
 	amount,
 	dimensions: nullable(dimensions),
 	document,
+	correction,
 }

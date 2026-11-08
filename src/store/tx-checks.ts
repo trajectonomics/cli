@@ -1,7 +1,7 @@
 import { type AppError, fail } from "../errors"
 import { liveAccount } from "./accounts"
 import type { Ctx } from "./context"
-import { txById } from "./tx-content"
+import { txByExternalRef, txById } from "./tx-content"
 import type { NewTransaction } from "./types"
 
 function postingAccount(ctx: Ctx, accountId: string, index: number): AppError | undefined {
@@ -21,10 +21,17 @@ function postingAccount(ctx: Ctx, accountId: string, index: number): AppError | 
 }
 
 /**
- * The store's own rules, checked before the core sees the transaction: every posting names a
- * live, unarchived account of this entity, and a link points at an existing transaction.
+ * The store's own rules, checked before the core sees the transaction: a linked row names what it
+ * is, every posting names a live, unarchived account of this entity, and a link points at an
+ * existing transaction.
  */
 export function storeChecks(ctx: Ctx, input: NewTransaction): AppError | undefined {
+	if ((input.linkedTo === undefined) !== (input.correctionKind === undefined)) {
+		return fail("invalid_input", {
+			path: "correctionKind",
+			message: "correctionKind: must be set exactly when linkedTo is",
+		})
+	}
 	for (const [index, posting] of input.postings.entries()) {
 		const failure = postingAccount(ctx, posting.accountId, index)
 		if (failure) return failure
@@ -33,5 +40,16 @@ export function storeChecks(ctx: Ctx, input: NewTransaction): AppError | undefin
 	return fail("invalid_input", {
 		path: "linkedTo",
 		message: `linkedTo: no transaction ${input.linkedTo} in this entity`,
+	})
+}
+
+/** A reference another row already holds; an amend's replacement may not reuse one. */
+export function externalRefTaken(ctx: Ctx, externalRef: string | undefined): AppError | undefined {
+	if (externalRef === undefined) return undefined
+	const stored = txByExternalRef(ctx, externalRef)
+	if (stored === null) return undefined
+	return fail("external_ref_conflict", {
+		path: "externalRef",
+		details: { externalRef, txId: stored.id },
 	})
 }

@@ -1,5 +1,5 @@
 -- The golden fixture database, as literal rows. Run against a database migrated to schema
--- version 1; the seeded personal entity already exists and is updated in place. Ids sort so
+-- version 2; the seeded personal entity already exists and is updated in place. Ids sort so
 -- that an account's parent, a void's linked transaction and a fork's origin all come later in
 -- the export than the row that points at them.
 UPDATE entity SET name = 'ส่วนตัว', version = 2, updated_at = '2026-01-01T08:00:00.000Z'
@@ -30,17 +30,17 @@ INSERT INTO account (id, entity_id, name, type, currency, parent_id, archived_at
 	'2026-01-01T09:00:00.000Z', '2026-01-01T09:00:00.000Z', NULL);
 
 INSERT INTO tx (id, entity_id, date, memo, linked_to, external_ref, version, created_at,
-	updated_at) VALUES
+	updated_at, correction_kind) VALUES
 ('0194b000-0001-7000-8000-000000000001', '00000000-0000-7000-8000-000000000001', '2026-01-05',
 	'ยอดยกมา', NULL, 'kbank:2026-01-05:0001', 1,
-	'2026-01-05T12:00:00.100Z', '2026-01-05T12:00:00.100Z'),
+	'2026-01-05T12:00:00.100Z', '2026-01-05T12:00:00.100Z', NULL),
 ('0194b000-0002-7000-8000-000000000002', '00000000-0000-7000-8000-000000000001', '2026-01-10',
-	NULL, NULL, NULL, 1, '2026-01-10T12:00:00.200Z', '2026-01-10T12:00:00.200Z'),
+	NULL, NULL, NULL, 1, '2026-01-10T12:00:00.200Z', '2026-01-10T12:00:00.200Z', NULL),
 ('0194b000-0003-7000-8000-000000000003', '00000000-0000-7000-8000-000000000001', '2026-01-12',
 	'void', '0194b000-0004-7000-8000-000000000004', NULL, 1,
-	'2026-01-12T18:00:00.400Z', '2026-01-12T18:00:00.400Z'),
+	'2026-01-12T18:00:00.400Z', '2026-01-12T18:00:00.400Z', 'reversal'),
 ('0194b000-0004-7000-8000-000000000004', '00000000-0000-7000-8000-000000000001', '2026-01-12',
-	'Lunch', NULL, NULL, 1, '2026-01-12T12:00:00.300Z', '2026-01-12T12:00:00.300Z');
+	'Lunch', NULL, NULL, 1, '2026-01-12T12:00:00.300Z', '2026-01-12T12:00:00.300Z', NULL);
 
 INSERT INTO posting (tx_id, ordinal, account_id, amount, currency, dimensions) VALUES
 ('0194b000-0001-7000-8000-000000000001', 0, '0194a000-0001-7000-8000-000000000001',

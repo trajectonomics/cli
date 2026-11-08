@@ -26,6 +26,46 @@ describe("importJsonl", () => {
 		expect(dump["entity"]).toHaveLength(1)
 	})
 
+	it("restores each transaction's correction kind unchanged", () => {
+		const source = mustOpen(tempHome())
+		const cash = must(source.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
+			.account.id
+		const food = must(source.createAccount({ name: "Food", type: "expense", currency: "THB" }))
+			.account.id
+		const original = must(
+			source.addTransaction({
+				date: "2026-03-01",
+				postings: [
+					{ accountId: food, amount: 12050, currency: "THB" },
+					{ accountId: cash, amount: -12050, currency: "THB" },
+				],
+			}),
+		).tx
+		must(
+			source.amendTransaction(original.id, {
+				replacement: {
+					date: "2026-03-02",
+					postings: [
+						{ accountId: food, amount: 10000, currency: "THB" },
+						{ accountId: cash, amount: -10000, currency: "THB" },
+					],
+				},
+			}),
+		)
+		const restored = mustOpen(tempHome())
+		must(importJsonl(must(exportJsonl(source)), restored))
+		const kinds = (store: ReturnType<typeof mustOpen>) =>
+			must(store.listTransactions({ sort: "date" }))
+				.map((tx) => `${tx.date} ${tx.correctionKind}`)
+				.sort()
+		expect(kinds(restored)).toEqual(kinds(source))
+		expect(kinds(restored)).toEqual([
+			"2026-03-01 null",
+			"2026-03-02 replacement",
+			"2026-03-02 reversal",
+		])
+	})
+
 	it("imports parent, link and fork references that point forward in the file", async () => {
 		const golden = await goldenJsonl()
 		const lineOf = (id: string) => golden.indexOf(`"id":"${id}"`)

@@ -116,6 +116,7 @@ describe("schema addresses commands by path", () => {
 			"init",
 			"schema",
 			"tx add",
+			"tx amend",
 			"tx list",
 			"tx show",
 			"tx void",

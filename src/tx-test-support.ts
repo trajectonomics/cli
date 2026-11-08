@@ -35,3 +35,86 @@ export async function accounts(
 	for (const [name, type] of names) added[name] = await account(traj, name, type)
 	return added
 }
+
+// Setup and result shapes for the `tx amend` tests.
+
+export type Written = {
+	id: string
+	date: string
+	memo: string | null
+	linkedTo: string | null
+	externalRef: string | null
+	postings: {
+		ordinal: number
+		accountId: string
+		amount: string
+		currency: string
+		dimensions: Record<string, string> | null
+	}[]
+}
+
+export type Amended = {
+	dryRun: boolean
+	status: "amended" | "already_corrected"
+	reversal: Written | null
+	replacement: Written | null
+	correction: Written | null
+}
+
+export const json = (res: { out: string }): Amended => JSON.parse(res.out) as Amended
+
+/** A fresh CLI over a temp home holding Cash and Food, and the lunch it records. */
+export async function lunch(
+	traj: Traj,
+	externalRef?: string,
+): Promise<{ opened: Record<string, Account>; original: Written }> {
+	const opened = await accounts(traj, [
+		["Cash", "asset"],
+		["Food", "expense"],
+	])
+	const ref = externalRef === undefined ? [] : ["--external-ref", externalRef]
+	const added = await traj([
+		"tx",
+		"add",
+		"--from",
+		"Cash",
+		"--to",
+		"Food",
+		"--amount",
+		"120.50",
+		"--date",
+		"2026-03-01",
+		...ref,
+		"--json",
+	])
+	expect(added.code).toBe(0)
+	return { opened, original: JSON.parse(added.out).transaction as Written }
+}
+
+/** Amends the lunch with a 100.00 replacement dated 2026-03-02, unless `extra` says otherwise. */
+export function amend(traj: Traj, id: string, extra: readonly string[] = []): Promise<Captured> {
+	return traj([
+		"tx",
+		"amend",
+		id,
+		"--from",
+		"Cash",
+		"--to",
+		"Food",
+		"--amount",
+		"100",
+		"--date",
+		"2026-03-02",
+		...extra,
+		"--json",
+	])
+}
+
+/** How many transaction rows and posting rows the ledger holds. */
+export async function ledgerSize(traj: Traj): Promise<{ transactions: number; postings: number }> {
+	const listed = JSON.parse((await traj(["tx", "list", "--json"])).out) as {
+		transactions: { postings: unknown[] }[]
+	}
+	const postings = listed.transactions.reduce((total, tx) => total + tx.postings.length, 0)
+	return { transactions: listed.transactions.length, postings }
+}

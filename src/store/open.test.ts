@@ -5,6 +5,7 @@ import { join } from "node:path"
 import { isAppError } from "../errors"
 import { capture } from "../test-support"
 import { HEAD, openStore } from "./index"
+import { schemaV1 } from "./schema-v1"
 import { mustOpen, steppingClock, tempHome } from "./testing"
 
 /**
@@ -15,6 +16,14 @@ const fixtures: Record<number, (home: string) => Promise<void>> = {
 	// Version 0 is exactly what `traj init` leaves behind: an empty WAL database.
 	0: async (home) => {
 		expect((await capture(["init"], { TRAJ_HOME: home })).code).toBe(0)
+	},
+	// Version 1 is the five tables, the seeded entity and no correction kind yet.
+	1: async (home) => {
+		expect((await capture(["init"], { TRAJ_HOME: home })).code).toBe(0)
+		const db = new Database(join(home, "traj.db"))
+		schemaV1(db)
+		db.run("PRAGMA user_version = 1")
+		db.close()
 	},
 }
 
