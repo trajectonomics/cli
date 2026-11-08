@@ -14,7 +14,15 @@ import {
 	txByExternalRef,
 	txById,
 } from "./tx-content"
-import type { NewTransaction, PostingRow, PostingSort, TxAdded, TxRow, TxSort } from "./types"
+import type {
+	NewTransaction,
+	PostingRow,
+	PostingSort,
+	TxAdded,
+	TxRow,
+	TxSort,
+	WriteOptions,
+} from "./types"
 
 function insert(ctx: Ctx, input: NewTransaction): TxAdded {
 	const at = ctx.clock()
@@ -60,11 +68,20 @@ function replay(ctx: Ctx, input: NewTransaction, externalRef: string): TxAdded |
 }
 
 /** Validates through the core, then appends. A repeated `externalRef` is idempotent. */
-export function addTransaction(ctx: Ctx, input: NewTransaction): TxAdded | AppError {
-	return write(ctx.db, () => {
-		const replayed = input.externalRef === undefined ? null : replay(ctx, input, input.externalRef)
-		return replayed ?? storeChecks(ctx, input) ?? insert(ctx, input)
-	})
+export function addTransaction(
+	ctx: Ctx,
+	input: NewTransaction,
+	options: WriteOptions = {},
+): TxAdded | AppError {
+	return write(
+		ctx.db,
+		() => {
+			const replayed =
+				input.externalRef === undefined ? null : replay(ctx, input, input.externalRef)
+			return replayed ?? storeChecks(ctx, input) ?? insert(ctx, input)
+		},
+		options,
+	)
 }
 
 export function listTransactions(ctx: Ctx, options: { sort: TxSort }): TxRow[] | AppError {

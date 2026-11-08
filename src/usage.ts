@@ -52,13 +52,28 @@ function groupUsage(group: Group, path: readonly string[]): string {
 	].join("\n")
 }
 
+function documentUsage(leaf: Leaf, path: readonly string[]): string | undefined {
+	const document = leaf.document
+	if (document === undefined) return undefined
+	const flag = leaf.flags.find((spec) => spec.field === document.flag)
+	if (flag === undefined) return undefined
+	const allowed = (document.allowed ?? []).flatMap((field) => {
+		const spec = leaf.flags.find((candidate) => candidate.field === field)
+		return spec === undefined ? [] : [`[${flagLabel(spec)}]`]
+	})
+	const file = flagLabel(flag).replace("<string>", "<file|->")
+	return `Usage: traj ${[...path, file, ...allowed].join(" ")}`
+}
+
 function leafUsage(leaf: Leaf, path: readonly string[]): string {
 	const words = leaf.positionals.map((name) => positionalLabel(leaf, name))
 	const flags = leaf.flags.length > 0 ? ["[options]"] : []
+	const alternate = documentUsage(leaf, path)
 	const own = leaf.flags.map((spec) => [flagLabel(spec), flagNote(spec)] as const)
 	const examples = leaf.examples.map((example) => [example.command, example.description] as const)
 	return [
 		`Usage: traj ${[...path, ...flags, ...words].join(" ")}`,
+		...(alternate === undefined ? [] : [alternate]),
 		"",
 		leaf.summary,
 		...(own.length > 0 ? ["", "Options:", ...table(own)] : []),

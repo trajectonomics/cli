@@ -1,4 +1,4 @@
-import type { AccountType } from "@trajectonomics/ledger"
+import type { AccountType, ChartOfAccounts } from "@trajectonomics/ledger"
 import type { AppError } from "../errors"
 import type { AccountRow, EntityRow, PostingRow, ScenarioRow, TxRow } from "./rows"
 
@@ -87,7 +87,9 @@ export interface Store {
 	listChildAccounts(parentId: string): AccountRow[] | AppError
 	closeAccount(id: string, options?: WriteOptions): AccountClosed | AppError
 	deleteAccount(id: string): AccountDeleted | AppError
-	addTransaction(input: NewTransaction): TxAdded | AppError
+	/** The entity's full chart, archived accounts included; the core builds and validates against it. */
+	chart(): ChartOfAccounts | AppError
+	addTransaction(input: NewTransaction, options?: WriteOptions): TxAdded | AppError
 	listTransactions(options: { sort: TxSort }): TxRow[] | AppError
 	listPostings(options: { sort: PostingSort }): PostingRow[] | AppError
 	saveScenario(input: NewScenario): ScenarioSaved | AppError

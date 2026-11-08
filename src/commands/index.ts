@@ -4,11 +4,12 @@ import { account } from "./account"
 import { help } from "./help"
 import { init } from "./init"
 import { schema } from "./schema"
+import { tx } from "./tx"
 import { version } from "./version"
 
 /** The command tree. Add a command here: one entry, one file (or folder, for a group). */
 export const root: Group = defineGroup({
 	name: "traj",
 	summary: "trajectonomics command line",
-	children: [account, help, init, schema, version],
+	children: [account, help, init, schema, tx, version],
 })

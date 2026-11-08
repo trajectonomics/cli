@@ -13,7 +13,7 @@ export { contentHash } from "./canonical"
 export { PERSONAL_ENTITY_ID } from "./ids"
 export { fromLedgerError } from "./ledger-errors"
 export { HEAD } from "./migrations"
-export { formatMinorUnits, parseMinorUnits } from "./money"
+export { formatMinorUnits, parseMinorUnits, supportedCurrency } from "./money"
 export { canonicalScenarioDocument } from "./scenario-rows"
 export type * from "./types"
 

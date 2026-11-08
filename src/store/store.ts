@@ -1,6 +1,7 @@
 import type { AppError } from "../errors"
 import { closeAccount, deleteAccount } from "./account-lifecycle"
 import { createAccount, getAccount, listAccounts, listChildAccounts } from "./accounts"
+import { chartOf } from "./chart"
 import { ENTITY_COLUMNS, ENTITY_ORDER, liveOnly } from "./columns"
 import type { Ctx } from "./context"
 import { guard } from "./guard"
@@ -27,6 +28,7 @@ export function storeOver(path: string, ctx: Ctx): Store {
 		path,
 		entityId: ctx.entityId,
 		schemaVersion: () => guard(() => userVersion(ctx.db)),
+		chart: () => guard(() => chartOf(ctx)),
 		listEntities: (options) => listEntities(ctx, options),
 		createAccount: (input, options) => createAccount(ctx, input, options),
 		listAccounts: (options) => listAccounts(ctx, options),
@@ -34,7 +36,7 @@ export function storeOver(path: string, ctx: Ctx): Store {
 		listChildAccounts: (parentId) => listChildAccounts(ctx, parentId),
 		closeAccount: (id, options) => closeAccount(ctx, id, options),
 		deleteAccount: (id) => deleteAccount(ctx, id),
-		addTransaction: (input) => addTransaction(ctx, input),
+		addTransaction: (input, options) => addTransaction(ctx, input, options),
 		listTransactions: (options) => listTransactions(ctx, options),
 		listPostings: (options) => listPostings(ctx, options),
 		saveScenario: (input) => saveScenario(ctx, input),

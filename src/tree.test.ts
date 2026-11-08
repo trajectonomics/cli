@@ -115,6 +115,7 @@ describe("schema addresses commands by path", () => {
 			"help",
 			"init",
 			"schema",
+			"tx add",
 			"version",
 		])
 		expect(data.errors.length).toBeGreaterThan(0)

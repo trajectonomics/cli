@@ -30,6 +30,11 @@ describe("number flags", () => {
 		expect(JSON.parse(res.out).times).toBe(3)
 	})
 
+	it("accepts a negative number as a separate value", async () => {
+		const res = await demo(["demo", "echo", "hi", "--times", "-2", "--json"])
+		expect(JSON.parse(res.out).times).toBe(-2)
+	})
+
 	it("rejects hex, exponent and Infinity spellings", async () => {
 		for (const value of ["0x10", "1e3", "Infinity", "", " "]) {
 			const res = await demo(["demo", "echo", "hi", `--times=${value}`, "--json"])
