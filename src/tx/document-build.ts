@@ -1,4 +1,4 @@
-import { type AppError, fail, isAppError } from "../errors"
+import { type AppError, isAppError } from "../errors"
 import {
 	type NewPosting,
 	type NewTransaction,
@@ -7,15 +7,7 @@ import {
 	supportedCurrency,
 } from "../store"
 import type { DocumentPosting, TransactionDocument } from "./document"
-
-function unknownAccount(ref: string, path: string): AppError {
-	const reason = "is not in the chart of accounts"
-	return fail("UNKNOWN_ACCOUNT", {
-		path,
-		message: `${path}: ${reason}`,
-		details: { field: path, value: ref, reason },
-	})
-}
+import { unknownAccount } from "./errors"
 
 /** One document posting: resolve its account, check its currency, and parse its amount exactly. */
 function postingOf(store: Store, posting: DocumentPosting, index: number): NewPosting | AppError {

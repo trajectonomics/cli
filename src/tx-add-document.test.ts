@@ -126,4 +126,26 @@ describe("tx add document", () => {
 			},
 		])
 	})
+
+	it("adds the loan split from stdin too", async () => {
+		const traj = cli(tempHome(), JSON.stringify(loan))
+		const opened = await accounts(traj, [
+			["Bank", "asset"],
+			["Loan", "liability"],
+			["Interest", "expense"],
+		])
+		const res = await traj(["tx", "add", "--postings", "-", "--json"])
+		expect(res.code).toBe(0)
+		const postings = JSON.parse(res.out).transaction.postings
+		expect(postings.map((p: { amount: string }) => p.amount)).toEqual([
+			"10000.00",
+			"2000.00",
+			"-12000.00",
+		])
+		expect(postings.map((p: { accountId: string }) => p.accountId)).toEqual([
+			opened["Loan"]?.id,
+			opened["Interest"]?.id,
+			opened["Bank"]?.id,
+		])
+	})
 })

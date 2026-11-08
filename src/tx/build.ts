@@ -1,15 +1,14 @@
 import type { Transaction } from "@trajectonomics/ledger"
 import { LedgerValidationError, openingBalance, simple } from "@trajectonomics/ledger"
-import { notFound } from "../account/errors"
 import { type AppError, isAppError } from "../errors"
 import {
-	type AccountRow,
 	fromLedgerError,
 	type NewPosting,
 	type NewTransaction,
 	parseMinorUnits,
 	type Store,
 } from "../store"
+import { unknownAccount } from "./errors"
 
 /** The flag surface of `tx add`; all of it is also a field of the command's input schema. */
 export type FlagInput = {
@@ -26,12 +25,6 @@ export type FlagInput = {
 
 // The core builder needs an id to shape a Transaction; the store mints the persisted one.
 const DRAFT_ID = "01940000-0000-7000-8000-000000000000"
-
-function account(store: Store, ref: string): AccountRow | AppError {
-	const row = store.getAccount(ref)
-	if (isAppError(row)) return row
-	return row ?? notFound(ref)
-}
 
 function dimensionsOf(project: string | undefined): Pick<NewPosting, "dimensions"> | object {
 	return project === undefined ? {} : { dimensions: { project } }
@@ -61,10 +54,12 @@ function written(tx: Transaction, input: FlagInput): NewTransaction {
 
 /** Builds either flag form: a simple magnitude transfer, or a signed opening balance. */
 export function buildFlags(input: FlagInput, store: Store): NewTransaction | AppError {
-	const from = account(store, input.from)
+	const from = store.getAccount(input.from)
 	if (isAppError(from)) return from
-	const to = account(store, input.to)
+	if (from === null) return unknownAccount(input.from, "from")
+	const to = store.getAccount(input.to)
 	if (isAppError(to)) return to
+	if (to === null) return unknownAccount(input.to, "to")
 	const chart = store.chart()
 	if (isAppError(chart)) return chart
 	const amount = parseMinorUnits(input.amount, to.currency, "amount")

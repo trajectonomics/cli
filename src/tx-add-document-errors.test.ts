@@ -93,6 +93,27 @@ describe("tx add document errors", () => {
 		}
 	})
 
+	it("names a document schema error under the document root", async () => {
+		const home = tempHome()
+		await seed(cli(home))
+		const missingDate = {
+			postings: [
+				{ account: "Bank", amount: "1.00", currency: "THB" },
+				{ account: "Salary", amount: "-1.00", currency: "THB" },
+			],
+		}
+		const res = await cli(
+			home,
+			JSON.stringify(missingDate),
+		)(["tx", "add", "--postings", "-", "--json"])
+		expect(res.code).toBe(2)
+		expect(errorOf(res)).toMatchObject({
+			code: "invalid_input",
+			exitCode: 2,
+			path: "document.date",
+		})
+	})
+
 	it("names a missing posting account as UNKNOWN_ACCOUNT at exit 3", async () => {
 		const home = tempHome()
 		const traj = cli(home)

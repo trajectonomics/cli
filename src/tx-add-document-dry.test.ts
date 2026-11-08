@@ -51,4 +51,19 @@ describe("tx add document dry run and replay", () => {
 		expect(data.status).toBe("duplicate")
 		expect(data.transaction.id).toBe(JSON.parse(first.out).transaction.id)
 	})
+
+	it("keeps the existing id when a dry run finds a duplicate", async () => {
+		const home = tempHome()
+		await accounts(cli(home), [
+			["Bank", "asset"],
+			["Salary", "income"],
+		])
+		const run = cli(home, JSON.stringify(document))
+		const first = await run(["tx", "add", "--postings", "-", "--json"])
+		const dry = await run(["tx", "add", "--postings", "-", "--dry-run", "--json"])
+		expect(dry.code).toBe(0)
+		const data = JSON.parse(dry.out)
+		expect(data).toMatchObject({ dryRun: true, status: "duplicate" })
+		expect(data.transaction.id).toBe(JSON.parse(first.out).transaction.id)
+	})
 })
