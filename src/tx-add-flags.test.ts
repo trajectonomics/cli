@@ -128,6 +128,31 @@ describe("tx add flags", () => {
 		})
 	})
 
+	it("leaves calendar validation to the core with INVALID_DATE", async () => {
+		const traj = cli(tempHome())
+		await account(traj, "Cash")
+		await account(traj, "Food", "expense")
+		const res = await traj([
+			"tx",
+			"add",
+			"--from",
+			"Cash",
+			"--to",
+			"Food",
+			"--amount",
+			"1.00",
+			"--date",
+			"2026-02-30",
+			"--json",
+		])
+		expect(res.code).toBe(3)
+		expect(JSON.parse(res.err).error).toMatchObject({
+			code: "INVALID_DATE",
+			exitCode: 3,
+			path: "date",
+		})
+	})
+
 	it("requires the opening contra to be an equity account", async () => {
 		const traj = cli(tempHome())
 		await account(traj, "Cash")

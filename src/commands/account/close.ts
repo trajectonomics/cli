@@ -1,10 +1,10 @@
 import { z } from "zod"
 import { notFound } from "../../account/errors"
-import { withStore } from "../../account/store"
 import { accountRow, view } from "../../account/view"
 import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { isAppError } from "../../errors"
+import { withStore } from "../../with-store"
 
 export const close: Leaf = defineCommand({
 	name: "close",

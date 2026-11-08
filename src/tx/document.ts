@@ -32,7 +32,11 @@ const posting: z.ZodType<DocumentPosting> = z.strictObject({
  * signed postings, in the order they should be written.
  */
 export const transactionDocument: z.ZodType<TransactionDocument> = z.strictObject({
-	date: z.string().describe("The transaction's YYYY-MM-DD date."),
+	date: z
+		.string()
+		.describe(
+			"The transaction's YYYY-MM-DD date; the core rejects an impossible date as INVALID_DATE.",
+		),
 	memo: z.string().optional().describe("Free text kept with the transaction."),
 	externalRef: z
 		.string()

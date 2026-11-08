@@ -1,5 +1,4 @@
 import { z } from "zod"
-import { withStore } from "../../account/store"
 import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { isAppError } from "../../errors"
@@ -7,6 +6,7 @@ import { buildFlags } from "../../tx/build"
 import { transactionDocument } from "../../tx/document"
 import { buildDocument } from "../../tx/document-build"
 import { viewTransaction, writtenTransaction } from "../../tx/view"
+import { withStore } from "../../with-store"
 
 export const add: Leaf = defineCommand({
 	name: "add",
@@ -16,7 +16,11 @@ export const add: Leaf = defineCommand({
 		from: z.string().min(1).describe("The source account's exact name or id."),
 		to: z.string().min(1).describe("The destination account's exact name or id."),
 		amount: z.string().describe("A magnitude in the accounts' currency, as a decimal string."),
-		date: z.string().describe("The transaction's YYYY-MM-DD date."),
+		date: z
+			.string()
+			.describe(
+				"The transaction's YYYY-MM-DD date; the core rejects an impossible date as INVALID_DATE.",
+			),
 		opening: z.boolean().optional().describe("Read --from as equity and --amount as signed."),
 		project: z.string().min(1).optional().describe("Tag every posting with this project."),
 		externalRef: z
