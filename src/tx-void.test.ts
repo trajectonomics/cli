@@ -91,6 +91,19 @@ describe("tx void", () => {
 		expect(data.transaction.postings).toEqual(reversal.postings)
 	})
 
+	it("shows the reversal on the original", async () => {
+		const traj = cli(tempHome())
+		const { original } = await lunch(traj)
+		const first = await traj(["tx", "void", original.id, "--date", "2026-03-02", "--json"])
+		const reversal = JSON.parse(first.out).transaction
+		const shown = await traj(["tx", "show", original.id, "--json"])
+		expect(shown.code).toBe(0)
+		expect(JSON.parse(shown.out).links).toEqual({
+			corrects: null,
+			correctedBy: [{ id: reversal.id, date: "2026-03-02" }],
+		})
+	})
+
 	it("reports the existing correction before checking a retry's date", async () => {
 		const traj = cli(tempHome())
 		const { original } = await lunch(traj)
