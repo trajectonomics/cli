@@ -54,12 +54,18 @@ describe("importJsonl ledger validation", () => {
 			`"currency":"THB","parentId":"${ASSETS}"`,
 			`"currency":"USD","parentId":"${ASSETS}"`,
 		)
-		expect(refused(account)).toMatchObject({ code: "invalid_input", path: "account.0.currency" })
+		expect(refused(account)).toMatchObject({
+			code: "unsupported_currency",
+			path: "account.0.currency",
+		})
 		const posting = edit(
 			golden,
 			'"currency":"THB","dimensions":null}',
 			'"currency":"USD","dimensions":null}',
 		)
-		expect(refused(posting)).toMatchObject({ code: "invalid_input", path: "posting.0.currency" })
+		expect(refused(posting)).toMatchObject({
+			code: "unsupported_currency",
+			path: "posting.0.currency",
+		})
 	})
 })

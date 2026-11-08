@@ -106,7 +106,17 @@ describe("schema addresses commands by path", () => {
 	it("lists every leaf by its full path", async () => {
 		const data = JSON.parse((await demo(["schema", "--json"])).out)
 		const names = data.commands.map((c: { name: string }) => c.name)
-		expect(names).toEqual(["demo echo", "help", "init", "schema", "version"])
+		expect(names).toEqual([
+			"account add",
+			"account close",
+			"account list",
+			"account show",
+			"demo echo",
+			"help",
+			"init",
+			"schema",
+			"version",
+		])
 		expect(data.errors.length).toBeGreaterThan(0)
 	})
 

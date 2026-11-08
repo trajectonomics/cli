@@ -68,7 +68,8 @@ describe("restore", () => {
 	it("refuses a currency other than THB (ADR-0005)", () => {
 		const account = [{ ...ACCOUNT, currency: "USD" }]
 		expect(refusedBody({ ...ROWS, account })).toMatchObject({
-			code: "invalid_input",
+			code: "unsupported_currency",
+			exitCode: 3,
 			path: "account.0.currency",
 			message: "account.0.currency: v1 supports THB only, not USD",
 		})

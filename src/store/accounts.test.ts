@@ -112,11 +112,72 @@ describe("accounts", () => {
 		const store = mustOpen(tempHome())
 		const usd = store.createAccount({ name: "Dollars", type: "asset", currency: "USD" })
 		expect(isAppError(usd) && usd.body).toMatchObject({
-			code: "invalid_input",
-			exitCode: 2,
+			code: "unsupported_currency",
+			exitCode: 3,
 			path: "currency",
 			message: "currency: v1 supports THB only, not USD",
 		})
 		expect(must(store.listAccounts({ sort: "id" }))).toEqual([])
+	})
+})
+
+describe("getAccount", () => {
+	it("resolves a live id first, then a live name, and never a tombstone", () => {
+		const store = mustOpen(tempHome())
+		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
+		const aliased = must(
+			store.createAccount({ name: cash.account.id, type: "asset", currency: "THB" }),
+		)
+		const gone = must(store.createAccount({ name: "Gone", type: "asset", currency: "THB" }))
+		expect(must(store.getAccount(cash.account.id))?.id).toBe(cash.account.id)
+		expect(must(store.getAccount(aliased.account.name))?.id).toBe(cash.account.id)
+		expect(must(store.getAccount("Cash"))?.id).toBe(cash.account.id)
+		must(store.closeAccount(cash.account.id))
+		expect(must(store.getAccount("Cash"))?.archivedAt).not.toBeNull()
+		must(store.deleteAccount(gone.account.id))
+		expect(store.getAccount("Gone")).toBeNull()
+		expect(store.getAccount("Nope")).toBeNull()
+	})
+})
+
+describe("dry-run writes", () => {
+	it("creates and rolls back, so the chart stays empty", () => {
+		const store = mustOpen(tempHome())
+		const made = must(
+			store.createAccount({ name: "Cash", type: "asset", currency: "THB" }, { dryRun: true }),
+		)
+		expect(made.status).toBe("created")
+		expect(made.account.name).toBe("Cash")
+		expect(must(store.listAccounts({ sort: "name" }))).toEqual([])
+		expect(must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" })).status).toBe(
+			"created",
+		)
+	})
+
+	it("reports a duplicate under a dry run instead of bypassing the rule", () => {
+		const store = mustOpen(tempHome())
+		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
+		const again = must(
+			store.createAccount({ name: "Cash", type: "expense", currency: "THB" }, { dryRun: true }),
+		)
+		expect(again).toEqual({ status: "name_taken", account: cash.account })
+	})
+
+	it("closes and rolls back, so the account stays open", () => {
+		const store = mustOpen(tempHome())
+		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
+		const closed = must(store.closeAccount(cash.account.id, { dryRun: true }))
+		if (closed.status !== "archived") throw new Error("expected archived")
+		expect(closed.account).toMatchObject({ id: cash.account.id, version: 2 })
+		expect(closed.account.archivedAt).not.toBeNull()
+		expect(must(store.getAccount("Cash"))).toEqual(cash.account)
+	})
+
+	it("reports already_archived under a dry run", () => {
+		const store = mustOpen(tempHome())
+		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
+		must(store.closeAccount(cash.account.id))
+		const again = must(store.closeAccount(cash.account.id, { dryRun: true }))
+		expect(again.status).toBe("already_archived")
 	})
 })

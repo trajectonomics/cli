@@ -61,13 +61,13 @@ export function formatMinorUnits(minor: number, currency: string): string {
 
 /**
  * THB only in v1 (ADR-0005). The core checks the code first, so an unknown code is still the
- * core's `INVALID_CURRENCY`; any other valid code is `invalid_input` at `path`.
+ * core's `INVALID_CURRENCY`; any other valid code is `unsupported_currency` at `path`.
  */
 export function supportedCurrency(currency: string, path = "currency"): AppError | null {
 	const code = guard(() => parseCurrency(currency, path))
 	if (isAppError(code)) return code
 	if (code === "THB") return null
-	return fail("invalid_input", {
+	return fail("unsupported_currency", {
 		path,
 		message: `${path}: v1 supports THB only, not ${code}`,
 		details: { supported: ["THB"], actual: code },

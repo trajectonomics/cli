@@ -3,21 +3,29 @@ import { liveAccount } from "./accounts"
 import type { Ctx } from "./context"
 import { write } from "./guard"
 import { iso } from "./ids"
-import type { AccountClosed, AccountDeleted } from "./types"
+import type { AccountClosed, AccountDeleted, WriteOptions } from "./types"
 
 /** Archives: the account stops taking postings and stays in history, reports and exports. */
-export function closeAccount(ctx: Ctx, id: string): AccountClosed | AppError {
-	return write(ctx.db, () => {
-		const account = liveAccount(ctx, id)
-		if (!account) return { status: "not_found" }
-		if (account.archivedAt !== null) return { status: "already_archived", account }
-		ctx.db.run(
-			`UPDATE account SET archived_at = ?2, version = version + 1, updated_at = ?2
-			WHERE id = ?1`,
-			[id, iso(ctx.clock())],
-		)
-		return { status: "archived", account: liveAccount(ctx, id)! }
-	})
+export function closeAccount(
+	ctx: Ctx,
+	id: string,
+	options: WriteOptions = {},
+): AccountClosed | AppError {
+	return write(
+		ctx.db,
+		() => {
+			const account = liveAccount(ctx, id)
+			if (!account) return { status: "not_found" }
+			if (account.archivedAt !== null) return { status: "already_archived", account }
+			ctx.db.run(
+				`UPDATE account SET archived_at = ?2, version = version + 1, updated_at = ?2
+				WHERE id = ?1`,
+				[id, iso(ctx.clock())],
+			)
+			return { status: "archived", account: liveAccount(ctx, id)! }
+		},
+		options,
+	)
 }
 
 function blocker(ctx: Ctx, id: string): "has_postings" | "has_children" | null {

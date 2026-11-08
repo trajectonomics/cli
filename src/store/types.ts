@@ -20,6 +20,9 @@ export type ListOptions<S> = {
 	includeDeleted?: boolean
 }
 
+/** Runs the write for real, then rolls it back before commit (ADR-0019). */
+export type WriteOptions = { dryRun?: boolean }
+
 export type NewAccount = { name: string; type: AccountType; currency: string; parentId?: string }
 export type AccountCreated =
 	| { status: "created"; account: AccountRow }
@@ -76,9 +79,11 @@ export interface Store {
 	/** `PRAGMA user_version`: the schema version the export header carries. */
 	schemaVersion(): number | AppError
 	listEntities(options: ListOptions<EntitySort>): EntityRow[] | AppError
-	createAccount(input: NewAccount): AccountCreated | AppError
+	createAccount(input: NewAccount, options?: WriteOptions): AccountCreated | AppError
 	listAccounts(options: ListOptions<AccountSort>): AccountRow[] | AppError
-	closeAccount(id: string): AccountClosed | AppError
+	/** The non-tombstoned account this id or exact name names; an id is read first (ADR-0018). */
+	getAccount(idOrName: string): AccountRow | null | AppError
+	closeAccount(id: string, options?: WriteOptions): AccountClosed | AppError
 	deleteAccount(id: string): AccountDeleted | AppError
 	addTransaction(input: NewTransaction): TxAdded | AppError
 	listTransactions(options: { sort: TxSort }): TxRow[] | AppError
