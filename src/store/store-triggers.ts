@@ -1,21 +1,24 @@
 // Test support for contract.test.ts: one real store path per code the store raises itself.
-import { Database } from "bun:sqlite"
-import { join } from "node:path"
 import type { ErrorCode } from "../errors"
-import { capture } from "../test-support"
 import { coreOnly } from "./core-triggers"
-import { openStore } from "./index"
 import { HEAD } from "./migrations"
-import { must, mustOpen, steppingClock, tempHome } from "./testing"
+import { must, mustOpen, tempHome } from "./testing"
+import { busy, openAt, type Trigger } from "./trigger-setup"
 import type { NewPosting, NewTransaction } from "./types"
 
-/** A trigger returns what the store returned; the contract test asserts it is an AppError. */
-export type Trigger = () => unknown | Promise<unknown>
+export type { Trigger } from "./trigger-setup"
 
-/** Every code that is not one of the CLI's own; adding a code fails typecheck until it has one. */
+/** Every code the store raises itself; adding one fails typecheck until it has a trigger. */
 export type StoreRaised = Exclude<
 	ErrorCode,
-	"internal" | "invalid_input" | "unknown_command" | "unknown_flag" | "unknown_format"
+	| "internal"
+	| "invalid_input"
+	| "unknown_command"
+	| "unknown_flag"
+	| "unknown_format"
+	// Commands map these from a store status; the store itself never raises them (ADR-0021).
+	| "account_name_taken"
+	| "not_found"
 >
 
 function fixture() {
@@ -37,29 +40,8 @@ const posting =
 	() =>
 		make(fixture())
 
-function openAt(prepare: (db: Database) => void): Trigger {
-	return async () => {
-		const home = tempHome()
-		await capture(["init"], { TRAJ_HOME: home })
-		const db = new Database(join(home, "traj.db"))
-		prepare(db)
-		db.close()
-		return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
-	}
-}
-
-function busy(): unknown {
-	const home = tempHome()
-	mustOpen(home).close()
-	const holder = new Database(join(home, "traj.db"))
-	holder.run("BEGIN IMMEDIATE")
-	const store = openStore({ env: { TRAJ_HOME: home }, clock: steppingClock(), busyTimeoutMs: 1 })
-	const outcome =
-		"path" in store ? store.createAccount({ name: "X", type: "asset", currency: "THB" }) : store
-	holder.run("ROLLBACK")
-	holder.close()
-	return outcome
-}
+const accountIn = (currency: string): Trigger =>
+	posting(({ store }) => store.createAccount({ name: currency, type: "asset", currency }))
 
 /** Every code the store produces, each reached through the store itself. */
 export const storeTriggers: Record<StoreRaised, Trigger> = {
@@ -97,9 +79,8 @@ export const storeTriggers: Record<StoreRaised, Trigger> = {
 	INVALID_DATE: posting(({ add, postingTo, cash, food }) =>
 		add([postingTo(food, 1), postingTo(cash, -1)], { date: "2026-02-30" }),
 	),
-	INVALID_CURRENCY: posting(({ store }) =>
-		store.createAccount({ name: "Y", type: "asset", currency: "ZZZ" }),
-	),
+	INVALID_CURRENCY: accountIn("ZZZ"),
+	unsupported_currency: accountIn("USD"),
 	INVALID_DIMENSION: posting(({ add, postingTo, cash, food }) =>
 		add([postingTo(food, 1, { dimensions: { project: "" } }), postingTo(cash, -1)]),
 	),

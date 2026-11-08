@@ -36,6 +36,8 @@ function unwrap(field: z.ZodType): { core: z.ZodType; description: string | unde
 function kindOf(field: string, type: z.ZodType): FlagKind {
 	const kind = type.def.type
 	if (kind === "string" || kind === "number" || kind === "boolean") return kind
+	// A closed set of string values is still a string flag; the schema validates the value.
+	if (kind === "enum") return "string"
 	throw new Error(`Input field "${field}" has type "${kind}", which cannot be a flag.`)
 }
 

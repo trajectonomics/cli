@@ -6,6 +6,7 @@ import { z } from "zod"
 import { defineCommand, defineGroup } from "./command"
 import { type ErrorCode, isAppError, registry } from "./errors"
 import { type StoreRaised, storeTriggers, type Trigger } from "./store/store-triggers"
+import { tempHome } from "./store/testing"
 import { type Captured, capture } from "./test-support"
 
 /**
@@ -50,6 +51,13 @@ describe("contract", () => {
 		unknown_flag: () => capture(["--nope", "--json"]),
 		// An unknown format is reported in text by design, so read the code from the text.
 		unknown_format: () => capture(["version"], { TRAJ_FORMAT: "yaml" }),
+		account_name_taken: async () => {
+			const home = tempHome()
+			const argv = ["account", "add", "Cash", "--type", "asset", "--currency", "THB", "--json"]
+			await capture(argv, { TRAJ_HOME: home })
+			return capture(argv, { TRAJ_HOME: home })
+		},
+		not_found: () => capture(["account", "show", "Nope", "--json"], { TRAJ_HOME: tempHome() }),
 		...probed(storeTriggers),
 	}
 

@@ -8,7 +8,16 @@ describe("schema", () => {
 		expect(res.code).toBe(0)
 		const data = JSON.parse(res.out)
 		const names = data.commands.map((c: { name: string }) => c.name)
-		expect(names).toEqual(["help", "init", "schema", "version"])
+		expect(names).toEqual([
+			"account add",
+			"account close",
+			"account list",
+			"account show",
+			"help",
+			"init",
+			"schema",
+			"version",
+		])
 		const codes = data.errors.map((e: { code: string }) => e.code)
 		expect(codes).toEqual([...codes].sort())
 		expect(codes).toEqual(Object.keys(registry).sort())

@@ -6,7 +6,14 @@ import type { Ctx } from "./context"
 import { guard, write } from "./guard"
 import { iso, newId } from "./ids"
 import { supportedCurrency } from "./money"
-import type { AccountCreated, AccountRow, AccountSort, ListOptions, NewAccount } from "./types"
+import type {
+	AccountCreated,
+	AccountRow,
+	AccountSort,
+	ListOptions,
+	NewAccount,
+	WriteOptions,
+} from "./types"
 
 /** The live (non-tombstoned) account with this id in the entity, if any. */
 export function liveAccount(ctx: Ctx, id: string): AccountRow | null {
@@ -25,6 +32,14 @@ function liveByName(ctx: Ctx, name: string): AccountRow | null {
 			WHERE entity_id = ?1 AND name = ?2 AND deleted_at IS NULL`,
 		)
 		.get(ctx.entityId, name)
+}
+
+/**
+ * The non-tombstoned account this id or name names. An id is read first, then a name, so the two
+ * never compete (ADR-0018); archived accounts still resolve, because history keeps them (ADR-0016).
+ */
+export function getAccount(ctx: Ctx, idOrName: string): AccountRow | null | AppError {
+	return guard(() => liveAccount(ctx, idOrName) ?? liveByName(ctx, idOrName))
 }
 
 function insert(ctx: Ctx, input: NewAccount): AccountRow {
@@ -60,7 +75,11 @@ export function isAccountType(value: unknown): value is AccountType {
 	return typeof value === "string" && Object.hasOwn(TYPES, value)
 }
 
-export function createAccount(ctx: Ctx, input: NewAccount): AccountCreated | AppError {
+export function createAccount(
+	ctx: Ctx,
+	input: NewAccount,
+	options: WriteOptions = {},
+): AccountCreated | AppError {
 	if (input.name === "") return fail("invalid_input", { path: "name", message: "name is empty" })
 	if (!isAccountType(input.type)) {
 		const message = `type: must be one of ${ACCOUNT_TYPES.join(", ")}`
@@ -68,11 +87,15 @@ export function createAccount(ctx: Ctx, input: NewAccount): AccountCreated | App
 	}
 	const currency = supportedCurrency(input.currency)
 	if (currency) return currency
-	return write(ctx.db, () => {
-		const taken = liveByName(ctx, input.name)
-		if (taken) return { status: "name_taken", account: taken }
-		return { status: "created", account: insert(ctx, input) }
-	})
+	return write(
+		ctx.db,
+		() => {
+			const taken = liveByName(ctx, input.name)
+			if (taken) return { status: "name_taken", account: taken }
+			return { status: "created", account: insert(ctx, input) }
+		},
+		options,
+	)
 }
 
 export function listAccounts(ctx: Ctx, options: ListOptions<AccountSort>): AccountRow[] | AppError {
@@ -83,5 +106,18 @@ export function listAccounts(ctx: Ctx, options: ListOptions<AccountSort>): Accou
 				${liveOnly(options.includeDeleted)} ORDER BY ${ACCOUNT_ORDER[options.sort]}`,
 			)
 			.all(ctx.entityId),
+	)
+}
+
+/** Direct children of one account, by name; archived children stay, tombstones never appear. */
+export function listChildAccounts(ctx: Ctx, parentId: string): AccountRow[] | AppError {
+	return guard(() =>
+		ctx.db
+			.query<AccountRow, [string, string]>(
+				`SELECT ${ACCOUNT_COLUMNS} FROM account
+				WHERE entity_id = ?1 AND parent_id = ?2 AND deleted_at IS NULL
+				ORDER BY ${ACCOUNT_ORDER.name}`,
+			)
+			.all(ctx.entityId, parentId),
 	)
 }
