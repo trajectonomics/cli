@@ -14,18 +14,18 @@ function correctionsOf(ctx: Ctx, id: string): TxRow[] {
 function liveCorrectionIn(ctx: Ctx, id: string, path: ReadonlySet<string>): TxRow | null {
 	if (path.has(id)) throw new Error(`correction cycle at transaction ${id}`)
 	const next = new Set(path).add(id)
-	const standing: TxRow[] = []
 	for (const correction of correctionsOf(ctx, id)) {
-		if (liveCorrectionIn(ctx, correction.id, next) === null) standing.push(correction)
+		// A reversal is the row that cancels the target; a replacement only restates it, so an
+		// amendment never outlives its own reversal when the chain is walked (ADR-0021).
+		if (correction.correctionKind === "replacement") continue
+		if (liveCorrectionIn(ctx, correction.id, next) === null) return correction
 	}
-	// A reversal is the row that cancels the target; a replacement only restates it, so an
-	// amendment answers with its reversal rather than whichever row happens to sort first.
-	return standing.find((row) => row.correctionKind === "reversal") ?? standing[0] ?? null
+	return null
 }
 
 /**
- * The correction of this transaction that is not itself cancelled, or null when the transaction
- * currently stands. A correction of a correction restores the original (ADR-0021).
+ * The reversal that currently cancels this transaction, or null when the transaction stands. A
+ * cancellation of a cancellation restores the original (ADR-0021).
  */
 export function liveCorrection(ctx: Ctx, id: string): TxRow | null {
 	return liveCorrectionIn(ctx, id, new Set())

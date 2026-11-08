@@ -1,3 +1,4 @@
+import { Database } from "bun:sqlite"
 import { describe, expect, it } from "bun:test"
 import { isAppError } from "../errors"
 import { must, mustOpen, tempHome } from "./testing"
@@ -123,6 +124,32 @@ describe("amendTransaction", () => {
 		})
 		if (!isAppError(outcome)) throw new Error("expected external_ref_conflict")
 		expect(outcome.body).toMatchObject({ code: "external_ref_conflict", exitCode: 5 })
+	})
+
+	it("writes neither row when the second insert fails", () => {
+		const { store, cash, food, lunch } = setup()
+		const original = must(store.addTransaction(lunch)).tx
+		// A trigger is the only way to fail the replacement after the reversal has been written.
+		const db = new Database(store.path)
+		db.run(`CREATE TRIGGER reject_replacement BEFORE INSERT ON tx
+			WHEN NEW.correction_kind = 'replacement' BEGIN SELECT RAISE(ABORT, 'refused'); END`)
+		db.close()
+		expect(() =>
+			store.amendTransaction(original.id, { replacement: replacement(cash, food) }),
+		).toThrow()
+		expect(must(store.listTransactions({ sort: "date" }))).toHaveLength(1)
+		expect(must(store.listPostings({ sort: "tx_id" }))).toHaveLength(2)
+	})
+
+	it("lets the original take a correction again once its reversal is reversed", () => {
+		const { store, cash, food, lunch } = setup()
+		const original = must(store.addTransaction(lunch)).tx
+		const first = amended(store, original.id, { replacement: replacement(cash, food) })
+		if (first.status !== "amended") throw new Error("expected an amendment")
+		must(store.voidTransaction(first.reversal.tx.id, { date: "2026-03-03" }))
+		expect(amended(store, original.id, { replacement: replacement(cash, food) }).status).toBe(
+			"amended",
+		)
 	})
 
 	it("reports a standing correction as already_corrected and writes no row", () => {

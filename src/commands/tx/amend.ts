@@ -19,7 +19,9 @@ export const amend: Leaf = defineCommand({
 		voidDate: z
 			.string()
 			.optional()
-			.describe("The reversal's YYYY-MM-DD date; it defaults to --date and may not precede it."),
+			.describe(
+				"The reversal's YYYY-MM-DD date; it defaults to --date and may not precede the original's date.",
+			),
 		from: z.string().min(1).describe("The replacement's source account's exact name or id."),
 		to: z.string().min(1).describe("The replacement's destination account's exact name or id."),
 		amount: z.string().describe("A magnitude in the accounts' currency, as a decimal string."),
