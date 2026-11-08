@@ -20,6 +20,22 @@ export type ListOptions<S> = {
 	includeDeleted?: boolean
 }
 
+/** Narrows a transaction listing. Every field is optional and they all must hold together. */
+export type TxFilter = {
+	/** Inclusive lower bound on the transaction's date, `YYYY-MM-DD`. */
+	since?: string
+	/** Inclusive upper bound on the transaction's date, `YYYY-MM-DD`. */
+	until?: string
+	/** At least one of the transaction's postings names this account. */
+	accountId?: string
+	/** At least one of the transaction's postings carries this `project` dimension value. */
+	project?: string
+	/** The transaction links to this id, as a reversal or replacement does. */
+	linkedTo?: string
+	/** Only this transaction; the show read uses it to fetch one row's postings. */
+	id?: string
+}
+
 /** Runs the write for real, then rolls it back before commit (ADR-0019). */
 export type WriteOptions = { dryRun?: boolean }
 
@@ -90,8 +106,10 @@ export interface Store {
 	/** The entity's full chart, archived accounts included; the core builds and validates against it. */
 	chart(): ChartOfAccounts | AppError
 	addTransaction(input: NewTransaction, options?: WriteOptions): TxAdded | AppError
-	listTransactions(options: { sort: TxSort }): TxRow[] | AppError
-	listPostings(options: { sort: PostingSort }): PostingRow[] | AppError
+	listTransactions(options: { sort: TxSort } & TxFilter): TxRow[] | AppError
+	/** The transaction with this id in the personal entity, or null. */
+	getTransaction(id: string): TxRow | null | AppError
+	listPostings(options: { sort: PostingSort; filter?: TxFilter }): PostingRow[] | AppError
 	saveScenario(input: NewScenario): ScenarioSaved | AppError
 	forkScenario(id: string, name: string): ScenarioForked | AppError
 	deleteScenario(id: string): ScenarioDeleted | AppError

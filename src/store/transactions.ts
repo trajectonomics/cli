@@ -1,28 +1,12 @@
 import { validateTransaction } from "@trajectonomics/ledger"
 import { type AppError, fail } from "../errors"
 import { chartOf } from "./chart"
-import { POSTING_COLUMNS, POSTING_ORDER, TX_COLUMNS, TX_ORDER } from "./columns"
 import type { Ctx } from "./context"
-import { guard, write } from "./guard"
+import { write } from "./guard"
 import { iso, newId } from "./ids"
 import { storeChecks } from "./tx-checks"
-import {
-	canonicalDimensions,
-	parsePosting,
-	postingsOf,
-	sameContent,
-	txByExternalRef,
-	txById,
-} from "./tx-content"
-import type {
-	NewTransaction,
-	PostingRow,
-	PostingSort,
-	TxAdded,
-	TxRow,
-	TxSort,
-	WriteOptions,
-} from "./types"
+import { canonicalDimensions, postingsOf, sameContent, txByExternalRef, txById } from "./tx-content"
+import type { NewTransaction, TxAdded, WriteOptions } from "./types"
 
 function insert(ctx: Ctx, input: NewTransaction): TxAdded {
 	const at = ctx.clock()
@@ -81,27 +65,5 @@ export function addTransaction(
 			return replayed ?? storeChecks(ctx, input) ?? insert(ctx, input)
 		},
 		options,
-	)
-}
-
-export function listTransactions(ctx: Ctx, options: { sort: TxSort }): TxRow[] | AppError {
-	return guard(() =>
-		ctx.db
-			.query<TxRow, [string]>(
-				`SELECT ${TX_COLUMNS} FROM tx WHERE entity_id = ?1 ORDER BY ${TX_ORDER[options.sort]}`,
-			)
-			.all(ctx.entityId),
-	)
-}
-
-export function listPostings(ctx: Ctx, options: { sort: PostingSort }): PostingRow[] | AppError {
-	return guard(() =>
-		ctx.db
-			.query<Parameters<typeof parsePosting>[0], [string]>(
-				`SELECT ${POSTING_COLUMNS} FROM posting
-				WHERE tx_id IN (SELECT id FROM tx WHERE entity_id = ?1) ORDER BY ${POSTING_ORDER[options.sort]}`,
-			)
-			.all(ctx.entityId)
-			.map(parsePosting),
 	)
 }
