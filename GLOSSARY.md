@@ -48,6 +48,10 @@ _Avoid_: Delete, cancel, remove
 A void of an earlier transaction plus a linked replacement.
 _Avoid_: Edit, update
 
+**Opening balance**:
+The transaction that states an account's value at the start of the record, posted against an equity account. It is written, never derived.
+_Avoid_: Starting balance, initial amount
+
 **Archive**:
 The state that `account close` produces: the account stops accepting postings and stays in history, reports and exports. Closing never deletes.
 _Avoid_: Delete, remove
