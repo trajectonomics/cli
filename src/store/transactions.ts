@@ -8,7 +8,8 @@ import { storeChecks } from "./tx-checks"
 import { canonicalDimensions, postingsOf, sameContent, txByExternalRef, txById } from "./tx-content"
 import type { NewTransaction, TxAdded, WriteOptions } from "./types"
 
-function insert(ctx: Ctx, input: NewTransaction): TxAdded {
+/** Validates through the core and appends the row; the store mints its one id, inside the write. */
+export function insertTransaction(ctx: Ctx, input: NewTransaction): TxAdded {
 	const at = ctx.clock()
 	const id = newId(at)
 	const { date, postings, linkedTo } = input
@@ -62,7 +63,7 @@ export function addTransaction(
 		() => {
 			const replayed =
 				input.externalRef === undefined ? null : replay(ctx, input, input.externalRef)
-			return replayed ?? storeChecks(ctx, input) ?? insert(ctx, input)
+			return replayed ?? storeChecks(ctx, input) ?? insertTransaction(ctx, input)
 		},
 		options,
 	)

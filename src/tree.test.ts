@@ -118,6 +118,7 @@ describe("schema addresses commands by path", () => {
 			"tx add",
 			"tx list",
 			"tx show",
+			"tx void",
 			"version",
 		])
 		expect(data.errors.length).toBeGreaterThan(0)
