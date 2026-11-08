@@ -46,6 +46,27 @@ function failureOf(error: unknown, path: readonly string[]): AppError {
 	return fail("invalid_input", { message: `Flag ${flag} ${detail}.`, hint })
 }
 
+/**
+ * `parseArgs` reads a negative number as an option. A flag that takes a value and is followed by
+ * a plain negative number gets `--flag=-1.23`, which is the same input spelled unambiguously.
+ */
+function joinNegativeValues(rest: readonly string[], flags: readonly FlagSpec[]): string[] {
+	const valued = new Set(flags.filter((spec) => spec.kind !== "boolean").map((spec) => spec.flag))
+	const joined: string[] = []
+	for (let index = 0; index < rest.length; index += 1) {
+		const token = rest[index] ?? ""
+		const next = rest[index + 1]
+		const name = token.startsWith("--") ? token.slice(2) : ""
+		if (valued.has(name) && next?.startsWith("-") && PLAIN_NUMBER.test(next)) {
+			joined.push(`${token}=${next}`)
+			index += 1
+			continue
+		}
+		joined.push(token)
+	}
+	return joined
+}
+
 /** Strictly parses a node's arguments: the global flags plus the leaf's own flags. */
 export function parseNodeArgs(
 	flags: readonly FlagSpec[],
@@ -54,7 +75,7 @@ export function parseNodeArgs(
 ): Parsed | AppError {
 	try {
 		const { values, positionals } = parseArgs({
-			args: rest,
+			args: joinNegativeValues(rest, flags),
 			options: optionsFor(flags),
 			allowPositionals: true,
 			strict: true,

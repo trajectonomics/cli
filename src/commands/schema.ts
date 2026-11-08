@@ -20,11 +20,19 @@ const listing = z.strictObject({
 		.describe("The whole error registry, sorted by code. Only listed for the root."),
 })
 
+const document = z
+	.strictObject({
+		flag: z.string().describe("The input field that names the document; `-` reads stdin."),
+		schema: jsonSchema.describe("JSON Schema of the document form's input."),
+	})
+	.describe("The alternate document form, beside the flag form.")
+
 const detail = z.strictObject({
 	name: z.string().describe("The full command path."),
 	summary: z.string(),
 	positionals: z.array(z.string()).describe("Input fields filled from words, in order."),
 	input: jsonSchema.describe("JSON Schema of the command's input. Non-positionals are flags."),
+	document: document.optional(),
 	output: jsonSchema.describe("JSON Schema of the command's result."),
 	examples: z.array(z.strictObject({ command: z.string(), description: z.string() })),
 	errorCodes: z.array(z.string()).describe("Registry codes this command raises."),
@@ -68,11 +76,21 @@ export const schema: Leaf = defineCommand({
 			}))
 			return ok(input.path.length === 0 ? { commands, errors: registryListing() } : { commands })
 		}
+		const document =
+			node.document === undefined
+				? {}
+				: {
+						document: {
+							flag: node.document.flag,
+							schema: z.toJSONSchema(node.document.schema, { io: "input" }),
+						},
+					}
 		return ok({
 			name: input.path.join(" "),
 			summary: node.summary,
 			positionals: [...node.positionals],
 			input: z.toJSONSchema(node.input, { io: "input" }),
+			...document,
 			output: z.toJSONSchema(node.output, { io: "output" }),
 			examples: node.examples.map((example) => ({ ...example })),
 			errorCodes: [...node.errorCodes].sort(),

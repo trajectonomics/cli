@@ -1,4 +1,4 @@
-import type { Env, Group, Leaf } from "./command"
+import type { Context, Env, Group, Leaf } from "./command"
 import { root as defaultRoot } from "./commands"
 import { type AppError, fail, isAppError } from "./errors"
 import { parseInput } from "./input"
@@ -11,7 +11,10 @@ export interface Io {
 	err: (line: string) => void
 }
 
-type Invocation = { leaf: Leaf; input: unknown }
+type Invocation = { leaf: Leaf; input: unknown; document?: unknown }
+type Stdin = () => Promise<string>
+
+const defaultStdin: Stdin = () => Bun.stdin.text()
 
 function builtIn(root: Group, name: string, input: unknown): Invocation | AppError {
 	const leaf = findNode(root, [name])
@@ -20,7 +23,7 @@ function builtIn(root: Group, name: string, input: unknown): Invocation | AppErr
 }
 
 /** Decides what to run: `--version` and `--help` win, a bare group falls back to its usage. */
-function route(argv: string[], root: Group): Invocation | AppError {
+async function route(argv: string[], root: Group, stdin: Stdin): Promise<Invocation | AppError> {
 	const landed = walk(root, argv)
 	if (isAppError(landed)) return landed
 	const { node, path, rest } = landed
@@ -33,18 +36,22 @@ function route(argv: string[], root: Group): Invocation | AppError {
 		return stray === undefined ? builtIn(root, "help", { path }) : unknownCommand(path, stray)
 	}
 	if (parsed.help) return builtIn(root, "help", { path })
-	const input = parseInput(node, parsed, path)
-	return isAppError(input) ? input : { leaf: node, input: input.input }
+	const input = await parseInput(node, parsed, path, stdin)
+	if (isAppError(input)) return input
+	const document = input.document === undefined ? {} : { document: input.document }
+	return { leaf: node, input: input.input, ...document }
 }
 
 async function dispatch(
 	argv: string[],
 	env: Env,
 	root: Group,
+	stdin: Stdin,
 ): Promise<{ data: unknown } | AppError> {
-	const invocation = route(argv, root)
+	const invocation = await route(argv, root, stdin)
 	if (isAppError(invocation)) return invocation
-	const result = await invocation.leaf.run(invocation.input, { env, root })
+	const ctx: Context = { env, root, stdin }
+	const result = await invocation.leaf.run(invocation.input, invocation.document, ctx)
 	if (isAppError(result)) return result
 	// A result that breaks its own output schema is a programming error: it throws, and the
 	// top-level catch turns it into the fixed `internal` envelope.
@@ -70,13 +77,14 @@ export async function run(
 	io: Io,
 	env: Env,
 	root: Group = defaultRoot,
+	stdin: Stdin = defaultStdin,
 ): Promise<number> {
 	// The format is settled first, by a pre-scan that cannot fail, so even a malformed command
 	// line is answered in the format the caller asked for.
 	const choice = resolveFormat(argv, env)
 	try {
 		if (choice.invalid !== undefined) return badFormat(choice.invalid, io)
-		const outcome = await dispatch(argv, env, root)
+		const outcome = await dispatch(argv, env, root, stdin)
 		if (isAppError(outcome)) return failureOf(outcome, choice.format, io)
 		io.out(renderResult(outcome.data, choice.format))
 		return 0
