@@ -76,7 +76,8 @@ export function viewTransaction(
 		dryRun: options.dryRun,
 		status: options.status,
 		transaction: {
-			id: options.dryRun ? null : tx.id,
+			// A generated id is always null under a dry run; a duplicate's existing id is not.
+			id: options.dryRun && options.status === "added" ? null : tx.id,
 			date: tx.date,
 			memo: tx.memo,
 			linkedTo: tx.linkedTo,

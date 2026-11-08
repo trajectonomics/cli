@@ -58,7 +58,7 @@ export function parseDocument(spec: DocumentSpec, text: string, path: string): u
 	const result = spec.schema.safeParse(value)
 	if (result.success) return result.data
 	const issues = result.error.issues.map((issue) => ({
-		path: [path, ...issue.path].join("."),
+		path: ["document", ...issue.path].filter((part) => part !== "").join("."),
 		message: issue.message,
 	}))
 	const first = issues[0]

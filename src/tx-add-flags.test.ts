@@ -104,7 +104,7 @@ describe("tx add flags", () => {
 		})
 	})
 
-	it("reports a missing account as not_found", async () => {
+	it("reports a posting account that is not in the chart as UNKNOWN_ACCOUNT", async () => {
 		const traj = cli(tempHome())
 		await account(traj, "Cash")
 		const res = await traj([
@@ -120,11 +120,36 @@ describe("tx add flags", () => {
 			"2026-03-01",
 			"--json",
 		])
-		expect(res.code).toBe(4)
+		expect(res.code).toBe(3)
 		expect(JSON.parse(res.err).error).toMatchObject({
-			code: "not_found",
-			exitCode: 4,
-			details: { resource: "account" },
+			code: "UNKNOWN_ACCOUNT",
+			exitCode: 3,
+			path: "from",
+		})
+	})
+
+	it("leaves calendar validation to the core with INVALID_DATE", async () => {
+		const traj = cli(tempHome())
+		await account(traj, "Cash")
+		await account(traj, "Food", "expense")
+		const res = await traj([
+			"tx",
+			"add",
+			"--from",
+			"Cash",
+			"--to",
+			"Food",
+			"--amount",
+			"1.00",
+			"--date",
+			"2026-02-30",
+			"--json",
+		])
+		expect(res.code).toBe(3)
+		expect(JSON.parse(res.err).error).toMatchObject({
+			code: "INVALID_DATE",
+			exitCode: 3,
+			path: "date",
 		})
 	})
 

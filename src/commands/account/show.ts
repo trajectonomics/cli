@@ -1,11 +1,11 @@
 import { z } from "zod"
 import { notFound } from "../../account/errors"
-import { withStore } from "../../account/store"
 import { type AccountRef, accountRef, accountRow, ref, view } from "../../account/view"
 import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { type AppError, isAppError } from "../../errors"
 import type { AccountRow, Store } from "../../store"
+import { withStore } from "../../with-store"
 
 type Relations = { parent: AccountRef | null; children: AccountRef[] }
 

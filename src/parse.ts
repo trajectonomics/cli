@@ -49,6 +49,8 @@ function failureOf(error: unknown, path: readonly string[]): AppError {
 /**
  * `parseArgs` reads a negative number as an option. A flag that takes a value and is followed by
  * a plain negative number gets `--flag=-1.23`, which is the same input spelled unambiguously.
+ * Only that one token is joined, and only when it is a plain negative decimal; everything else
+ * is left exactly where the caller put it.
  */
 function joinNegativeValues(rest: readonly string[], flags: readonly FlagSpec[]): string[] {
 	const valued = new Set(flags.filter((spec) => spec.kind !== "boolean").map((spec) => spec.flag))

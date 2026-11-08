@@ -1,6 +1,6 @@
-import type { Context, Result } from "../command"
-import { type AppError, isAppError } from "../errors"
-import { openStore, type Store } from "../store"
+import type { Context, Result } from "./command"
+import { type AppError, isAppError } from "./errors"
+import { openStore, type Store } from "./store"
 
 /** Opens the store for one command and closes it again, even when the command throws. */
 export function withStore<T>(
