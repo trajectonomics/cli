@@ -6,23 +6,6 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   check:
-    name: Lint, Typecheck, Test & Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.4
-      - run: bun install --frozen-lockfile
-      - run: bun run check # lint + typecheck + test + build
-      - name: Smoke test the compiled binary
-        run: ./dist/traj --version
+    uses: trajectonomics/cicd/.github/workflows/check.yml@v1

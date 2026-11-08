@@ -1,0 +1,3 @@
+{
+	"extends": "@trajectonomics/tooling/tsconfig/base.json"
+}
