@@ -4,6 +4,7 @@ import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { type AppError, isAppError } from "../../errors"
 import type { Store, TxFilter } from "../../store"
+import { dateError, periodError } from "../../tx/date-filter"
 import { accountNames, readTransaction, transactionView } from "../../tx/read"
 import { withStore } from "../../with-store"
 
@@ -26,6 +27,11 @@ type Input = z.output<typeof inputSchema>
 
 /** Turns the flags into a store filter; `--account` resolves to an id or fails as `not_found`. */
 function filterOf(input: Input, store: Store): TxFilter | AppError {
+	const invalid =
+		dateError(input.since, "since") ??
+		dateError(input.until, "until") ??
+		periodError(input.since, input.until)
+	if (invalid) return invalid
 	const filter: TxFilter = {}
 	if (input.since !== undefined) filter.since = input.since
 	if (input.until !== undefined) filter.until = input.until
@@ -57,17 +63,17 @@ export const list: Leaf = defineCommand({
 		},
 		{
 			command: "traj tx list --account Cash --project lunch",
-			description: "Read the postings of one project that touched Cash.",
+			description: "Transactions touching Cash, narrowed to their lunch postings.",
 		},
 	],
-	errorCodes: ["not_found"],
+	errorCodes: ["INVALID_DATE", "INVALID_PERIOD", "not_found"],
 	run: (input, ctx) =>
 		withStore(ctx, (store) => {
 			const filter = filterOf(input, store)
 			if (isAppError(filter)) return filter
 			const txs = store.listTransactions({ sort: "date", ...filter })
 			if (isAppError(txs)) return txs
-			const postings = store.listPostings({ sort: "tx_id" })
+			const postings = store.listPostings({ sort: "tx_id", filter })
 			if (isAppError(postings)) return postings
 			const names = accountNames(store)
 			if (isAppError(names)) return names

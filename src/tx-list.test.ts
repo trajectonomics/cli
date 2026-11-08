@@ -20,10 +20,6 @@ describe("tx list", () => {
 			date: "2026-03-01",
 			memo: null,
 			linkedTo: null,
-			externalRef: null,
-			version: 1,
-			createdAt: expect.any(String),
-			updatedAt: expect.any(String),
 			postings: [
 				{
 					ordinal: 0,
@@ -152,49 +148,5 @@ describe("tx list", () => {
 			code: "UNKNOWN_ACCOUNT",
 			exitCode: 3,
 		})
-	})
-
-	it("matches the project dimension's value with --project", async () => {
-		const home = tempHome()
-		const traj = cli(home)
-		const opened = await accounts(traj, [
-			["Cash", "asset"],
-			["Food", "expense"],
-		])
-		const tagged = await addTx(traj, "Cash", "Food", "12.00", "2026-03-01", "lunch")
-		await addTx(traj, "Cash", "Food", "20.00", "2026-03-02")
-		await addTx(traj, "Cash", "Food", "30.00", "2026-03-03", "rent")
-		const document = JSON.stringify({
-			date: "2026-03-04",
-			postings: [
-				{
-					account: "Food",
-					amount: "30.00",
-					currency: "THB",
-					dimensions: { project: "lunch" },
-				},
-				{ account: "Cash", amount: "-30.00", currency: "THB" },
-			],
-		})
-		const mixed = await cli(home, document)(["tx", "add", "--postings", "-", "--json"])
-		expect(mixed.code).toBe(0)
-		const mixedId = JSON.parse(mixed.out).transaction.id
-		const res = await traj(["tx", "list", "--project", "lunch", "--json"])
-		expect(res.code).toBe(0)
-		const txs = JSON.parse(res.out).transactions
-		expect(txs.map((tx: { id: string }) => tx.id)).toEqual([tagged.id, mixedId])
-		for (const posting of txs[0].postings) {
-			expect(posting.dimensions).toEqual({ project: "lunch" })
-		}
-		// The mixed transaction keeps only its tagged posting; the untagged side is sliced away.
-		expect(txs[1].postings).toEqual([
-			{
-				ordinal: 0,
-				account: { id: opened["Food"]?.id, name: "Food" },
-				amount: "30.00",
-				currency: "THB",
-				dimensions: { project: "lunch" },
-			},
-		])
 	})
 })

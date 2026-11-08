@@ -28,18 +28,17 @@ export function getTransaction(ctx: Ctx, id: string): TxRow | null | AppError {
 
 export function listPostings(
 	ctx: Ctx,
-	options: { sort: PostingSort; txId?: string },
+	options: { sort: PostingSort; filter?: TxFilter },
 ): PostingRow[] | AppError {
-	const narrow = options.txId === undefined ? "" : "AND tx_id = ?"
-	const params = options.txId === undefined ? [ctx.entityId] : [ctx.entityId, options.txId]
+	const where = whereOf(options.filter ?? {})
 	return guard(() =>
 		ctx.db
 			.query<Parameters<typeof parsePosting>[0], string[]>(
 				`SELECT ${POSTING_COLUMNS} FROM posting
-				WHERE tx_id IN (SELECT id FROM tx WHERE entity_id = ?) ${narrow}
+				WHERE tx_id IN (SELECT id FROM tx WHERE entity_id = ? ${where.sql})
 				ORDER BY ${POSTING_ORDER[options.sort]}`,
 			)
-			.all(...params)
+			.all(ctx.entityId, ...where.params)
 			.map(parsePosting),
 	)
 }

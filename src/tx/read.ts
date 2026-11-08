@@ -17,10 +17,6 @@ export type ReadTransaction = {
 	date: string
 	memo: string | null
 	linkedTo: string | null
-	externalRef: string | null
-	version: number
-	createdAt: string
-	updatedAt: string
 	postings: ReadPosting[]
 }
 
@@ -41,7 +37,7 @@ export const readPosting: z.ZodType<ReadPosting> = z.strictObject({
 	dimensions: z
 		.record(z.string(), z.string())
 		.nullable()
-		.describe("Dimension tags that do not change a balance, or null."),
+		.describe("Dimensions that do not change a balance, or null."),
 })
 
 export const readTransaction: z.ZodType<ReadTransaction> = z.strictObject({
@@ -49,10 +45,6 @@ export const readTransaction: z.ZodType<ReadTransaction> = z.strictObject({
 	date: z.string().describe("The transaction's YYYY-MM-DD date."),
 	memo: z.string().nullable().describe("The free-text memo, or null."),
 	linkedTo: z.string().nullable().describe("The transaction this one corrects, or null."),
-	externalRef: z.string().nullable().describe("The caller's idempotency key, or null."),
-	version: z.number().int().describe("The row's version."),
-	createdAt: z.string().describe("When the row was created."),
-	updatedAt: z.string().describe("When the row was last changed."),
 	postings: z.array(readPosting).describe("The postings in the order they were written."),
 })
 
@@ -87,10 +79,6 @@ export function transactionView(
 		date: tx.date,
 		memo: tx.memo,
 		linkedTo: tx.linkedTo,
-		externalRef: tx.externalRef,
-		version: tx.version,
-		createdAt: tx.createdAt,
-		updatedAt: tx.updatedAt,
 		postings: postings.map((row) => ({
 			ordinal: row.ordinal,
 			account: { id: row.accountId, name: names.get(row.accountId)! },

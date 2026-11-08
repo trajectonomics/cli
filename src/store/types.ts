@@ -32,6 +32,8 @@ export type TxFilter = {
 	project?: string
 	/** The transaction links to this id, as a reversal or replacement does. */
 	linkedTo?: string
+	/** Only this transaction; the show read uses it to fetch one row's postings. */
+	id?: string
 }
 
 /** Runs the write for real, then rolls it back before commit (ADR-0019). */
@@ -107,7 +109,7 @@ export interface Store {
 	listTransactions(options: { sort: TxSort } & TxFilter): TxRow[] | AppError
 	/** The transaction with this id in the personal entity, or null. */
 	getTransaction(id: string): TxRow | null | AppError
-	listPostings(options: { sort: PostingSort; txId?: string }): PostingRow[] | AppError
+	listPostings(options: { sort: PostingSort; filter?: TxFilter }): PostingRow[] | AppError
 	saveScenario(input: NewScenario): ScenarioSaved | AppError
 	forkScenario(id: string, name: string): ScenarioForked | AppError
 	deleteScenario(id: string): ScenarioDeleted | AppError

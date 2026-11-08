@@ -10,6 +10,7 @@ export function whereOf(filter: TxFilter): { sql: string; params: string[] } {
 	}
 	if (filter.since !== undefined) clauses.push(`tx.date >= ${bind(filter.since)}`)
 	if (filter.until !== undefined) clauses.push(`tx.date <= ${bind(filter.until)}`)
+	if (filter.id !== undefined) clauses.push(`tx.id = ${bind(filter.id)}`)
 	if (filter.accountId !== undefined) {
 		const account = bind(filter.accountId)
 		clauses.push(

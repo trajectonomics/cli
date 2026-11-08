@@ -46,7 +46,7 @@ export const show: Leaf = defineCommand({
 			const tx = store.getTransaction(input.id)
 			if (isAppError(tx)) return tx
 			if (tx === null) return transactionNotFound(input.id)
-			const postings = store.listPostings({ sort: "tx_id", txId: tx.id })
+			const postings = store.listPostings({ sort: "tx_id", filter: { id: tx.id } })
 			if (isAppError(postings)) return postings
 			const names = accountNames(store)
 			if (isAppError(names)) return names

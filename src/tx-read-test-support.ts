@@ -12,7 +12,7 @@ export async function addTx(
 	date: string,
 	project?: string,
 ): Promise<AddedTx> {
-	const tags = project === undefined ? [] : ["--project", project]
+	const projectArgs = project === undefined ? [] : ["--project", project]
 	const res = await traj([
 		"tx",
 		"add",
@@ -24,7 +24,7 @@ export async function addTx(
 		amount,
 		"--date",
 		date,
-		...tags,
+		...projectArgs,
 		"--json",
 	])
 	expect(res.code).toBe(0)
