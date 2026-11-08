@@ -1,24 +1,15 @@
-import type { PostingInput } from "@trajectonomics/ledger"
-import { LedgerValidationError, validateTransaction } from "@trajectonomics/ledger"
+import { LedgerValidationError } from "@trajectonomics/ledger"
 import { type AppError, isAppError } from "../errors"
 import { chartOf } from "./chart"
 import type { Ctx } from "./context"
+import { coreTransaction } from "./tx-core"
 import { listPostings, listTransactions } from "./tx-reads"
 import type { PostingRow, TxRow } from "./types"
 
-function inputOf(posting: PostingRow): PostingInput {
-	const { accountId, amount, currency, dimensions } = posting
-	return { accountId, amount, currency, ...(dimensions === null ? {} : { dimensions }) }
-}
-
 /** The core's rejection of one transaction, its field prefixed with `tx.<id>.`. */
 function validate(tx: TxRow, postings: readonly PostingRow[], chart: ReturnType<typeof chartOf>) {
-	const linked = tx.linkedTo === null ? {} : { linkedTo: tx.linkedTo }
 	try {
-		validateTransaction(
-			{ id: tx.id, date: tx.date, postings: postings.map(inputOf), ...linked },
-			chart,
-		)
+		coreTransaction(tx, postings, chart)
 	} catch (error) {
 		if (!(error instanceof LedgerValidationError)) throw error
 		const field = `tx.${tx.id}.${error.field}`.replace(/\.$/, "")

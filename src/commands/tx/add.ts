@@ -79,6 +79,6 @@ export const add: Leaf = defineCommand({
 			const dryRun = input.dryRun === true
 			const outcome = store.addTransaction(built, { dryRun })
 			if (isAppError(outcome)) return outcome
-			return ok(viewTransaction(outcome.tx, outcome.postings, { dryRun, status: outcome.status }))
+			return ok(viewTransaction(outcome, dryRun))
 		}),
 })

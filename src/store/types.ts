@@ -64,7 +64,14 @@ export type NewTransaction = {
 	linkedTo?: string
 	externalRef?: string
 }
-export type TxAdded = { status: "added" | "duplicate"; tx: TxRow; postings: PostingRow[] }
+export type TxStatus = "added" | "duplicate" | "voided" | "already_corrected"
+export type TxWritten<S extends TxStatus> = {
+	status: S
+	tx: TxRow
+	postings: PostingRow[]
+}
+export type TxAdded = TxWritten<"added" | "duplicate">
+export type TxVoided = TxWritten<"voided" | "already_corrected"> | { status: "not_found" }
 
 export type NewScenario = { name: string; document: unknown }
 export type ScenarioSaved = { status: "created" | "updated" | "unchanged"; scenario: ScenarioRow }
@@ -106,6 +113,7 @@ export interface Store {
 	/** The entity's full chart, archived accounts included; the core builds and validates against it. */
 	chart(): ChartOfAccounts | AppError
 	addTransaction(input: NewTransaction, options?: WriteOptions): TxAdded | AppError
+	voidTransaction(id: string, input: { date: string }, options?: WriteOptions): TxVoided | AppError
 	listTransactions(options: { sort: TxSort } & TxFilter): TxRow[] | AppError
 	/** The transaction with this id in the personal entity, or null. */
 	getTransaction(id: string): TxRow | null | AppError
