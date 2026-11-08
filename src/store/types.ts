@@ -83,6 +83,8 @@ export interface Store {
 	listAccounts(options: ListOptions<AccountSort>): AccountRow[] | AppError
 	/** The non-tombstoned account this id or exact name names; an id is read first (ADR-0018). */
 	getAccount(idOrName: string): AccountRow | null | AppError
+	/** Direct children of one account, by name; archived children stay, tombstones never appear. */
+	listChildAccounts(parentId: string): AccountRow[] | AppError
 	closeAccount(id: string, options?: WriteOptions): AccountClosed | AppError
 	deleteAccount(id: string): AccountDeleted | AppError
 	addTransaction(input: NewTransaction): TxAdded | AppError

@@ -1,8 +1,6 @@
 import type { AccountType } from "@trajectonomics/ledger"
 import { z } from "zod"
-import type { Context, Result } from "../../command"
-import { type AppError, fail, isAppError } from "../../errors"
-import { type AccountRow, openStore, type Store } from "../../store"
+import type { AccountRow } from "../store"
 
 export const ACCOUNT_TYPE_VALUES: readonly [AccountType, ...AccountType[]] = [
 	"asset",
@@ -11,10 +9,6 @@ export const ACCOUNT_TYPE_VALUES: readonly [AccountType, ...AccountType[]] = [
 	"income",
 	"expense",
 ]
-
-// A canonical UUID shape in any case: ids are read before names (ADR-0018), so a name that looks
-// like one would make an account unreachable by the word the user typed.
-export const UUID_SHAPED: RegExp = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export type AccountView = {
 	id: string
@@ -71,26 +65,4 @@ export function view(row: AccountRow): AccountView {
 
 export function ref(row: AccountRow): AccountRef {
 	return { id: row.id, name: row.name }
-}
-
-export function notFound(account: string): AppError {
-	return fail("not_found", {
-		message: `No account matches "${account}".`,
-		details: { resource: "account" },
-		hint: 'Run "traj account list" to see the chart.',
-	})
-}
-
-/** Opens the store for one command and closes it again, even when the command throws. */
-export function withStore<T>(
-	ctx: Context,
-	work: (store: Store) => Result<T> | AppError,
-): Result<T> | AppError {
-	const store = openStore({ env: ctx.env, clock: () => new Date() })
-	if (isAppError(store)) return store
-	try {
-		return work(store)
-	} finally {
-		store.close()
-	}
 }

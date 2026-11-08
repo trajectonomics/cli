@@ -182,6 +182,7 @@ describe("schema account add", () => {
 			"INVALID_ACCOUNT_HIERARCHY",
 			"INVALID_CURRENCY",
 			"account_name_taken",
+			"database_busy",
 			"invalid_input",
 			"not_found",
 			"unsupported_currency",

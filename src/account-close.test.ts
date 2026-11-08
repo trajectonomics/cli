@@ -70,6 +70,11 @@ describe("account close", () => {
 		})
 	})
 
+	it("lists exactly the codes that command raises", async () => {
+		const data = JSON.parse((await capture(["schema", "account", "close", "--json"])).out)
+		expect(data.errorCodes).toEqual(["database_busy", "not_found"])
+	})
+
 	it("returns the row it would archive under --dry-run and writes nothing", async () => {
 		const traj = cli(tempHome())
 		await seed(traj)

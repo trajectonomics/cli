@@ -1,16 +1,12 @@
 import { z } from "zod"
+import { notFound } from "../../account/errors"
+import { invalidName, UUID_SHAPED } from "../../account/name"
+import { withStore } from "../../account/store"
+import { ACCOUNT_TYPE_VALUES, view, writtenAccount } from "../../account/view"
 import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { type AppError, fail, isAppError } from "../../errors"
 import type { AccountRow, Store } from "../../store"
-import {
-	ACCOUNT_TYPE_VALUES,
-	notFound,
-	UUID_SHAPED,
-	view,
-	withStore,
-	writtenAccount,
-} from "./shared"
 
 const accountType = z.enum(ACCOUNT_TYPE_VALUES)
 
@@ -21,13 +17,6 @@ function parentOf(store: Store, parent: string | undefined): ParentId | AppError
 	const row = store.getAccount(parent)
 	if (isAppError(row)) return row
 	return row === null ? notFound(parent) : { parentId: row.id }
-}
-
-function invalidName(): AppError {
-	return fail("invalid_input", {
-		path: "name",
-		message: "name: an account name cannot be shaped like a UUID",
-	})
 }
 
 function taken(account: AccountRow): AppError {
@@ -70,6 +59,7 @@ export const add: Leaf = defineCommand({
 		"INVALID_ACCOUNT_HIERARCHY",
 		"INVALID_CURRENCY",
 		"account_name_taken",
+		"database_busy",
 		"invalid_input",
 		"not_found",
 		"unsupported_currency",

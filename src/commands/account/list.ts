@@ -1,8 +1,9 @@
 import { z } from "zod"
+import { withStore } from "../../account/store"
+import { accountRow, view } from "../../account/view"
 import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { isAppError } from "../../errors"
-import { accountRow, view, withStore } from "./shared"
 
 export const list: Leaf = defineCommand({
 	name: "list",

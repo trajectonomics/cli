@@ -5,6 +5,7 @@ import { z } from "zod"
 import type { Node } from "./command"
 import { defineCommand, defineGroup, ok } from "./command"
 import { root } from "./commands"
+import { leavesOf } from "./tree"
 
 const base = {
 	name: "x",
@@ -93,23 +94,14 @@ describe("registration is checked when a command is defined", () => {
 })
 
 describe("the command tree", () => {
-	function nodesOf(node: Node): Node[] {
-		return node.kind === "leaf" ? [node] : [node, ...node.children.flatMap(nodesOf)]
-	}
-
-	function isNode(value: unknown): value is Node {
-		if (typeof value !== "object" || value === null || !("kind" in value)) return false
-		return value.kind === "leaf" || value.kind === "group"
-	}
-
-	it("registers every command exported from a file under src/commands", async () => {
+	it("registers every leaf exported from a file under src/commands", async () => {
 		const files = readdirSync(join(import.meta.dir, "commands"), { recursive: true })
 			.map(String)
 			.filter((file) => file.endsWith(".ts") && !file.endsWith("index.ts"))
-		const registered = new Set<Node>(nodesOf(root))
+		const registered = new Set<Node>(leavesOf(root).map(({ leaf }) => leaf))
 		expect(files.length).toBeGreaterThan(0)
 		for (const file of files) {
-			const exported = Object.values(await import(`./commands/${file}`)).filter(isNode)
+			const exported = Object.values(await import(`./commands/${file}`)) as Node[]
 			for (const node of exported) expect(registered.has(node)).toBe(true)
 		}
 	})

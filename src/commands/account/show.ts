@@ -1,20 +1,22 @@
 import { z } from "zod"
+import { notFound } from "../../account/errors"
+import { withStore } from "../../account/store"
+import { type AccountRef, accountRef, accountRow, ref, view } from "../../account/view"
 import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { type AppError, isAppError } from "../../errors"
 import type { AccountRow, Store } from "../../store"
-import { type AccountRef, accountRef, accountRow, notFound, ref, view, withStore } from "./shared"
 
 type Relations = { parent: AccountRef | null; children: AccountRef[] }
 
 function relationsOf(store: Store, account: AccountRow): Relations | AppError {
-	const accounts = store.listAccounts({ sort: "name" })
-	if (isAppError(accounts)) return accounts
 	const parent = account.parentId === null ? null : store.getAccount(account.parentId)
 	if (isAppError(parent)) return parent
+	const children = store.listChildAccounts(account.id)
+	if (isAppError(children)) return children
 	return {
 		parent: parent === null ? null : ref(parent),
-		children: accounts.filter((row) => row.parentId === account.id).map(ref),
+		children: children.map(ref),
 	}
 }
 

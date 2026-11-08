@@ -108,3 +108,16 @@ export function listAccounts(ctx: Ctx, options: ListOptions<AccountSort>): Accou
 			.all(ctx.entityId),
 	)
 }
+
+/** Direct children of one account, by name; archived children stay, tombstones never appear. */
+export function listChildAccounts(ctx: Ctx, parentId: string): AccountRow[] | AppError {
+	return guard(() =>
+		ctx.db
+			.query<AccountRow, [string, string]>(
+				`SELECT ${ACCOUNT_COLUMNS} FROM account
+				WHERE entity_id = ?1 AND parent_id = ?2 AND deleted_at IS NULL
+				ORDER BY ${ACCOUNT_ORDER.name}`,
+			)
+			.all(ctx.entityId, parentId),
+	)
+}

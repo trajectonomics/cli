@@ -1,8 +1,10 @@
 import { z } from "zod"
+import { notFound } from "../../account/errors"
+import { withStore } from "../../account/store"
+import { accountRow, view } from "../../account/view"
 import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { isAppError } from "../../errors"
-import { accountRow, notFound, view, withStore } from "./shared"
 
 export const close: Leaf = defineCommand({
 	name: "close",
@@ -21,7 +23,7 @@ export const close: Leaf = defineCommand({
 		{ command: "traj account close Cash", description: "Archive an account by name." },
 		{ command: "traj account close Cash --dry-run", description: "Show what closing would do." },
 	],
-	errorCodes: ["not_found"],
+	errorCodes: ["database_busy", "not_found"],
 	run: (input, ctx) =>
 		withStore(ctx, (store) => {
 			const account = store.getAccount(input.account)

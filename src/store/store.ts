@@ -1,6 +1,6 @@
 import type { AppError } from "../errors"
 import { closeAccount, deleteAccount } from "./account-lifecycle"
-import { createAccount, getAccount, listAccounts } from "./accounts"
+import { createAccount, getAccount, listAccounts, listChildAccounts } from "./accounts"
 import { ENTITY_COLUMNS, ENTITY_ORDER, liveOnly } from "./columns"
 import type { Ctx } from "./context"
 import { guard } from "./guard"
@@ -31,6 +31,7 @@ export function storeOver(path: string, ctx: Ctx): Store {
 		createAccount: (input, options) => createAccount(ctx, input, options),
 		listAccounts: (options) => listAccounts(ctx, options),
 		getAccount: (idOrName) => getAccount(ctx, idOrName),
+		listChildAccounts: (parentId) => listChildAccounts(ctx, parentId),
 		closeAccount: (id, options) => closeAccount(ctx, id, options),
 		deleteAccount: (id) => deleteAccount(ctx, id),
 		addTransaction: (input) => addTransaction(ctx, input),
