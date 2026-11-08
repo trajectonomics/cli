@@ -3,7 +3,7 @@ import { LedgerValidationError, validateTransaction } from "@trajectonomics/ledg
 import { type AppError, isAppError } from "../errors"
 import { chartOf } from "./chart"
 import type { Ctx } from "./context"
-import { listPostings, listTransactions } from "./transactions"
+import { listPostings, listTransactions } from "./tx-reads"
 import type { PostingRow, TxRow } from "./types"
 
 function inputOf(posting: PostingRow): PostingInput {

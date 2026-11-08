@@ -12,3 +12,12 @@ export function unknownAccount(ref: string, path: string): AppError {
 		details: { field: path, value: ref, reason },
 	})
 }
+
+/** `tx show` found no transaction with this id: a lookup miss at exit 4 (ADR-0021). */
+export function transactionNotFound(id: string): AppError {
+	return fail("not_found", {
+		message: `No transaction matches "${id}".`,
+		details: { resource: "transaction" },
+		hint: 'Run "traj tx list" to see the ledger.',
+	})
+}

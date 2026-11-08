@@ -17,6 +17,8 @@ describe("schema", () => {
 			"init",
 			"schema",
 			"tx add",
+			"tx list",
+			"tx show",
 			"version",
 		])
 		const codes = data.errors.map((e: { code: string }) => e.code)

@@ -1,0 +1,106 @@
+import { z } from "zod"
+import { type AccountRef, accountRef } from "../account/view"
+import { type AppError, isAppError } from "../errors"
+import { formatMinorUnits, type PostingRow, type Store, type TxRow } from "../store"
+
+export type ReadPosting = {
+	ordinal: number
+	account: AccountRef
+	/** Signed decimal string in the posting's currency. */
+	amount: string
+	currency: string
+	dimensions: Readonly<Record<string, string>> | null
+}
+
+export type ReadTransaction = {
+	id: string
+	date: string
+	memo: string | null
+	linkedTo: string | null
+	externalRef: string | null
+	version: number
+	createdAt: string
+	updatedAt: string
+	postings: ReadPosting[]
+}
+
+export type TransactionRef = { id: string; date: string }
+
+export type TransactionLinks = {
+	/** The transaction this one voids or amends, or null when it corrects nothing. */
+	corrects: TransactionRef | null
+	/** The transactions that void or amend this one, oldest first and then by id. */
+	correctedBy: TransactionRef[]
+}
+
+export const readPosting: z.ZodType<ReadPosting> = z.strictObject({
+	ordinal: z.number().int().describe("Zero-based position in the transaction."),
+	account: accountRef.describe("The account this posting names."),
+	amount: z.string().describe("Signed decimal string in the posting's currency."),
+	currency: z.string().describe("The posting's ISO 4217 currency."),
+	dimensions: z
+		.record(z.string(), z.string())
+		.nullable()
+		.describe("Dimension tags that do not change a balance, or null."),
+})
+
+export const readTransaction: z.ZodType<ReadTransaction> = z.strictObject({
+	id: z.string().describe("The transaction's UUIDv7 id."),
+	date: z.string().describe("The transaction's YYYY-MM-DD date."),
+	memo: z.string().nullable().describe("The free-text memo, or null."),
+	linkedTo: z.string().nullable().describe("The transaction this one corrects, or null."),
+	externalRef: z.string().nullable().describe("The caller's idempotency key, or null."),
+	version: z.number().int().describe("The row's version."),
+	createdAt: z.string().describe("When the row was created."),
+	updatedAt: z.string().describe("When the row was last changed."),
+	postings: z.array(readPosting).describe("The postings in the order they were written."),
+})
+
+export const transactionRef: z.ZodType<TransactionRef> = z.strictObject({
+	id: z.string().describe("The linked transaction's id."),
+	date: z.string().describe("The linked transaction's YYYY-MM-DD date."),
+})
+
+export const transactionLinks: z.ZodType<TransactionLinks> = z.strictObject({
+	corrects: transactionRef
+		.nullable()
+		.describe("The transaction this one voids or amends, or null."),
+	correctedBy: z
+		.array(transactionRef)
+		.describe("The transactions that void or amend this one, by date then id."),
+})
+
+/** Every account's name by id, tombstones included, so a posting can always be named. */
+export function accountNames(store: Store): ReadonlyMap<string, string> | AppError {
+	const accounts = store.listAccounts({ sort: "id", includeDeleted: true })
+	return isAppError(accounts) ? accounts : new Map(accounts.map((a) => [a.id, a.name]))
+}
+
+/** The transaction with its postings, each posting's account named from `names`. */
+export function transactionView(
+	tx: TxRow,
+	postings: readonly PostingRow[],
+	names: ReadonlyMap<string, string>,
+): ReadTransaction {
+	return {
+		id: tx.id,
+		date: tx.date,
+		memo: tx.memo,
+		linkedTo: tx.linkedTo,
+		externalRef: tx.externalRef,
+		version: tx.version,
+		createdAt: tx.createdAt,
+		updatedAt: tx.updatedAt,
+		postings: postings.map((row) => ({
+			ordinal: row.ordinal,
+			account: { id: row.accountId, name: names.get(row.accountId)! },
+			amount: formatMinorUnits(row.amount, row.currency),
+			currency: row.currency,
+			dimensions: row.dimensions,
+		})),
+	}
+}
+
+export function refOf(tx: TxRow): TransactionRef {
+	return { id: tx.id, date: tx.date }
+}

@@ -8,7 +8,8 @@ import { guard } from "./guard"
 import { userVersion } from "./migrations"
 import { restore } from "./restore"
 import { deleteScenario, forkScenario, listScenarios, saveScenario } from "./scenarios"
-import { addTransaction, listPostings, listTransactions } from "./transactions"
+import { addTransaction } from "./transactions"
+import { getTransaction, listPostings, listTransactions } from "./tx-reads"
 import type { EntityRow, EntitySort, ListOptions, Store } from "./types"
 
 function listEntities(ctx: Ctx, options: ListOptions<EntitySort>): EntityRow[] | AppError {
@@ -38,6 +39,7 @@ export function storeOver(path: string, ctx: Ctx): Store {
 		deleteAccount: (id) => deleteAccount(ctx, id),
 		addTransaction: (input, options) => addTransaction(ctx, input, options),
 		listTransactions: (options) => listTransactions(ctx, options),
+		getTransaction: (id) => getTransaction(ctx, id),
 		listPostings: (options) => listPostings(ctx, options),
 		saveScenario: (input) => saveScenario(ctx, input),
 		forkScenario: (id, name) => forkScenario(ctx, id, name),
