@@ -23,7 +23,8 @@ export type FlagInput = {
 	postings?: string | undefined
 }
 
-// The core builder needs an id to shape a Transaction; the store mints the persisted one.
+// The core builder needs an id to shape a Transaction, but this draft id is never persisted:
+// the store mints the real UUIDv7 once, inside the write transaction.
 const DRAFT_ID = "01940000-0000-7000-8000-000000000000"
 
 function dimensionsOf(project: string | undefined): Pick<NewPosting, "dimensions"> | object {

@@ -1,12 +1,12 @@
 import { z } from "zod"
 import { notFound } from "../../account/errors"
 import { invalidName, UUID_SHAPED } from "../../account/name"
-import { withStore } from "../../account/store"
 import { ACCOUNT_TYPE_VALUES, view, writtenAccount } from "../../account/view"
 import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { type AppError, fail, isAppError } from "../../errors"
 import type { AccountRow, Store } from "../../store"
+import { withStore } from "../../with-store"
 
 const accountType = z.enum(ACCOUNT_TYPE_VALUES)
 
