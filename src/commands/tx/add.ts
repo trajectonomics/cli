@@ -65,7 +65,6 @@ export const add: Leaf = defineCommand({
 		"database_busy",
 		"external_ref_conflict",
 		"invalid_input",
-		"not_found",
 		"unsupported_currency",
 	],
 	run: (input, document, ctx) =>
