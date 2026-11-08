@@ -10,6 +10,7 @@
       },
       "devDependencies": {
         "@biomejs/biome": "2.6.3",
+        "@trajectonomics/tooling": "1.1.0",
         "@types/bun": "^1.4.4",
         "typescript": "^7.0.2",
       },
@@ -39,6 +40,8 @@
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.6.3", "", { "os": "win32", "cpu": "x64" }, "sha512-GhtOPphBWlnCepqpNk/w5eGN5oGRCzL20EbAkL1XCIpyboeVC9R642noyT43l8LSenGS4qz9IL8sKPfwY37V/Q=="],
 
     "@trajectonomics/ledger": ["@trajectonomics/ledger@0.1.0-alpha.0", "", {}, "sha512-v6a+UStSjDBoomBcrCNt7BJTcnwm/GFjQhQ+ZkBh3GopnVuehifnpWhUoTh/NCG1xD7OimD8E/W4HsWMF7krJg=="],
+
+    "@trajectonomics/tooling": ["@trajectonomics/tooling@1.1.0", "", {}, "sha512-AqKQYsyPN+EosNtxLUaKipA+ocXl2tEWizJ0eXOtSn+C4Lge82ZXCKDbyPYwdsjMiLknnFWfwGeyhKYPTTAl7g=="],
 
     "@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
