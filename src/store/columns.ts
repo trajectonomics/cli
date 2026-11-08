@@ -8,7 +8,8 @@ export const ACCOUNT_COLUMNS = `id, entity_id AS entityId, name, type, currency,
 	parent_id AS parentId, archived_at AS archivedAt, version, created_at AS createdAt,
 	updated_at AS updatedAt, deleted_at AS deletedAt`
 export const TX_COLUMNS = `id, entity_id AS entityId, date, memo, linked_to AS linkedTo,
-	external_ref AS externalRef, version, created_at AS createdAt, updated_at AS updatedAt`
+	external_ref AS externalRef, version, created_at AS createdAt, updated_at AS updatedAt,
+	correction_kind AS correctionKind`
 export const POSTING_COLUMNS = `tx_id AS txId, ordinal, account_id AS accountId, amount, currency,
 	dimensions`
 export const SCENARIO_COLUMNS = `id, entity_id AS entityId, name, document,

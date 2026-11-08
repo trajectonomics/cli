@@ -4,6 +4,14 @@ import type { AccountType } from "@trajectonomics/ledger"
 // declaration order sees the table's own order. Money is integer minor units; timestamps are
 // `YYYY-MM-DDTHH:MM:SS.sssZ`; a missing optional value is `null`, never absent.
 
+/** What a linked transaction is to the one it corrects: a void's reversal, or an amend's replacement. */
+export const TX_CORRECTIONS = ["reversal", "replacement"] as const
+export type TxCorrection = (typeof TX_CORRECTIONS)[number]
+
+export function isTxCorrection(value: unknown): value is TxCorrection {
+	return TX_CORRECTIONS.some((kind) => kind === value)
+}
+
 export type EntityRow = {
 	id: string
 	name: string
@@ -37,6 +45,8 @@ export type TxRow = {
 	version: number
 	createdAt: string
 	updatedAt: string
+	/** Set exactly when `linkedTo` is (ADR-0016); the store and the interchange both enforce it. */
+	correctionKind: TxCorrection | null
 }
 
 /** Keyed `(txId, ordinal)`; carries no sync columns (ADR-0017). `ordinal` starts at 0. */

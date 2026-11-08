@@ -182,9 +182,31 @@ describe("transactions", () => {
 	it("links a reversal to an existing transaction and refuses an unknown link", () => {
 		const { store, cash, food } = setup()
 		const first = must(store.addTransaction(lunch(cash, food)))
-		const reversal = { ...lunch(cash, food, -12050), linkedTo: first.tx.id }
+		const reversal = {
+			...lunch(cash, food, -12050),
+			linkedTo: first.tx.id,
+			correctionKind: "reversal" as const,
+		}
 		expect(must(store.addTransaction(reversal)).tx.linkedTo).toBe(first.tx.id)
 		const body = rejection(store.addTransaction({ ...reversal, linkedTo: "nope" }))
 		expect(body).toMatchObject({ code: "invalid_input", exitCode: 2, path: "linkedTo" })
+	})
+
+	it("refuses a linked row that does not say what it is, and a kind on an unlinked row", () => {
+		const { store, cash, food } = setup()
+		const first = must(store.addTransaction(lunch(cash, food)))
+		const linked = { ...lunch(cash, food, -12050), linkedTo: first.tx.id }
+		expect(rejection(store.addTransaction(linked))).toMatchObject({
+			code: "invalid_input",
+			exitCode: 2,
+			path: "correctionKind",
+		})
+		const named = { ...linked, correctionKind: "replacement" as const }
+		expect(must(store.addTransaction(named)).tx.correctionKind).toBe("replacement")
+		const unlinked = { ...lunch(cash, food), correctionKind: "reversal" as const }
+		expect(rejection(store.addTransaction(unlinked))).toMatchObject({
+			code: "invalid_input",
+			path: "correctionKind",
+		})
 	})
 })

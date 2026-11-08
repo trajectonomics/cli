@@ -10,21 +10,23 @@ export type WrittenPosting = {
 	dimensions: Readonly<Record<string, string>> | null
 }
 
+/** One transaction row as a write reports it; the id is null when a dry run minted it. */
+export type WrittenTransactionBody = {
+	id: string | null
+	date: string
+	memo: string | null
+	linkedTo: string | null
+	externalRef: string | null
+	version: number
+	createdAt: string
+	updatedAt: string
+	postings: WrittenPosting[]
+}
+
 export type WrittenTransaction<S extends TxStatus = TxStatus> = {
 	dryRun: boolean
 	status: S
-	transaction: {
-		/** Null under --dry-run. */
-		id: string | null
-		date: string
-		memo: string | null
-		linkedTo: string | null
-		externalRef: string | null
-		version: number
-		createdAt: string
-		updatedAt: string
-		postings: WrittenPosting[]
-	}
+	transaction: WrittenTransactionBody
 }
 
 const posting: z.ZodType<WrittenPosting> = z.strictObject({
@@ -38,6 +40,18 @@ const posting: z.ZodType<WrittenPosting> = z.strictObject({
 		.describe("Dimension tags that do not change a balance, or null."),
 })
 
+export const writtenTransactionBody: z.ZodType<WrittenTransactionBody> = z.strictObject({
+	id: z.string().nullable().describe("The transaction's id; null under --dry-run."),
+	date: z.string().describe("The transaction's YYYY-MM-DD date."),
+	memo: z.string().nullable().describe("The free-text memo, or null."),
+	linkedTo: z.string().nullable().describe("The transaction this one corrects, or null."),
+	externalRef: z.string().nullable().describe("The caller's idempotency key, or null."),
+	version: z.number().int().describe("The row's version."),
+	createdAt: z.string().describe("When the row was created."),
+	updatedAt: z.string().describe("When the row was last changed."),
+	postings: z.array(posting).describe("The postings in the order they were written."),
+})
+
 /** The output schema shared by every command that writes one transaction row. */
 export function writtenTransactionSchema<S extends TxStatus>(
 	statuses: readonly [S, ...S[]],
@@ -46,17 +60,7 @@ export function writtenTransactionSchema<S extends TxStatus>(
 	return z.strictObject({
 		dryRun: z.boolean().describe("True when the write was rolled back."),
 		status: z.enum(statuses).describe(description),
-		transaction: z.strictObject({
-			id: z.string().nullable().describe("The transaction's id; null under --dry-run."),
-			date: z.string().describe("The transaction's YYYY-MM-DD date."),
-			memo: z.string().nullable().describe("The free-text memo, or null."),
-			linkedTo: z.string().nullable().describe("The transaction this one corrects, or null."),
-			externalRef: z.string().nullable().describe("The caller's idempotency key, or null."),
-			version: z.number().int().describe("The row's version."),
-			createdAt: z.string().describe("When the row was created."),
-			updatedAt: z.string().describe("When the row was last changed."),
-			postings: z.array(posting).describe("The postings in the order they were written."),
-		}),
+		transaction: writtenTransactionBody,
 	})
 }
 
@@ -76,26 +80,33 @@ function viewPosting(row: PostingRow): WrittenPosting {
 	}
 }
 
+export function viewTransactionBody(
+	row: TxWritten<TxStatus>,
+	minted: boolean,
+): WrittenTransactionBody {
+	const { tx, postings } = row
+	return {
+		// A generated id is always null under a dry run; an existing row keeps its id.
+		id: minted ? null : tx.id,
+		date: tx.date,
+		memo: tx.memo,
+		linkedTo: tx.linkedTo,
+		externalRef: tx.externalRef,
+		version: tx.version,
+		createdAt: tx.createdAt,
+		updatedAt: tx.updatedAt,
+		postings: postings.map(viewPosting),
+	}
+}
+
 /** The row written, with its postings; under a dry run the generated id is stated as null. */
 export function viewTransaction<S extends TxStatus>(
 	written: TxWritten<S>,
 	dryRun: boolean,
 ): WrittenTransaction<S> {
-	const { tx, postings } = written
 	return {
 		dryRun,
 		status: written.status,
-		transaction: {
-			// A generated id is always null under a dry run; an existing row keeps its id.
-			id: dryRun && MINTED_STATUSES.has(written.status) ? null : tx.id,
-			date: tx.date,
-			memo: tx.memo,
-			linkedTo: tx.linkedTo,
-			externalRef: tx.externalRef,
-			version: tx.version,
-			createdAt: tx.createdAt,
-			updatedAt: tx.updatedAt,
-			postings: postings.map(viewPosting),
-		},
+		transaction: viewTransactionBody(written, dryRun && MINTED_STATUSES.has(written.status)),
 	}
 }

@@ -6,6 +6,7 @@ import type { Store, TxRow } from "../../store"
 import { transactionNotFound } from "../../tx/errors"
 import {
 	accountNames,
+	correctionRefOf,
 	readTransaction,
 	refOf,
 	type TransactionLinks,
@@ -21,7 +22,8 @@ function linksOf(store: Store, tx: TxRow): TransactionLinks | AppError {
 	if (isAppError(correctedBy)) return correctedBy
 	return {
 		corrects: corrects === null ? null : refOf(corrects),
-		correctedBy: correctedBy.map(refOf),
+		correction: tx.correctionKind,
+		correctedBy: correctedBy.map(correctionRefOf),
 	}
 }
 

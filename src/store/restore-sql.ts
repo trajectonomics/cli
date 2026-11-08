@@ -34,8 +34,8 @@ export const INSERTS: Inserts = {
 		],
 	},
 	tx: {
-		sql: `INSERT INTO tx (id, entity_id, date, memo, linked_to, external_ref, ${SYNC_COLUMNS})
-		VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`,
+		sql: `INSERT INTO tx (id, entity_id, date, memo, linked_to, external_ref, ${SYNC_COLUMNS},
+		correction_kind) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`,
 		values: (r) => [
 			r.id,
 			r.entityId,
@@ -46,6 +46,7 @@ export const INSERTS: Inserts = {
 			r.version,
 			r.createdAt,
 			r.updatedAt,
+			r.correctionKind,
 		],
 	},
 	posting: {

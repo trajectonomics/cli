@@ -1,8 +1,26 @@
 import type { AccountType, ChartOfAccounts } from "@trajectonomics/ledger"
 import type { AppError } from "../errors"
 import type { AccountRow, EntityRow, PostingRow, ScenarioRow, TxRow } from "./rows"
+import type { NewAmendment, NewTransaction, TxAdded, TxAmended, TxVoided } from "./tx-types"
 
-export type { AccountRow, EntityRow, PostingRow, ScenarioRow, TxRow } from "./rows"
+export type {
+	AccountRow,
+	EntityRow,
+	PostingRow,
+	ScenarioRow,
+	TxCorrection,
+	TxRow,
+} from "./rows"
+export type {
+	NewAmendment,
+	NewPosting,
+	NewTransaction,
+	TxAdded,
+	TxAmended,
+	TxStatus,
+	TxVoided,
+	TxWritten,
+} from "./tx-types"
 
 /** The only source of time the store reads. Nothing in the store calls `Date.now()`. */
 export type Clock = () => Date
@@ -50,29 +68,6 @@ export type AccountDeleted =
 	| { status: "deleted" | "has_postings" | "has_children"; account: AccountRow }
 	| { status: "not_found" }
 
-export type NewPosting = {
-	accountId: string
-	/** Signed integer minor units: debit `+`, credit `-`. */
-	amount: number
-	currency: string
-	dimensions?: Readonly<Record<string, string>>
-}
-export type NewTransaction = {
-	date: string
-	postings: readonly NewPosting[]
-	memo?: string
-	linkedTo?: string
-	externalRef?: string
-}
-export type TxStatus = "added" | "duplicate" | "voided" | "already_corrected"
-export type TxWritten<S extends TxStatus> = {
-	status: S
-	tx: TxRow
-	postings: PostingRow[]
-}
-export type TxAdded = TxWritten<"added" | "duplicate">
-export type TxVoided = TxWritten<"voided" | "already_corrected"> | { status: "not_found" }
-
 export type NewScenario = { name: string; document: unknown }
 export type ScenarioSaved = { status: "created" | "updated" | "unchanged"; scenario: ScenarioRow }
 export type ScenarioForked =
@@ -114,6 +109,8 @@ export interface Store {
 	chart(): ChartOfAccounts | AppError
 	addTransaction(input: NewTransaction, options?: WriteOptions): TxAdded | AppError
 	voidTransaction(id: string, input: { date: string }, options?: WriteOptions): TxVoided | AppError
+	/** Writes the reversal and the replacement in one transaction, both linked to the original. */
+	amendTransaction(id: string, input: NewAmendment, options?: WriteOptions): TxAmended | AppError
 	listTransactions(options: { sort: TxSort } & TxFilter): TxRow[] | AppError
 	/** The transaction with this id in the personal entity, or null. */
 	getTransaction(id: string): TxRow | null | AppError

@@ -6,7 +6,8 @@ export const FORMAT_VERSION = 1
 /**
  * How a field is written and read back. `time` is `YYYY-MM-DDTHH:MM:SS.sssZ`; `amount` is an
  * ADR-0009 decimal string in the record's `currency`; `dimensions` is an object of strings or
- * `null`, never `{}`; `document` is a JSON object written as its RFC 8785 canonical text.
+ * `null`, never `{}`; `document` is a JSON object written as its RFC 8785 canonical text;
+ * `correction` is `reversal`, `replacement` or `null`.
  */
 export type FieldKind =
 	| "text"
@@ -17,6 +18,7 @@ export type FieldKind =
 	| "amount"
 	| "dimensions"
 	| "document"
+	| "correction"
 
 type Fields<Row> = { readonly [K in keyof Row]-?: FieldKind }
 
@@ -69,6 +71,7 @@ export const FIELDS: { readonly [T in RecordType]: Fields<RecordRows[T]> } = {
 		linkedTo: "text?",
 		externalRef: "text?",
 		...SYNC,
+		correctionKind: "correction",
 	},
 	posting: {
 		txId: "text",

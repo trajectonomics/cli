@@ -22,13 +22,14 @@ describe("importJsonl refusals", () => {
 
 	it("refuses an unknown or malformed header before writing any row", async () => {
 		const golden = await goldenJsonl()
-		const header = '{"record":"header","formatVersion":1,"schemaVersion":1}'
+		const header = '{"record":"header","formatVersion":1,"schemaVersion":2}'
 		const cases: [string, string][] = [
-			['{"record":"header","formatVersion":2,"schemaVersion":1}', "line.1.formatVersion"],
-			['{"record":"header","formatVersion":1,"schemaVersion":2}', "line.1.schemaVersion"],
+			['{"record":"header","formatVersion":2,"schemaVersion":2}', "line.1.formatVersion"],
+			['{"record":"header","formatVersion":1,"schemaVersion":3}', "line.1.schemaVersion"],
+			['{"record":"header","formatVersion":1,"schemaVersion":1}', "line.1.schemaVersion"],
 			['{"record":"header","formatVersion":1,"schemaVersion":0}', "line.1.schemaVersion"],
-			['{"record":"header","schemaVersion":1,"formatVersion":1}', "line.1"],
-			['{"record":"header","formatVersion":1,"schemaVersion":1,"at":"now"}', "line.1"],
+			['{"record":"header","schemaVersion":2,"formatVersion":1}', "line.1"],
+			['{"record":"header","formatVersion":1,"schemaVersion":2,"at":"now"}', "line.1"],
 			['{"record":"entity"}', "line.1.record"],
 			["not json", "line.1"],
 		]
@@ -65,6 +66,24 @@ describe("importJsonl refusals", () => {
 				"line.14.dimensions",
 			],
 			['"memo":null', '"note":null', "invalid_input", "line.11"],
+			[
+				'"correctionKind":"reversal"',
+				'"correctionKind":"void"',
+				"invalid_input",
+				"line.12.correctionKind",
+			],
+			[
+				'"correctionKind":"reversal"',
+				'"correctionKind":null',
+				"invalid_input",
+				"line.12.correctionKind",
+			],
+			[
+				'"correctionKind":null',
+				'"correctionKind":"reversal"',
+				"invalid_input",
+				"line.10.correctionKind",
+			],
 			['{"record":"tx"', '{"record":"transfer"', "invalid_input", "line.10.record"],
 			[
 				'"version":2,"createdAt":"1970',

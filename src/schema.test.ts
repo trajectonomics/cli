@@ -17,6 +17,7 @@ describe("schema", () => {
 			"init",
 			"schema",
 			"tx add",
+			"tx amend",
 			"tx list",
 			"tx show",
 			"tx void",

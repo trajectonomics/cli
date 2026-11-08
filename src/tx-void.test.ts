@@ -100,7 +100,8 @@ describe("tx void", () => {
 		expect(shown.code).toBe(0)
 		expect(JSON.parse(shown.out).links).toEqual({
 			corrects: null,
-			correctedBy: [{ id: reversal.id, date: "2026-03-02" }],
+			correction: null,
+			correctedBy: [{ id: reversal.id, date: "2026-03-02", correction: "reversal" }],
 		})
 	})
 
