@@ -114,6 +114,28 @@ describe("tx add document errors", () => {
 		})
 	})
 
+	it("keeps the posting index in a document schema path", async () => {
+		const home = tempHome()
+		await seed(cli(home))
+		const missingAmount = {
+			date: "2026-03-31",
+			postings: [
+				{ account: "Bank", currency: "THB" },
+				{ account: "Salary", amount: "-1.00", currency: "THB" },
+			],
+		}
+		const res = await cli(
+			home,
+			JSON.stringify(missingAmount),
+		)(["tx", "add", "--postings", "-", "--json"])
+		expect(res.code).toBe(2)
+		expect(errorOf(res)).toMatchObject({
+			code: "invalid_input",
+			exitCode: 2,
+			path: "document.postings.0.amount",
+		})
+	})
+
 	it("names a missing posting account as UNKNOWN_ACCOUNT at exit 3", async () => {
 		const home = tempHome()
 		const traj = cli(home)
