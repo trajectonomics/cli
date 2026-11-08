@@ -25,6 +25,7 @@
 		"typescript": "^7.0.2"
 	},
 	"dependencies": {
+		"@trajectonomics/ledger": "0.1.0-alpha.0",
 		"zod": "^4.6.7"
 	}
 }

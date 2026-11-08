@@ -12,6 +12,10 @@ describe("schema", () => {
 		const codes = data.errors.map((e: { code: string }) => e.code)
 		expect(codes).toEqual([...codes].sort())
 		expect(codes).toEqual(Object.keys(registry).sort())
+		// The store's codes are listed although no shipped command raises them yet.
+		for (const code of ["database_busy", "external_ref_conflict", "UNBALANCED_TRANSACTION"]) {
+			expect(codes).toContain(code)
+		}
 		for (const entry of data.errors) {
 			expect(entry.exitCode).toBe(registry[entry.code as ErrorCode].exit)
 		}
