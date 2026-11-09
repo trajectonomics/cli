@@ -82,6 +82,14 @@ _Avoid_: Income source
 A dated one-off change in a scenario, such as a purchase or a windfall.
 _Avoid_: Milestone
 
+**Fork**:
+A copy of a Scenario under a new name that remembers the id of the Scenario it came from.
+_Avoid_: Branch, clone
+
+**Override**:
+A value that replaces one dotted path of a Scenario's document; persisted when a fork is made, or applied transiently to a Projection.
+_Avoid_: Patch, edit
+
 **Contribution**:
 Money moved from cash flow into an investment or retirement account. It is not an expense, so net worth does not change at that instant.
 _Avoid_: Investment expense, savings
