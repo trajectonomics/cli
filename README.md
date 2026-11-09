@@ -46,6 +46,10 @@ bun run format            # Biome format + import order, writes files
 bun run check             # lint + typecheck + test + build, what CI runs
 ```
 
+From a checkout, run the CLI with `bun run dev -- …`. The npm launcher refuses the
+`0.0.0` a checkout carries, because that version is never a release; set
+`TRAJ_BINARY_PATH` to run a binary you built with `bun run build`.
+
 ## Docs
 
 - [`GLOSSARY.md`](GLOSSARY.md): the project's vocabulary.

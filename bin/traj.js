@@ -40,6 +40,7 @@ function run(binary, args) {
 /** One asset's bytes; only a 404 retries, because npm publishes minutes before the assets land. */
 async function download(url) {
 	const deadline = Date.now() + RETRY_MS
+	let said = false
 	for (let wait = 1000; ; wait = Math.min(wait * 2, MAX_WAIT_MS)) {
 		const res = await fetch(url)
 		if (res.ok) return new Uint8Array(await res.arrayBuffer())
@@ -47,7 +48,10 @@ async function download(url) {
 		if (Date.now() + wait > deadline) {
 			throw new Error(`${url} is not there yet; the release may still be building. Retry shortly.`)
 		}
-		process.stderr.write(`traj: ${url} is not there yet, retrying in ${wait / 1000}s.\n`)
+		if (!said) {
+			said = true
+			process.stderr.write(`traj: ${url} is not there yet; retrying for up to five minutes.\n`)
+		}
 		await sleep(wait)
 	}
 }

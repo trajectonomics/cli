@@ -76,7 +76,8 @@ describe("the launcher's download", () => {
 			})
 			expect(ran.code).toBe(0)
 			expect(ran.out).toBe(`${artifact.version}\n`)
-			expect(ran.err).toContain("retrying")
+			const retries = ran.err.split("\n").filter((line) => line.includes("retrying"))
+			expect(retries).toHaveLength(1)
 			expect(server.requests()).toBe(3)
 		} finally {
 			server.stop()

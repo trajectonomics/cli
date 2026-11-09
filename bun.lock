@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@excited-live/cli",
+      "name": "@trajectonomics/cli",
       "devDependencies": {
         "@biomejs/biome": "2.6.3",
         "@trajectonomics/ledger": "0.1.0-alpha.0",
