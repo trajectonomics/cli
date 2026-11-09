@@ -1,8 +1,8 @@
 /** Platform to release asset, checksums and release URLs. Plain JavaScript and `node:` only. */
 import { createHash } from "node:crypto"
 
-/** Where one release's assets live, before `v<version>`. */
-export const RELEASE_BASE = "https://github.com/trajectonomics/cli/releases/download"
+/** The repo's releases root: one release's assets sit under `download/v<version>`. */
+export const RELEASE_BASE = "https://github.com/trajectonomics/cli/releases"
 
 /** `process.platform`-`process.arch` to asset name. */
 const ASSETS = {
@@ -51,5 +51,5 @@ export function verifyChecksum(checksums, name, bytes) {
 }
 
 export function releaseUrl(version, name, base = RELEASE_BASE) {
-	return `${base}/v${version}/${name}`
+	return `${base}/download/v${version}/${name}`
 }

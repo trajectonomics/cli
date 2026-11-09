@@ -33,7 +33,7 @@ asset="traj-$os-$arch"
 
 base="${TRAJ_DOWNLOAD_BASE_URL:-$DEFAULT_BASE}"
 if [ -n "${TRAJ_VERSION:-}" ]; then
-	prefix="$base/v$TRAJ_VERSION"
+	prefix="$base/download/v$TRAJ_VERSION"
 else
 	prefix="$base/latest/download"
 fi

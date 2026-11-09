@@ -41,8 +41,8 @@ describe("the launcher's download", () => {
 		const checksums = `${digest(artifact.bytes)}  ${name}\n`
 		return releaseServer(
 			{
-				[`/v${pkg.version}/checksums.txt`]: encoder.encode(checksums),
-				[`/v${pkg.version}/${name}`]: artifact.bytes,
+				[`/download/v${pkg.version}/checksums.txt`]: encoder.encode(checksums),
+				[`/download/v${pkg.version}/${name}`]: artifact.bytes,
 			},
 			missing,
 		)
@@ -86,8 +86,8 @@ describe("the launcher's download", () => {
 
 	it("refuses bytes that do not match the published checksum, and installs nothing", async () => {
 		const server = releaseServer({
-			[`/v${pkg.version}/checksums.txt`]: encoder.encode(`${"0".repeat(64)}  ${name}\n`),
-			[`/v${pkg.version}/${name}`]: artifact.bytes,
+			[`/download/v${pkg.version}/checksums.txt`]: encoder.encode(`${"0".repeat(64)}  ${name}\n`),
+			[`/download/v${pkg.version}/${name}`]: artifact.bytes,
 		})
 		const home = tempDir()
 		const bin = join(home, "bin")

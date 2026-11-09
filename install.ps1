@@ -23,7 +23,7 @@ if ($env:PROCESSOR_ARCHITECTURE -ne "AMD64") {
 $asset = "traj-windows-x64.exe"
 
 $base = if ($env:TRAJ_DOWNLOAD_BASE_URL) { $env:TRAJ_DOWNLOAD_BASE_URL } else { $DEFAULT_BASE }
-$prefix = if ($env:TRAJ_VERSION) { "$base/v$($env:TRAJ_VERSION)" } else { "$base/latest/download" }
+$prefix = if ($env:TRAJ_VERSION) { "$base/download/v$($env:TRAJ_VERSION)" } else { "$base/latest/download" }
 
 function Fetch($url, $out) {
 	try {

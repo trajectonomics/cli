@@ -45,16 +45,16 @@ jobs:
         run: |
           set -euo pipefail
           npm version "$VERSION" --no-git-tag-version
-          mkdir -p "release/v$VERSION" "release/bad/v$VERSION"
-          bun build src/index.ts --compile --outfile "release/v$VERSION/$ASSET"
-          cd "release/v$VERSION"
+          mkdir -p "release/download/v$VERSION" "release/bad/download/v$VERSION"
+          bun build src/index.ts --compile --outfile "release/download/v$VERSION/$ASSET"
+          cd "release/download/v$VERSION"
           if command -v sha256sum >/dev/null 2>&1; then
             sha256sum "$ASSET" > checksums.txt
           else
             shasum -a 256 "$ASSET" > checksums.txt
           fi
-          cp "$ASSET" "../bad/v$VERSION/$ASSET"
-          printf '%064d  %s\n' 0 "$ASSET" > "../bad/v$VERSION/checksums.txt"
+          cp "$ASSET" "../../bad/download/v$VERSION/$ASSET"
+          printf '%064d  %s\n' 0 "$ASSET" > "../../bad/download/v$VERSION/checksums.txt"
       - name: Install from the local server, then round trip and refuse a bad checksum
         shell: bash
         env:
@@ -80,7 +80,7 @@ jobs:
           code=000
           attempt=0
           while [ "$attempt" -lt 100 ]; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/v$VERSION/checksums.txt" || true)
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/download/v$VERSION/checksums.txt" || true)
             [ "$code" = "200" ] && break
             attempt=$((attempt + 1))
             sleep 0.2

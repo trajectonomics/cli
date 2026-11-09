@@ -25,7 +25,7 @@ describe("release URL", () => {
 
 	it("takes a download base override", () => {
 		expect(releaseUrl("1.2.3", "checksums.txt", "http://127.0.0.1:9")).toBe(
-			"http://127.0.0.1:9/v1.2.3/checksums.txt",
+			"http://127.0.0.1:9/download/v1.2.3/checksums.txt",
 		)
 	})
 })
