@@ -95,24 +95,27 @@ export function assetFor(platform: string, arch: string): string {
 
 export type Artifact = { bytes: Uint8Array; path: string; version: string }
 
+/** The shipped shape: what a release asset holds, and the version it reports. */
+export async function buildArtifact(): Promise<Artifact> {
+	const out = join(tempDir("traj-build-"), "traj")
+	const build = Bun.spawn(
+		[process.execPath, "build", "src/index.ts", "--compile", `--outfile=${out}`],
+		{ cwd: ROOT, stdout: "pipe", stderr: "pipe" },
+	)
+	if ((await build.exited) !== 0) {
+		throw new Error(`compile failed: ${await new Response(build.stderr).text()}`)
+	}
+	const bytes = new Uint8Array(await Bun.file(out).arrayBuffer())
+	const ran = Bun.spawn([out, "--version"], { stdout: "pipe", stderr: "pipe" })
+	const version = (await new Response(ran.stdout).text()).trim()
+	if ((await ran.exited) !== 0) throw new Error(`compiled binary did not answer --version`)
+	return { bytes, path: out, version }
+}
+
 let compiled: Promise<Artifact> | undefined
 
-/** The shipped shape, compiled once, and the version it reports: what a release asset holds. */
+/** `buildArtifact` once per test process, for the suites that only need the bytes. */
 export function compiledArtifact(): Promise<Artifact> {
-	compiled ??= (async () => {
-		const out = join(tempDir("traj-build-"), "traj")
-		const build = Bun.spawn(
-			[process.execPath, "build", "src/index.ts", "--compile", `--outfile=${out}`],
-			{ cwd: ROOT, stdout: "pipe", stderr: "pipe" },
-		)
-		if ((await build.exited) !== 0) {
-			throw new Error(`compile failed: ${await new Response(build.stderr).text()}`)
-		}
-		const bytes = new Uint8Array(await Bun.file(out).arrayBuffer())
-		const ran = Bun.spawn([out, "--version"], { stdout: "pipe", stderr: "pipe" })
-		const version = (await new Response(ran.stdout).text()).trim()
-		if ((await ran.exited) !== 0) throw new Error(`compiled binary did not answer --version`)
-		return { bytes, path: out, version }
-	})()
+	compiled ??= buildArtifact()
 	return compiled
 }

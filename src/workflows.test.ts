@@ -41,6 +41,24 @@ function stepIndex(job: Job, text: string): number {
 
 const RELEASE = load("release.yml")
 const BINARIES = load("binaries.yml")
+const INSTALLER = load("installer-smoke.yml")
+
+/** Every job whose steps compile the CLI, wherever it lives. */
+function compiling(workflow: Workflow): Job[] {
+	return Object.values(workflow.jobs).filter((job) =>
+		runs(job).some((command) => command.includes("bun build")),
+	)
+}
+
+describe("every workflow that compiles the CLI", () => {
+	it("installs the locked dependencies first, or the compiler cannot resolve them", () => {
+		const jobs = [RELEASE, BINARIES, INSTALLER].flatMap(compiling)
+		expect(jobs.length).toBeGreaterThan(0)
+		for (const job of jobs) {
+			expect(runs(job).join("\n")).toContain("bun install --frozen-lockfile")
+		}
+	})
+})
 
 describe("release.yml, the caller npm trusted publishing validates", () => {
 	it("publishes only when dispatched, never on a push to main", () => {
@@ -152,7 +170,7 @@ describe("binaries.yml, the assets job", () => {
 })
 
 describe("installer-smoke.yml", () => {
-	const installer = load("installer-smoke.yml")
+	const installer = INSTALLER
 
 	it("installs on Linux, macOS and Windows from a local server", () => {
 		const runners = (installer.jobs["install"]?.strategy?.matrix?.include ?? []).map(

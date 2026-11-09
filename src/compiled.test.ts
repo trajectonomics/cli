@@ -1,18 +1,25 @@
-import { afterAll, describe, expect, it } from "bun:test"
+import { afterAll, beforeAll, describe, expect, it } from "bun:test"
 import { join } from "node:path"
-import { cleanup, compiledArtifact, ROOT } from "./launcher-test-support"
+import { type Artifact, buildArtifact, cleanup, ROOT } from "./launcher-test-support"
 
 afterAll(cleanup)
 
 const manifest = (await Bun.file(join(ROOT, "package.json")).json()) as { version: string }
 
 describe("the compiled binary", () => {
+	let artifact: Artifact
+
+	// Its own build: another suite's cleanup removes whatever it compiled.
+	beforeAll(async () => {
+		artifact = await buildArtifact()
+	})
+
 	it("reports the package version, which is what makes --version a sentinel", async () => {
-		expect((await compiledArtifact()).version).toBe(manifest.version)
+		expect(artifact.version).toBe(manifest.version)
 	}, 60_000)
 
 	it("writes one error envelope to stderr and nothing to stdout", async () => {
-		const proc = Bun.spawn([(await compiledArtifact()).path, "--nope", "--json"], {
+		const proc = Bun.spawn([artifact.path, "--nope", "--json"], {
 			stdout: "pipe",
 			stderr: "pipe",
 		})

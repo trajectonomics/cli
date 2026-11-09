@@ -99,6 +99,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.4"
+      - run: bun install --frozen-lockfile
       - name: Stamp the version the tag names, before compiling
         # The compiler inlines package.json, so a binary built at 0.0.0 reports
         # 0.0.0 whatever npm publishes: this step is what makes --version a sentinel.
