@@ -36,9 +36,13 @@ _Avoid_: Wallet
 One balanced, immutable record of money moving, made of two or more postings that sum to zero.
 _Avoid_: Entry, payment
 
+**External reference**:
+The stable key on a Transaction that makes a write idempotent: replaying it with identical content is a duplicate, with different content a conflict. It is unique in the personal entity. The `tx add` flag also calls it an idempotency key.
+_Avoid_: Ref
+
 **Posting**:
 A single signed amount against one account, carrying its currency and optional dimensions.
-_Avoid_: Line, leg, split
+_Avoid_: Line, leg, split (a CSV row's `line` is a file position, not a Posting)
 
 **Void**:
 A reversing transaction that cancels an earlier one. Nothing in the ledger is ever deleted.
@@ -147,6 +151,10 @@ _Avoid_: Output, response, payload
 **Data directory**:
 The single directory holding all state, `~/.traj` unless `TRAJ_HOME` says otherwise.
 _Avoid_: Home, config dir, state dir
+
+**Import template**:
+The one CSV header `date,from,to,amount,memo,external_ref,project` that `tx import` reads. It is not a bank export and not the canonical JSONL restore.
+_Avoid_: Format, schema, bank export
 
 ### Release
 
