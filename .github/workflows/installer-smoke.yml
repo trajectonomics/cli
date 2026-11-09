@@ -89,17 +89,21 @@ jobs:
 
           install="$RUNNER_TEMP/install"
           bad="$RUNNER_TEMP/bad-install"
+          log="$RUNNER_TEMP/install.log"
           if [ "$RUNNER_OS" = "Windows" ]; then
             TRAJ_INSTALL_DIR="$install" TRAJ_VERSION="$VERSION" TRAJ_DOWNLOAD_BASE_URL="$BASE" \
-              pwsh -NoProfile -File ./install.ps1
+              pwsh -NoProfile -File ./install.ps1 >"$log" 2>&1
             binary="$install/traj.exe"
             refused="$bad/traj.exe"
           else
             TRAJ_INSTALL_DIR="$install" TRAJ_VERSION="$VERSION" TRAJ_DOWNLOAD_BASE_URL="$BASE" \
-              sh ./install.sh
+              sh ./install.sh >"$log" 2>&1
             binary="$install/traj"
             refused="$bad/traj"
           fi
+          cat "$log"
+          grep -qF "downloading" "$log" || { echo "::error::the installer did not say what it downloads."; exit 1; }
+          grep -qF "$install" "$log" || { echo "::error::the installer did not say where it installed."; exit 1; }
           sh .github/smoke.sh "$VERSION" "$binary"
 
           status=0

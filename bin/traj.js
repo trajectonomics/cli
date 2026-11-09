@@ -13,11 +13,11 @@ import {
 import { homedir } from "node:os"
 import { dirname, join } from "node:path"
 import { setTimeout as sleep } from "node:timers/promises"
-import { assetName, releaseUrl, verifyChecksum } from "./launcher.js"
+import { assetName, exitStatus, releaseUrl, verifyChecksum } from "./launcher.js"
 
 const RETRY_MS = 5 * 60 * 1000
 const MAX_WAIT_MS = 30 * 1000
-const SIGNALS = { SIGHUP: 1, SIGINT: 2, SIGTERM: 15 }
+const FORWARDED = ["SIGHUP", "SIGINT", "SIGTERM"]
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"))
 
@@ -29,11 +29,10 @@ function fail(message) {
 
 function run(binary, args) {
 	const child = spawn(binary, args, { stdio: "inherit" })
-	for (const signal of Object.keys(SIGNALS)) {
-		process.on(signal, () => child.kill(signal))
-	}
+	child.on("error", (error) => fail(`cannot run ${binary}: ${error.message}`))
+	for (const signal of FORWARDED) process.on(signal, () => child.kill(signal))
 	child.on("exit", (code, signal) => {
-		process.exitCode = signal === null ? (code ?? 1) : 128 + (SIGNALS[signal] ?? 0)
+		process.exitCode = exitStatus(code, signal)
 	})
 }
 

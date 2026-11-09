@@ -39,6 +39,7 @@ function Fetch($url, $out) {
 	}
 }
 
+Say "downloading $asset from $prefix"
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("traj-" + [System.Guid]::NewGuid())
 New-Item -ItemType Directory -Path $tmp -Force | Out-Null
 try {

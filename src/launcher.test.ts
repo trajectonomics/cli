@@ -1,5 +1,12 @@
 import { describe, expect, it } from "bun:test"
-import { assetName, checksumFor, releaseUrl, sha256, verifyChecksum } from "../bin/launcher.js"
+import {
+	assetName,
+	checksumFor,
+	exitStatus,
+	releaseUrl,
+	sha256,
+	verifyChecksum,
+} from "../bin/launcher.js"
 
 describe("asset naming", () => {
 	it("maps every shipped platform and architecture to its release asset", () => {
@@ -27,6 +34,20 @@ describe("release URL", () => {
 		expect(releaseUrl("1.2.3", "checksums.txt", "http://127.0.0.1:9")).toBe(
 			"http://127.0.0.1:9/download/v1.2.3/checksums.txt",
 		)
+	})
+})
+
+describe("a child's exit status", () => {
+	it("passes a normal exit code through", () => {
+		expect(exitStatus(0, null)).toBe(0)
+		expect(exitStatus(7, null)).toBe(7)
+	})
+
+	it("reports any signal as 128 + its number, not only the forwarded three", () => {
+		expect(exitStatus(null, "SIGINT")).toBe(130)
+		expect(exitStatus(null, "SIGTERM")).toBe(143)
+		expect(exitStatus(null, "SIGKILL")).toBe(137)
+		expect(exitStatus(null, "SIGSEGV")).toBe(139)
 	})
 })
 

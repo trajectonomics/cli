@@ -38,6 +38,8 @@ else
 	prefix="$base/latest/download"
 fi
 
+say "downloading $asset from $prefix"
+
 # Only a 200 is a download: a 404 during a release window means "still building".
 fetch() {
 	code=$(curl -sSL -o "$2" -w '%{http_code}' "$1" || true)

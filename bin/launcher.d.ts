@@ -5,4 +5,5 @@ export declare function assetName(platform: string, arch: string): string
 export declare function checksumFor(checksums: string, name: string): string
 export declare function sha256(bytes: Uint8Array): string
 export declare function verifyChecksum(checksums: string, name: string, bytes: Uint8Array): string
+export declare function exitStatus(code: number | null, signal: string | null): number
 export declare function releaseUrl(version: string, name: string, base?: string): string

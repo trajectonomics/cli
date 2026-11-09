@@ -1,5 +1,6 @@
 /** Platform to release asset, checksums and release URLs. Plain JavaScript and `node:` only. */
 import { createHash } from "node:crypto"
+import { constants } from "node:os"
 
 /** The repo's releases root: one release's assets sit under `download/v<version>`. */
 export const RELEASE_BASE = "https://github.com/trajectonomics/cli/releases"
@@ -48,6 +49,14 @@ export function verifyChecksum(checksums, name, bytes) {
 		throw new Error(`checksum mismatch for ${name}: expected ${listed}, got ${actual}`)
 	}
 	return actual
+}
+
+/**
+ * What a shell reports for a signalled child: `128 + signal`. A normal exit passes
+ * its own code through.
+ */
+export function exitStatus(code, signal) {
+	return signal === null ? (code ?? 1) : 128 + (constants.signals[signal] ?? 0)
 }
 
 export function releaseUrl(version, name, base = RELEASE_BASE) {
