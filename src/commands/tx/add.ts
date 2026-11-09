@@ -2,9 +2,8 @@ import { z } from "zod"
 import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { isAppError } from "../../errors"
-import { buildFlags } from "../../tx/build"
+import { buildTransaction } from "../../tx/build"
 import { transactionDocument } from "../../tx/document"
-import { buildDocument } from "../../tx/document-build"
 import { viewTransaction, writtenTransaction } from "../../tx/view"
 import { withStore } from "../../with-store"
 
@@ -23,6 +22,10 @@ export const add: Leaf = defineCommand({
 			),
 		opening: z.boolean().optional().describe("Read --from as equity and --amount as signed."),
 		project: z.string().min(1).optional().describe("Tag every posting with this project."),
+		memo: z
+			.string()
+			.optional()
+			.describe("Free text kept with the transaction; part of its duplicate identity."),
 		externalRef: z
 			.string()
 			.min(1)
@@ -73,8 +76,7 @@ export const add: Leaf = defineCommand({
 	],
 	run: (input, document, ctx) =>
 		withStore(ctx, (store) => {
-			const built =
-				document === undefined ? buildFlags(input, store) : buildDocument(document, store)
+			const built = buildTransaction(input, document, store)
 			if (isAppError(built)) return built
 			const dryRun = input.dryRun === true
 			const outcome = store.addTransaction(built, { dryRun })

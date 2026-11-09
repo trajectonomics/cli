@@ -3,9 +3,8 @@ import type { Leaf } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { isAppError } from "../../errors"
 import { viewAmendment, writtenAmendment } from "../../tx/amend-view"
-import { buildFlags } from "../../tx/build"
+import { buildTransaction } from "../../tx/build"
 import { transactionDocument } from "../../tx/document"
-import { buildDocument } from "../../tx/document-build"
 import { transactionNotFound } from "../../tx/errors"
 import { withStore } from "../../with-store"
 
@@ -31,6 +30,7 @@ export const amend: Leaf = defineCommand({
 			.min(1)
 			.optional()
 			.describe("Tag every replacement posting with this project."),
+		memo: z.string().optional().describe("Free text kept with the replacement."),
 		externalRef: z
 			.string()
 			.min(1)
@@ -85,8 +85,7 @@ export const amend: Leaf = defineCommand({
 	],
 	run: (input, document, ctx) =>
 		withStore(ctx, (store) => {
-			const replacement =
-				document === undefined ? buildFlags(input, store) : buildDocument(document, store)
+			const replacement = buildTransaction(input, document, store)
 			if (isAppError(replacement)) return replacement
 			const dryRun = input.dryRun === true
 			const outcome = store.amendTransaction(

@@ -69,6 +69,7 @@ describe("tx add document errors", () => {
 			["--opening"],
 			["--external-ref", "mixed"],
 			["--project", "x"],
+			["--memo", "x"],
 		]) {
 			const res = await traj(["tx", "add", "--postings", "-", ...extra, "--json"])
 			expect(res.code).toBe(2)

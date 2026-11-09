@@ -8,6 +8,8 @@ import {
 	parseMinorUnits,
 	type Store,
 } from "../store"
+import type { TransactionDocument } from "./document"
+import { buildDocument } from "./document-build"
 import { unknownAccount } from "./errors"
 
 /** The flag surface of `tx add`; all of it is also a field of the command's input schema. */
@@ -18,6 +20,7 @@ export type FlagInput = {
 	date: string
 	opening?: boolean | undefined
 	project?: string | undefined
+	memo?: string | undefined
 	externalRef?: string | undefined
 	dryRun?: boolean | undefined
 	postings?: string | undefined
@@ -49,8 +52,9 @@ function rewrite(error: unknown, names: Record<string, string>): AppError {
 }
 
 function written(tx: Transaction, input: FlagInput): NewTransaction {
+	const memo = input.memo === undefined ? {} : { memo: input.memo }
 	const externalRef = input.externalRef === undefined ? {} : { externalRef: input.externalRef }
-	return { date: input.date, postings: postingsOf(tx), ...externalRef }
+	return { date: input.date, postings: postingsOf(tx), ...memo, ...externalRef }
 }
 
 /** Builds either flag form: a simple magnitude transfer, or a signed opening balance. */
@@ -94,4 +98,13 @@ export function buildFlags(input: FlagInput, store: Store): NewTransaction | App
 			? rewrite(error, { account: "to", contra: "from" })
 			: rewrite(error, { debit: "to", credit: "from" })
 	}
+}
+
+/** The transaction a leaf's write input asked for: the flag form unless a document was named. */
+export function buildTransaction(
+	input: FlagInput,
+	document: TransactionDocument | undefined,
+	store: Store,
+): NewTransaction | AppError {
+	return document === undefined ? buildFlags(input, store) : buildDocument(document, store)
 }
