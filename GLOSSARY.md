@@ -139,3 +139,13 @@ _Avoid_: Output, response, payload
 **Data directory**:
 The single directory holding all state, `~/.traj` unless `TRAJ_HOME` says otherwise.
 _Avoid_: Home, config dir, state dir
+
+### Release
+
+**Release**:
+One tag `vX.Y.Z` and the artifacts attached to it: the binary for each supported platform, their checksums, and the install scripts.
+_Avoid_: build, artifact, deploy
+
+**Install channel**:
+A way a user obtains the `traj` binary: a GitHub Release, the npm package, or the install script. Homebrew would be a fourth.
+_Avoid_: distribution method, delivery
