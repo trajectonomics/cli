@@ -11,8 +11,12 @@ The append-only record of what actually happened to money: accounts, transaction
 _Avoid_: Books, journal
 
 **Baseline**:
-The starting state of a projection, derived from the ledger or written by hand: current balances and income and spending run-rates.
+The starting state of a projection, derived from the ledger or written by hand: what each account holds at an as-of date. Income and spending are assumptions about the future, so they belong to the scenario, not the baseline.
 _Avoid_: Snapshot, current state
+
+**Baseline mapping**:
+The one connector between the ledger and the simulation: it turns balances at an as-of date into a baseline. Neither core imports the other, so the mapping lives here.
+_Avoid_: Adapter, bridge, sync
 
 **Scenario**:
 A named set of assumptions about the future: economy, accounts, streams, events, cash flow rules, and the FI goal.
@@ -39,6 +43,10 @@ _Avoid_: Entry, payment
 **External reference**:
 The stable key on a Transaction that makes a write idempotent: replaying it with identical content is a duplicate, with different content a conflict. It is unique in the personal entity. The `tx add` flag also calls it an idempotency key.
 _Avoid_: Ref
+
+**Balance**:
+The amount one account holds at an as-of date, signed the way the ledger signs it: debit positive, credit negative, so a liability is normally negative.
+_Avoid_: Amount, total, net
 
 **Posting**:
 A single signed amount against one account, carrying its currency and optional dimensions.
@@ -117,6 +125,10 @@ _Avoid_: End date, lifespan
 **Core**:
 A separate, pure package of real-world logic (ledger, simulation, or tax) that knows nothing about this application.
 _Avoid_: Library, plugin
+
+**Simulation core**:
+The core that projects the future from a baseline and a scenario. Package `@trajectonomics/sim`, repo `trajectonomics/sim-core`.
+_Avoid_: Sim, simulator
 
 ### Contract
 
