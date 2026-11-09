@@ -1,6 +1,40 @@
 # trajectonomics
 
-The trajectonomics command line. Bun only.
+The trajectonomics command line. The sources are Bun-only; a released binary needs nothing.
+
+## Install
+
+Linux and macOS, one line (verifies the release checksum, installs `traj` to `~/.local/bin`,
+or `$TRAJ_INSTALL_DIR`, and prints what it installed):
+
+```bash
+curl -fsSL https://github.com/trajectonomics/cli/releases/latest/download/install.sh | sh
+```
+
+Windows, one line (installs to `%LOCALAPPDATA%\traj\bin`, adds it to the user `PATH` once,
+and needs a new shell afterwards):
+
+```powershell
+irm https://github.com/trajectonomics/cli/releases/latest/download/install.ps1 | iex
+```
+
+npm, on any machine with Node 20 or later, or with Bun (`npx` needs no Bun; the package
+fetches the release binary on first run and caches it under `~/.traj/bin`):
+
+```bash
+npx @trajectonomics/cli@latest --version
+bunx @trajectonomics/cli@latest --version
+```
+
+Which channel: all three end at the same compiled binary and the same version. Use the
+script for a machine that should keep `traj` on `PATH`, npm when you already have Node or
+Bun and want one command. Pin a release with `TRAJ_VERSION=X.Y.Z` for the script, or
+`@X.Y.Z` for npm.
+
+Uninstall by deleting the one file: `~/.local/bin/traj`, `%LOCALAPPDATA%\traj\bin`,
+`~/.traj/bin` (the download cache), or nothing at all for `npx`.
+
+## Development
 
 ```bash
 bun install
@@ -16,6 +50,7 @@ bun run check             # lint + typecheck + test + build, what CI runs
 
 - [`GLOSSARY.md`](GLOSSARY.md): the project's vocabulary.
 - [`docs/adr/`](docs/adr/): design decisions and why.
+- [`docs/runbooks/releasing.md`](docs/runbooks/releasing.md): cutting and repairing a release.
 - [`ROADMAP.md`](ROADMAP.md): phases and recorded next steps.
 
 ## Adding a command

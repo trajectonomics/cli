@@ -4,15 +4,13 @@
   "workspaces": {
     "": {
       "name": "@excited-live/cli",
-      "dependencies": {
-        "@trajectonomics/ledger": "0.1.0-alpha.0",
-        "zod": "^4.6.7",
-      },
       "devDependencies": {
         "@biomejs/biome": "2.6.3",
+        "@trajectonomics/ledger": "0.1.0-alpha.0",
         "@trajectonomics/tooling": "1.1.0",
         "@types/bun": "^1.4.4",
         "typescript": "^7.0.2",
+        "zod": "^4.6.7",
       },
     },
   },
