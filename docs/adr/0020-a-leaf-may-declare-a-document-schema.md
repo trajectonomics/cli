@@ -2,7 +2,7 @@
 
 Flags cannot express an n-posting transaction, and two of `tx add`'s three contract flows need exactly that: a four-posting salary and a loan split. So a leaf may declare **one** additional `document` schema beside its input schema. The input schema stays the single source of its flags — `required`, usage and `traj schema` still come from it — and the document schema is printed by `traj schema <path>` as the second accepted shape. The two forms are mutually exclusive; passing both is `invalid_input`, and neither is inferred.
 
-A document field given as `-` is read from stdin, otherwise from a path resolved against the working directory. Reading stdin is never inferred from a terminal: `-` is the only way to ask for it. The rule is stated once here because `scenario apply -f -` needs it too.
+A document field given as `-` is read from stdin, otherwise from a path resolved against the working directory. Reading stdin is never inferred from a terminal: `-` is the only way to ask for it. The rule is stated once here because `scenario apply <name> --file -` needs it too.
 
 ## Considered options
 
