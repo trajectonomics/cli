@@ -1,6 +1,6 @@
 # Deletion has three names, and only one is a tombstone
 
-The ledger never deletes. A wrong transaction is corrected by a **void** (a reversing transaction) or an **amend** (a void plus a linked replacement); both only add rows. An account that is no longer used is **archived**: `archived_at` is set, it stops accepting postings, and it stays in history, reports and exports. A **tombstone** (`deleted_at`) exists only on the aggregates sync must be able to remove from another device — entity, account, scenario — and only on rows that never carried ledger meaning: an account with postings cannot be tombstoned, because its history would become unreadable.
+The ledger never deletes. A wrong transaction is corrected by a **void** (which writes a **reversal**) or an **amend** (a reversal plus a linked **replacement**); both only add rows. An account that is no longer used is **archived**: `archived_at` is set, it stops accepting postings, and it stays in history, reports and exports. A **tombstone** (`deleted_at`) exists only on the aggregates sync must be able to remove from another device — entity, account, scenario — and only on rows that never carried ledger meaning: an account with postings cannot be tombstoned, because its history would become unreadable.
 
 The three are not one mechanism under different names, which is why the commands differ: `tx void`, `account close`, `scenario rm`.
 

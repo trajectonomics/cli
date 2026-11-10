@@ -52,13 +52,25 @@ _Avoid_: Amount, total, net
 A single signed amount against one account, carrying its currency and optional dimensions.
 _Avoid_: Line, leg, split (a CSV row's `line` is a file position, not a Posting)
 
+**Correction**:
+The umbrella over the two linked rows: a void's reversal and an amend's replacement.
+_Avoid_: Edit, fix
+
 **Void**:
-A reversing transaction that cancels an earlier one. Nothing in the ledger is ever deleted.
+The act of cancelling an earlier transaction by writing a reversal. Nothing in the ledger is ever deleted.
 _Avoid_: Delete, cancel, remove
 
+**Reversal**:
+The transaction a void writes: the original's postings with every sign flipped, linked to it.
+_Avoid_: Void, delete, cancel
+
 **Amend**:
-A void of an earlier transaction plus a linked replacement.
+A reversal of an earlier transaction plus a linked replacement.
 _Avoid_: Edit, update
+
+**Replacement**:
+The transaction an amend adds beside its reversal: the corrected version, linked to the original.
+_Avoid_: Edit, update, fix
 
 **Opening balance**:
 The transaction that states an account's value at the start of the record, posted against an equity account. It is written, never derived.
