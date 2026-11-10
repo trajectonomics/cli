@@ -112,6 +112,7 @@ describe("export's refusals", () => {
 		expect(error.code).toBe("export_failed")
 		expect(error.path).toBe("out")
 		expect(error.details.path).toBe(resolve(out))
+		expect(error.details.code).toBe("EEXIST")
 		expect(error.message).toContain(resolve(out))
 		// The directory this run tried to create is gone again; the file is untouched.
 		expect(existsSync(out)).toBe(false)
