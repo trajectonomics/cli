@@ -1,4 +1,5 @@
 import type { BalanceRow, Total, TrialBalanceRow, TrialBalanceTotal } from "@trajectonomics/ledger"
+import { ref } from "../account/view"
 import { type AccountRow, formatMinorUnits } from "../store"
 import type { ReportRow, TotalView, TrialRowView, TrialTotalView } from "./view"
 
@@ -35,7 +36,7 @@ export function inAccountOrder<T extends { accountId: string }>(
 export function reportRowOf(row: BalanceRow, index: AccountIndex): ReportRow {
 	const account = accountOf(index, row.accountId)
 	return {
-		account: { id: account.id, name: account.name },
+		account: ref(account),
 		type: account.type,
 		amount: formatMinorUnits(row.amount, row.currency),
 		currency: row.currency,
@@ -49,7 +50,7 @@ export function totalOf(row: Total): TotalView {
 export function trialRowOf(row: TrialBalanceRow, index: AccountIndex): TrialRowView {
 	const account = accountOf(index, row.accountId)
 	return {
-		account: { id: account.id, name: account.name },
+		account: ref(account),
 		debit: formatMinorUnits(row.debit, row.currency),
 		credit: formatMinorUnits(row.credit, row.currency),
 		currency: row.currency,

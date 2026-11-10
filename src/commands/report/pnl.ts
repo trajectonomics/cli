@@ -1,11 +1,10 @@
 import { z } from "zod"
 import type { Leaf } from "../../command"
-import { defineCommand, ok } from "../../command"
-import { isAppError } from "../../errors"
+import { defineCommand } from "../../command"
 import { type PnlResult, pnlOf } from "../../report/pnl"
 import { reportRow, totalView } from "../../report/view"
+import { withLedger } from "../../report/with-ledger"
 import { LEDGER_READ_CODES } from "../../store"
-import { withStore } from "../../with-store"
 
 const resultSchema: z.ZodType<PnlResult> = z.strictObject({
 	since: z.string().nullable().describe("The period's inclusive start date, or null."),
@@ -43,11 +42,5 @@ export const pnl: Leaf = defineCommand({
 		},
 	],
 	errorCodes: ["INVALID_DATE", "INVALID_PERIOD", "AMOUNT_OVERFLOW", ...LEDGER_READ_CODES],
-	run: (input, ctx) =>
-		withStore(ctx, (store) => {
-			const ledger = store.ledger()
-			if (isAppError(ledger)) return ledger
-			const result = pnlOf(ledger, input)
-			return isAppError(result) ? result : ok(result)
-		}),
+	run: (input, ctx) => withLedger(ctx, (ledger) => pnlOf(ledger, input)),
 })

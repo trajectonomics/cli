@@ -1,6 +1,6 @@
 import type { AccountType } from "@trajectonomics/ledger"
 import { z } from "zod"
-import { type AccountRef, accountRef } from "../account/view"
+import { ACCOUNT_TYPE_VALUES, type AccountRef, accountRef } from "../account/view"
 
 /** One Account's amount in a report: named, typed, and rendered at its currency's scale. */
 export type ReportRow = {
@@ -29,8 +29,8 @@ export type TrialBalanceView = { rows: TrialRowView[]; totals: TrialTotalView[] 
 export const reportRow: z.ZodType<ReportRow> = z.strictObject({
 	account: accountRef.describe("The Account this Balance belongs to."),
 	type: z
-		.enum(["asset", "liability", "equity", "income", "expense"])
-		.describe("The Account's type, which says how to read the raw sign."),
+		.enum(ACCOUNT_TYPE_VALUES)
+		.describe("The Account's type, which says how to read the sign."),
 	amount: z.string().describe("Decimal string at the currency's own scale; raw signed units."),
 	currency: z.string().describe("The row's ISO 4217 currency; v1 is THB only."),
 })

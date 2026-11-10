@@ -3,7 +3,7 @@ import { LedgerValidationError } from "@trajectonomics/ledger"
 import type { AppError, ErrorCode } from "../errors"
 import { isAppError } from "../errors"
 import { listAccounts } from "./accounts"
-import { chartOf } from "./chart"
+import { type ChartRow, chartFrom, chartRows } from "./chart"
 import type { Ctx } from "./context"
 import { guard } from "./guard"
 import { ledgerFailure } from "./ledger-errors"
@@ -47,23 +47,19 @@ const CHART_FIELD = /^accounts\[(\d+)\]/
  * The account row a chart rejection names: the core indexes its input, and an index is not
  * something a caller can point at, so the row's own id replaces it.
  */
-function accountPath(ctx: Ctx, field: string): string {
+function accountPath(rows: readonly ChartRow[], field: string): string {
 	const index = Number(CHART_FIELD.exec(field)?.[1] ?? -1)
-	const ids = ctx.db
-		.query<{ id: string }, [string]>(
-			`SELECT id FROM account WHERE entity_id = ?1 AND deleted_at IS NULL ORDER BY id`,
-		)
-		.all(ctx.entityId)
-	const id = ids[index]?.id
+	const id = rows[index]?.id
 	return id === undefined ? "accounts" : `accounts.${id}`
 }
 
 function chartOrFailure(ctx: Ctx): ChartOfAccounts | AppError {
+	const rows = chartRows(ctx)
 	try {
-		return chartOf(ctx)
+		return chartFrom(ctx, rows)
 	} catch (error) {
 		if (!(error instanceof LedgerValidationError)) throw error
-		return ledgerFailure(error, accountPath(ctx, error.field))
+		return ledgerFailure(error, accountPath(rows, error.field))
 	}
 }
 

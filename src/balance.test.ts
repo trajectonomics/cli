@@ -1,5 +1,13 @@
+import { Database } from "bun:sqlite"
 import { describe, expect, it } from "bun:test"
-import { FIXTURE_AS_OF, fixtureHome } from "./ledger-fixture"
+import { join } from "node:path"
+import {
+	FIXTURE_ACCOUNTS,
+	FIXTURE_AS_OF,
+	fixtureHome,
+	overflowRows,
+	seededHome,
+} from "./ledger-fixture"
 import { golden } from "./report/testing"
 import { tempHome } from "./store/testing"
 import { capture } from "./test-support"
@@ -113,6 +121,32 @@ describe("balance", () => {
 		expect(res.code).toBe(2)
 		expect(JSON.parse(res.err).error).toMatchObject({ code: "unknown_flag", exitCode: 2 })
 		expect(JSON.parse(res.err).error.message).toContain("--project")
+	})
+
+	it("reports an account total beyond the safe range at its row", async () => {
+		const res = await balance(seededHome(overflowRows()))
+		expect(res.code).toBe(3)
+		expect(JSON.parse(res.err).error).toMatchObject({
+			code: "AMOUNT_OVERFLOW",
+			exitCode: 3,
+			path: `rows[${FIXTURE_ACCOUNTS.food}]`,
+		})
+	})
+
+	it("names an account by id when the stored chart is invalid", async () => {
+		const home = fixtureHome()
+		const db = new Database(join(home, "traj.db"))
+		db.run("UPDATE account SET parent_id = ?1 WHERE id = ?2", [
+			FIXTURE_ACCOUNTS.salary,
+			FIXTURE_ACCOUNTS.food,
+		])
+		db.close()
+		const res = await balance(home)
+		expect(res.code).toBe(3)
+		const { error } = JSON.parse(res.err)
+		expect(error.code).toBe("INVALID_ACCOUNT_HIERARCHY")
+		expect(error.path).toBe(`accounts.${FIXTURE_ACCOUNTS.food}`)
+		expect(error.path).not.toContain("[")
 	})
 
 	it("prints the same result as readable text by default", async () => {

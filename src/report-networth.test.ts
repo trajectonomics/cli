@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { FIXTURE_AS_OF, fixtureHome } from "./ledger-fixture"
+import { FIXTURE_AS_OF, fixtureHome, overflowRows, seededHome } from "./ledger-fixture"
 import { golden } from "./report/testing"
 import { tempHome } from "./store/testing"
 import { capture } from "./test-support"
@@ -88,6 +88,16 @@ describe("report networth", () => {
 			expect(error.code).toBe("unknown_flag")
 			expect(error.message).toContain(args[0] ?? "")
 		}
+	})
+
+	it("reports an overflow outside the reported rows at totals", async () => {
+		const res = await networth(seededHome(overflowRows()))
+		expect(res.code).toBe(3)
+		expect(JSON.parse(res.err).error).toMatchObject({
+			code: "AMOUNT_OVERFLOW",
+			exitCode: 3,
+			path: "totals",
+		})
 	})
 
 	it("gives byte-identical output for the same database and arguments", async () => {

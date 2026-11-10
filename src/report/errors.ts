@@ -9,6 +9,9 @@ import { ledgerFailure } from "../store"
  */
 export type FieldRules = readonly (readonly [corePrefix: string, resultPrefix: string])[]
 
+/** A core output field, respelled as a path the caller can point at. */
+export type FieldMap = (coreField: string) => string
+
 /** `[<entityId>/THB]` names a pair the result reports as a currency alone. */
 const PAIR = /\[[^/\]]+\//
 
@@ -22,12 +25,16 @@ export function respell(field: string, rules: FieldRules): string {
 	return rule === undefined ? path : `${rule[1]}${path.slice(rule[0].length)}`
 }
 
+function mapOf(fields: FieldRules | FieldMap): FieldMap {
+	return typeof fields === "function" ? fields : (field) => respell(field, fields)
+}
+
 /** Runs one core query, mapping its rejection into this Command's own result field. */
-export function query<T>(work: () => T, rules: FieldRules): T | AppError {
+export function query<T>(work: () => T, fields: FieldRules | FieldMap): T | AppError {
 	try {
 		return work()
 	} catch (error) {
 		if (!(error instanceof LedgerValidationError)) throw error
-		return ledgerFailure(error, respell(error.field, rules))
+		return ledgerFailure(error, mapOf(fields)(error.field))
 	}
 }

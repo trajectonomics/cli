@@ -45,17 +45,8 @@ function readings(ledger: Ledger, asOf: string) {
 function trialOf(ledger: Ledger, asOf: string, index: AccountIndex) {
 	const result = query(() => trialBalance(ledger.transactions, asOf, ledger.chart), [])
 	if (isAppError(result)) return result
-	const unbalanced = result.totals.find((row) => row.debit !== row.credit)
-	if (unbalanced !== undefined) {
-		return fail("internal", {
-			message: "The trial balance's debit and credit totals do not agree.",
-			details: {
-				currency: unbalanced.currency,
-				debit: unbalanced.debit,
-				credit: unbalanced.credit,
-			},
-		})
-	}
+	// ADR-0013 keeps the catch-all's bytes fixed, so the guard states nothing of its own.
+	if (result.totals.some((row) => row.debit !== row.credit)) return fail("internal")
 	return {
 		rows: inAccountOrder(result.rows, index).map((row) => trialRowOf(row, index)),
 		totals: result.totals.map(trialTotalOf),

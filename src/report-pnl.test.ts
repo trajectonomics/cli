@@ -1,5 +1,11 @@
 import { describe, expect, it } from "bun:test"
-import { FIXTURE_AS_OF, fixtureHome } from "./ledger-fixture"
+import {
+	FIXTURE_ACCOUNTS,
+	FIXTURE_AS_OF,
+	fixtureHome,
+	overflowRows,
+	seededHome,
+} from "./ledger-fixture"
 import { golden } from "./report/testing"
 import { tempHome } from "./store/testing"
 import { capture } from "./test-support"
@@ -123,6 +129,16 @@ describe("report pnl", () => {
 		])
 		expect(res.code).toBe(2)
 		expect(JSON.parse(res.err).error.code).toBe("unknown_flag")
+	})
+
+	it("reports a row total beyond the safe range at the row", async () => {
+		const res = await pnl(seededHome(overflowRows()), "--until", FIXTURE_AS_OF)
+		expect(res.code).toBe(3)
+		expect(JSON.parse(res.err).error).toMatchObject({
+			code: "AMOUNT_OVERFLOW",
+			exitCode: 3,
+			path: `rows[${FIXTURE_ACCOUNTS.food}]`,
+		})
 	})
 
 	it("prints the report as readable text by default", async () => {

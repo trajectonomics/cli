@@ -2,7 +2,7 @@ import type { AccountInput, AccountType, ChartOfAccounts } from "@trajectonomics
 import { createChartOfAccounts, LedgerValidationError } from "@trajectonomics/ledger"
 import type { Ctx } from "./context"
 
-type ChartRow = { id: string; type: AccountType; currency: string; parentId: string | null }
+export type ChartRow = { id: string; type: AccountType; currency: string; parentId: string | null }
 
 function inputOf(ctx: Ctx, row: ChartRow): AccountInput {
 	const parent = row.parentId === null ? {} : { parentId: row.parentId }
@@ -18,22 +18,38 @@ function asCallerField(error: unknown, index: number): unknown {
 	return new LedgerValidationError(error.code, field, error.value, error.reason)
 }
 
-/**
- * The entity's chart: every non-tombstoned account, archived ones included, because leaving an
- * archived parent out would make its live children fail hierarchy validation. `extra` is a new
- * account checked alongside them. Throws the core's `LedgerValidationError`, which `guard` maps.
- */
-export function chartOf(ctx: Ctx, extra?: AccountInput): ChartOfAccounts {
-	const rows = ctx.db
+/** Every non-tombstoned account row, archived included, in the order the core validates them. */
+export function chartRows(ctx: Ctx): ChartRow[] {
+	return ctx.db
 		.query<ChartRow, [string]>(
 			`SELECT id, type, currency, parent_id AS parentId FROM account
 			WHERE entity_id = ?1 AND deleted_at IS NULL ORDER BY id`,
 		)
 		.all(ctx.entityId)
+}
+
+/**
+ * Builds the chart from rows `chartRows` already read, so a caller that must name a rejected row
+ * keeps them. `extra` is a new account checked alongside them. Throws the core's
+ * `LedgerValidationError`, which `guard` maps.
+ */
+export function chartFrom(
+	ctx: Ctx,
+	rows: readonly ChartRow[],
+	extra?: AccountInput,
+): ChartOfAccounts {
 	const inputs = rows.map((row) => inputOf(ctx, row))
 	try {
 		return createChartOfAccounts(extra === undefined ? inputs : [...inputs, extra])
 	} catch (error) {
 		throw asCallerField(error, inputs.length)
 	}
+}
+
+/**
+ * The entity's chart: every non-tombstoned account, archived ones included, because leaving an
+ * archived parent out would make its live children fail hierarchy validation.
+ */
+export function chartOf(ctx: Ctx, extra?: AccountInput): ChartOfAccounts {
+	return chartFrom(ctx, chartRows(ctx), extra)
 }
