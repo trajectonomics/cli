@@ -172,6 +172,21 @@ describe("tx import rejections", () => {
 			path: "line.2.to",
 			details: { rows: [{ line: 2, reason: { code: "account_archived", path: "line.2.to" } }] },
 		})
+
+		const archivedFrom = await traj([
+			"tx",
+			"import",
+			csv(home, "archived-from.csv", [
+				HEADER,
+				row(["2026-03-01", "Old", "Food", "1", "", "af", ""]),
+			]),
+			"--json",
+		])
+		expect(errorOf(archivedFrom)).toMatchObject({
+			code: "account_archived",
+			path: "line.2.from",
+			details: { rows: [{ line: 2, reason: { code: "account_archived", path: "line.2.from" } }] },
+		})
 		expect(await ledgerSize(traj)).toEqual({ transactions: 0, postings: 0 })
 	})
 })
