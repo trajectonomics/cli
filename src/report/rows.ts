@@ -47,6 +47,16 @@ export function totalOf(row: Total): TotalView {
 	return { currency: row.currency, amount: formatMinorUnits(row.amount, row.currency) }
 }
 
+/** The core's rows rendered and in `account list` order, which every report result wants. */
+export function reportRowsOf(rows: readonly BalanceRow[], index: AccountIndex): ReportRow[] {
+	return inAccountOrder(rows, index).map((row) => reportRowOf(row, index))
+}
+
+/** The core's per-currency totals, rendered. */
+export function totalsOf(totals: readonly Total[]): TotalView[] {
+	return totals.map(totalOf)
+}
+
 export function trialRowOf(row: TrialBalanceRow, index: AccountIndex): TrialRowView {
 	const account = accountOf(index, row.accountId)
 	return {

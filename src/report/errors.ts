@@ -25,16 +25,12 @@ export function respell(field: string, rules: FieldRules): string {
 	return rule === undefined ? path : `${rule[1]}${path.slice(rule[0].length)}`
 }
 
-function mapOf(fields: FieldRules | FieldMap): FieldMap {
-	return typeof fields === "function" ? fields : (field) => respell(field, fields)
-}
-
 /** Runs one core query, mapping its rejection into this Command's own result field. */
-export function query<T>(work: () => T, fields: FieldRules | FieldMap): T | AppError {
+export function query<T>(work: () => T, fields: FieldMap): T | AppError {
 	try {
 		return work()
 	} catch (error) {
 		if (!(error instanceof LedgerValidationError)) throw error
-		return ledgerFailure(error, mapOf(fields)(error.field))
+		return ledgerFailure(error, fields(error.field))
 	}
 }

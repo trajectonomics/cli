@@ -2,13 +2,13 @@ import { balances, netWorth, trialBalance } from "@trajectonomics/ledger"
 import type { AppError } from "../errors"
 import { fail, isAppError } from "../errors"
 import type { Ledger } from "../store"
-import { type FieldRules, query } from "./errors"
+import { type FieldMap, type FieldRules, query, respell } from "./errors"
 import {
 	type AccountIndex,
 	accountIndex,
 	inAccountOrder,
-	reportRowOf,
-	totalOf,
+	reportRowsOf,
+	totalsOf,
 	trialRowOf,
 	trialTotalOf,
 } from "./rows"
@@ -21,6 +21,8 @@ const FIELDS: FieldRules = [
 	["netWorth.rows[", "rows["],
 ]
 
+const fields: FieldMap = (field) => respell(field, FIELDS)
+
 /** `traj balance`: every Leaf Account's Balance, the net-worth total, and an optional Trial Balance. */
 export type BalanceResult = {
 	asOf: string
@@ -30,9 +32,9 @@ export type BalanceResult = {
 }
 
 function readings(ledger: Ledger, asOf: string) {
-	const rows = query(() => balances(ledger.transactions, asOf, ledger.chart), FIELDS)
+	const rows = query(() => balances(ledger.transactions, asOf, ledger.chart), fields)
 	if (isAppError(rows)) return rows
-	const worth = query(() => netWorth(ledger.transactions, asOf, ledger.chart), FIELDS)
+	const worth = query(() => netWorth(ledger.transactions, asOf, ledger.chart), fields)
 	if (isAppError(worth)) return worth
 	return { rows, totals: worth.totals }
 }
@@ -43,7 +45,10 @@ function readings(ledger: Ledger, asOf: string) {
  * with UNBALANCED_TRANSACTION; this guards a core arithmetic bug and is not a declared code.
  */
 function trialOf(ledger: Ledger, asOf: string, index: AccountIndex) {
-	const result = query(() => trialBalance(ledger.transactions, asOf, ledger.chart), [])
+	const result = query(
+		() => trialBalance(ledger.transactions, asOf, ledger.chart),
+		(field) => respell(field, []),
+	)
 	if (isAppError(result)) return result
 	// ADR-0013 keeps the catch-all's bytes fixed, so the guard states nothing of its own.
 	if (result.totals.some((row) => row.debit !== row.credit)) return fail("internal")
@@ -65,8 +70,8 @@ export function balanceOf(
 	if (isAppError(trial)) return trial
 	return {
 		asOf: input.asOf,
-		rows: inAccountOrder(read.rows, index).map((row) => reportRowOf(row, index)),
-		netWorth: read.totals.map(totalOf),
+		rows: reportRowsOf(read.rows, index),
+		netWorth: totalsOf(read.totals),
 		...(trial === undefined ? {} : { trialBalance: trial }),
 	}
 }

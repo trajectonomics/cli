@@ -3,8 +3,8 @@ import { profitAndLoss } from "@trajectonomics/ledger"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
 import type { Ledger } from "../store"
-import { type FieldRules, query } from "./errors"
-import { accountIndex, inAccountOrder, reportRowOf, totalOf } from "./rows"
+import { type FieldMap, type FieldRules, query, respell } from "./errors"
+import { accountIndex, reportRowsOf, totalsOf } from "./rows"
 import type { ReportRow, TotalView } from "./view"
 
 // The core names its own queries and period options; respell them into this result's keys.
@@ -14,6 +14,8 @@ const FIELDS: FieldRules = [
 	["options.from", "since"],
 	["options.to", "until"],
 ]
+
+const fields: FieldMap = (field) => respell(field, FIELDS)
 
 /** `traj report pnl`: income minus expenses over an inclusive period, optionally by Project. */
 export type PnlResult = {
@@ -44,14 +46,14 @@ export function pnlOf(
 	const index = accountIndex(ledger.accounts)
 	const result = query(
 		() => profitAndLoss(ledger.transactions, optionsOf(input), ledger.chart),
-		FIELDS,
+		fields,
 	)
 	if (isAppError(result)) return result
 	return {
 		since: input.since ?? null,
 		until: input.until,
 		project: input.project ?? null,
-		rows: inAccountOrder(result.rows, index).map((row) => reportRowOf(row, index)),
-		totals: result.totals.map(totalOf),
+		rows: reportRowsOf(result.rows, index),
+		totals: totalsOf(result.totals),
 	}
 }

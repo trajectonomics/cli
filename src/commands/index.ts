@@ -16,5 +16,17 @@ import { version } from "./version"
 export const root: Group = defineGroup({
 	name: "traj",
 	summary: "trajectonomics command line",
-	children: [account, balance, exportCommand, help, init, inspect, report, scenario, schema, tx, version],
+	children: [
+		account,
+		balance,
+		exportCommand,
+		help,
+		init,
+		inspect,
+		report,
+		scenario,
+		schema,
+		tx,
+		version,
+	],
 })

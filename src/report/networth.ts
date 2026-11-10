@@ -3,7 +3,7 @@ import type { AppError } from "../errors"
 import { isAppError } from "../errors"
 import type { Ledger } from "../store"
 import { type FieldMap, type FieldRules, query, respell } from "./errors"
-import { accountIndex, inAccountOrder, reportRowOf, totalOf } from "./rows"
+import { accountIndex, reportRowsOf, totalsOf } from "./rows"
 import type { ReportRow, TotalView } from "./view"
 
 // The core names its own query; respell those paths into this result's keys.
@@ -30,7 +30,7 @@ export function netWorthOf(ledger: Ledger, asOf: string): NetWorthResult | AppEr
 	if (isAppError(result)) return result
 	return {
 		asOf,
-		rows: inAccountOrder(result.rows, index).map((row) => reportRowOf(row, index)),
-		totals: result.totals.map(totalOf),
+		rows: reportRowsOf(result.rows, index),
+		totals: totalsOf(result.totals),
 	}
 }
