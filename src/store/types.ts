@@ -12,6 +12,7 @@ export type {
 	TxRow,
 } from "./rows"
 export type {
+	ImportRejection,
 	NewAmendment,
 	NewPosting,
 	NewTransaction,
@@ -108,6 +109,14 @@ export interface Store {
 	/** The entity's full chart, archived accounts included; the core builds and validates against it. */
 	chart(): ChartOfAccounts | AppError
 	addTransaction(input: NewTransaction, options?: WriteOptions): TxAdded | AppError
+	/**
+	 * Writes every built row in one transaction, in input order; the batch reads the clock once.
+	 * Any rejection rolls the whole batch back and lists `{ index, reason }` for each rejected row.
+	 */
+	importTransactions(
+		inputs: readonly NewTransaction[],
+		options?: WriteOptions,
+	): readonly TxAdded[] | AppError
 	voidTransaction(id: string, input: { date: string }, options?: WriteOptions): TxVoided | AppError
 	/** Writes the reversal and the replacement in one transaction, both linked to the original. */
 	amendTransaction(id: string, input: NewAmendment, options?: WriteOptions): TxAmended | AppError

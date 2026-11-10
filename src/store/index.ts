@@ -16,6 +16,7 @@ export { HEAD } from "./migrations"
 export { formatMinorUnits, parseMinorUnits, supportedCurrency } from "./money"
 export { isTxCorrection, TX_CORRECTIONS } from "./rows"
 export { canonicalScenarioDocument } from "./scenario-rows"
+export { importRejections } from "./tx-import"
 export type * from "./types"
 
 export type StoreOptions = {

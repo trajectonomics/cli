@@ -17,7 +17,7 @@ export type Example = { command: string; description: string }
 export type Context = {
 	env: Env
 	root: Group
-	/** Reads all of stdin; only a document form that names `-` calls it. */
+	/** Reads all of stdin; only a form that names `-` calls it: a document form, or `tx import -`. */
 	stdin: () => Promise<string>
 }
 

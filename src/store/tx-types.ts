@@ -1,3 +1,4 @@
+import type { ErrorBody } from "../errors"
 import type { PostingRow, TxCorrection, TxRow } from "./rows"
 
 // What a transaction write takes and returns, kept apart from the store's other vocabulary.
@@ -27,6 +28,9 @@ export type NewAmendment = {
 	/** The reversal's date; the replacement's date by default (ADR-0018). */
 	voidDate?: string
 }
+
+/** One row a batch rejected: its zero-based index in the batch, and the reason it failed. */
+export type ImportRejection = { index: number; reason: ErrorBody }
 
 export type TxStatus = "added" | "duplicate" | "voided" | "already_corrected"
 export type TxWritten<S extends TxStatus> = {
