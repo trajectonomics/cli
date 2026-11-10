@@ -1,10 +1,12 @@
 import type { AccountType, ChartOfAccounts } from "@trajectonomics/ledger"
 import type { AppError } from "../errors"
 import type { ScenarioDocument } from "../scenario/envelope"
+import type { Ledger } from "./ledger"
 import type { AccountRow, EntityRow, PostingRow, ScenarioRow, TxRow } from "./rows"
 import type { TxFilter } from "./tx-filter"
 import type { NewAmendment, NewTransaction, TxAdded, TxAmended, TxVoided } from "./tx-types"
 
+export type { Ledger } from "./ledger"
 export type {
 	AccountRow,
 	EntityRow,
@@ -103,6 +105,11 @@ export interface Store {
 	deleteAccount(id: string): AccountDeleted | AppError
 	/** The entity's full chart, archived accounts included; the core builds and validates against it. */
 	chart(): ChartOfAccounts | AppError
+	/**
+	 * The whole Ledger as one read: the chart, the core's Transactions in id order, and the stored
+	 * Account rows in name order. Every Transaction is re-validated before it is handed back.
+	 */
+	ledger(): Ledger | AppError
 	addTransaction(input: NewTransaction, options?: WriteOptions): TxAdded | AppError
 	/**
 	 * Writes every built row in one transaction, in input order; the batch reads the clock once.

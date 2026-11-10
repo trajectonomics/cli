@@ -5,6 +5,7 @@ import type { Ctx } from "./context"
 import { dumpCounts, dumpRows } from "./dump"
 import { listEntities } from "./entities"
 import { guard } from "./guard"
+import { readLedger } from "./ledger"
 import { userVersion } from "./migrations"
 import { restore } from "./restore"
 import { deleteScenario } from "./scenario-delete"
@@ -24,6 +25,7 @@ export function storeOver(path: string, ctx: Ctx): Store {
 		entityId: ctx.entityId,
 		schemaVersion: () => guard(() => userVersion(ctx.db)),
 		chart: () => guard(() => chartOf(ctx)),
+		ledger: () => readLedger(ctx),
 		listEntities: (options) => listEntities(ctx, options),
 		createAccount: (input, options) => createAccount(ctx, input, options),
 		listAccounts: (options) => listAccounts(ctx, options),

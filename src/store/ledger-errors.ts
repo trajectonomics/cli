@@ -28,10 +28,17 @@ export function dotPath(field: string): string {
 	return field.replace(/\[(\d+)\]/g, ".$1").replace(/^\./, "")
 }
 
-/** The core's rejection as an envelope: its code verbatim, its field as `path`, the rest in details. */
-export function fromLedgerError(error: LedgerValidationError): AppError {
-	const path = dotPath(error.field)
-	const details = { field: path, value: error.value ?? null, reason: error.reason }
+/**
+ * The core's rejection as an envelope, with `path` naming the caller's own surface. The code is
+ * the core's verbatim; the core's field stays in `details`, so nothing is lost in the rewrite.
+ */
+export function ledgerFailure(error: LedgerValidationError, path: string): AppError {
+	const details = { field: dotPath(error.field), value: error.value ?? null, reason: error.reason }
 	const options = { message: `${path}: ${error.reason}`, details }
 	return fail(LEDGER_CODES[error.code], path === "" ? options : { ...options, path })
+}
+
+/** The core's rejection as an envelope: its code verbatim, its field as `path`, the rest in details. */
+export function fromLedgerError(error: LedgerValidationError): AppError {
+	return ledgerFailure(error, dotPath(error.field))
 }
