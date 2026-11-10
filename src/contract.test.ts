@@ -58,6 +58,12 @@ describe("contract", () => {
 			return capture(argv, { TRAJ_HOME: home })
 		},
 		not_found: () => capture(["account", "show", "Nope", "--json"], { TRAJ_HOME: tempHome() }),
+		scenario_name_taken: async () => {
+			const home = tempHome()
+			const apply = ["scenario", "apply", "base", "--file", "-", "--json"]
+			await capture(apply, { TRAJ_HOME: home }, undefined, '{"schemaVersion":1}')
+			return capture(["scenario", "fork", "base", "base", "--json"], { TRAJ_HOME: home })
+		},
 		...probed(storeTriggers),
 	}
 

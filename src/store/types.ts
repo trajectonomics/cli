@@ -1,5 +1,6 @@
 import type { AccountType, ChartOfAccounts } from "@trajectonomics/ledger"
 import type { AppError } from "../errors"
+import type { ScenarioDocument } from "../scenario/envelope"
 import type { AccountRow, EntityRow, PostingRow, ScenarioRow, TxRow } from "./rows"
 import type { NewAmendment, NewTransaction, TxAdded, TxAmended, TxVoided } from "./tx-types"
 
@@ -76,6 +77,14 @@ export type ScenarioForked =
 	| { status: "not_found" }
 export type ScenarioDeleted = { status: "deleted"; scenario: ScenarioRow } | { status: "not_found" }
 
+/**
+ * A pure change to a fork's copy, applied inside the fork's one write. Return an `AppError`
+ * (usually `invalid_input`) and the whole write rolls back.
+ */
+export type ScenarioTransform = (document: ScenarioDocument) => ScenarioDocument | AppError
+
+export type ForkOptions = WriteOptions & { transform?: ScenarioTransform }
+
 /** Every row of a lossless dump, by table, exactly as the list methods return them. */
 export type RestoreRows = {
 	entity: readonly EntityRow[]
@@ -124,9 +133,12 @@ export interface Store {
 	/** The transaction with this id in the personal entity, or null. */
 	getTransaction(id: string): TxRow | null | AppError
 	listPostings(options: { sort: PostingSort; filter?: TxFilter }): PostingRow[] | AppError
-	saveScenario(input: NewScenario): ScenarioSaved | AppError
-	forkScenario(id: string, name: string): ScenarioForked | AppError
-	deleteScenario(id: string): ScenarioDeleted | AppError
+	saveScenario(input: NewScenario, options?: WriteOptions): ScenarioSaved | AppError
+	/** Copies a live Scenario by id; `transform` runs inside the same write (ADR-0019, ADR-0024). */
+	forkScenario(id: string, name: string, options?: ForkOptions): ScenarioForked | AppError
+	deleteScenario(id: string, options?: WriteOptions): ScenarioDeleted | AppError
+	/** The live Scenario this id or exact name names; an id is read first (ADR-0018). */
+	getScenario(idOrName: string): ScenarioRow | null | AppError
 	listScenarios(options: ListOptions<ScenarioSort>): ScenarioRow[] | AppError
 	/**
 	 * Writes `rows` verbatim (ids, versions, timestamps, tombstones) into a database holding only

@@ -18,6 +18,7 @@ export type StoreRaised = Exclude<
 	| "unknown_format"
 	// Commands map these from a store status; the store itself never raises them (ADR-0021).
 	| "account_name_taken"
+	| "scenario_name_taken"
 	| "not_found"
 >
 

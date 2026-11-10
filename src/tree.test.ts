@@ -111,9 +111,16 @@ describe("schema addresses commands by path", () => {
 			"account close",
 			"account list",
 			"account show",
+			"demo doc",
 			"demo echo",
 			"help",
 			"init",
+			"scenario apply",
+			"scenario diff",
+			"scenario fork",
+			"scenario list",
+			"scenario rm",
+			"scenario show",
 			"schema",
 			"tx add",
 			"tx amend",
@@ -128,7 +135,10 @@ describe("schema addresses commands by path", () => {
 
 	it("lists only the leaves of a group, without the registry", async () => {
 		const data = JSON.parse((await demo(["schema", "demo", "--json"])).out)
-		expect(data.commands).toEqual([{ name: "demo echo", summary: "Echo a word back" }])
+		expect(data.commands).toEqual([
+			{ name: "demo doc", summary: "Read a document under a name" },
+			{ name: "demo echo", summary: "Echo a word back" },
+		])
 		expect(data.errors).toBeUndefined()
 	})
 

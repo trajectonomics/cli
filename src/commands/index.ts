@@ -3,6 +3,7 @@ import { defineGroup } from "../command"
 import { account } from "./account"
 import { help } from "./help"
 import { init } from "./init"
+import { scenario } from "./scenario"
 import { schema } from "./schema"
 import { tx } from "./tx"
 import { version } from "./version"
@@ -11,5 +12,5 @@ import { version } from "./version"
 export const root: Group = defineGroup({
 	name: "traj",
 	summary: "trajectonomics command line",
-	children: [account, help, init, schema, tx, version],
+	children: [account, help, init, schema, scenario, tx, version],
 })
