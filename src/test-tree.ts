@@ -31,7 +31,23 @@ const echo = defineCommand({
 		}),
 })
 
-const demo = defineGroup({ name: "demo", summary: "A fixture group", children: [echo] })
+const doc = defineCommand({
+	name: "doc",
+	summary: "Read a document under a name",
+	positionals: ["name"],
+	input: z.strictObject({
+		name: z.string().describe("The document's name."),
+		file: z.string().describe("The document's path, or - for stdin."),
+		dryRun: z.boolean().optional().describe("Report the row and roll the write back."),
+	}),
+	document: { flag: "file", schema: z.unknown(), allowed: ["name", "dryRun"] },
+	output: z.strictObject({ name: z.string() }),
+	examples: [],
+	errorCodes: [],
+	run: (input) => ok({ name: input.name }),
+})
+
+const demo = defineGroup({ name: "demo", summary: "A fixture group", children: [doc, echo] })
 
 /** The real command tree plus a `demo` group, for tests that need nesting and flags. */
 export const fixtureRoot: Group = defineGroup({
