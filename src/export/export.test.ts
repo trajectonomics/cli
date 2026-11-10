@@ -151,3 +151,36 @@ describe("export's description", () => {
 		expect(JSON.stringify(data.examples)).toContain("traj export")
 	})
 })
+
+describe("export's determinism", () => {
+	it("writes the same bytes under another timezone and locale", async () => {
+		const first = outPath()
+		const one = await capture(["export", "--out", first, "--json"], {
+			TRAJ_HOME: await goldenHome(),
+		})
+		const env = { TZ: "Pacific/Kiritimati", LC_ALL: "th_TH.UTF-8", LANG: "th_TH.UTF-8" }
+		const saved = Object.fromEntries(Object.keys(env).map((key) => [key, process.env[key]]))
+		try {
+			Object.assign(process.env, env)
+			const second = outPath()
+			const two = await capture(["export", "--format", "csv", "--out", second, "--json"], {
+				TRAJ_HOME: await goldenHome(),
+				...env,
+			})
+			expect(two.code).toBe(0)
+			expect(JSON.parse(two.out).rows).toEqual(JSON.parse(one.out).rows)
+			const [a, csv] = await Promise.all([
+				Bun.file(join(first, "traj.jsonl")).text(),
+				Bun.file(join(second, "entity.csv")).bytes(),
+			])
+			expect(a).toBe(await goldenJsonl())
+			// Bun's text decoder strips a leading BOM, so read the bytes to see it.
+			expect([...csv.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
+		} finally {
+			for (const [key, value] of Object.entries(saved)) {
+				if (value === undefined) delete process.env[key]
+				else process.env[key] = value
+			}
+		}
+	})
+})

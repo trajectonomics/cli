@@ -122,3 +122,22 @@ describe("inspect <table>", () => {
 		})
 	})
 })
+
+describe("inspect's determinism", () => {
+	it("gives the same bytes under another timezone and locale", async () => {
+		const home = await goldenHome()
+		const before = await capture(["inspect", "--all"], { TRAJ_HOME: home })
+		const env = { TZ: "Pacific/Kiritimati", LC_ALL: "th_TH.UTF-8", LANG: "th_TH.UTF-8" }
+		const saved = Object.fromEntries(Object.keys(env).map((key) => [key, process.env[key]]))
+		try {
+			Object.assign(process.env, env)
+			const after = await capture(["inspect", "--all"], { TRAJ_HOME: home, ...env })
+			expect(after).toEqual(before)
+		} finally {
+			for (const [key, value] of Object.entries(saved)) {
+				if (value === undefined) delete process.env[key]
+				else process.env[key] = value
+			}
+		}
+	})
+})
