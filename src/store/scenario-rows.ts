@@ -1,5 +1,5 @@
-import { type AppError, fail } from "../errors"
-import { isPlainObject } from "../json"
+import type { AppError } from "../errors"
+import { envelopeError } from "../scenario/envelope"
 import { canonicalJson, contentHash } from "./canonical"
 import { SCENARIO_COLUMNS } from "./columns"
 import type { Ctx } from "./context"
@@ -18,17 +18,11 @@ export function liveScenario(ctx: Ctx, column: "id" | "name", value: string): Sc
 
 /**
  * The document as canonical text. `sim-core` does not exist, so a scenario is opaque apart from
- * being an object with an integer `schemaVersion`. Must run inside `guard`.
+ * the shared envelope (ADR-0024). Must run inside `guard`.
  */
 export function canonicalDocument(document: unknown, path = "document"): string {
-	if (!isPlainObject(document)) {
-		return abort(fail("invalid_input", { path, message: `${path}: must be a JSON object` }))
-	}
-	const version = document["schemaVersion"]
-	if (!Number.isSafeInteger(version) || (version as number) < 1) {
-		const at = `${path}.schemaVersion`
-		return abort(fail("invalid_input", { path: at, message: `${at}: must be a positive integer` }))
-	}
+	const failure = envelopeError(document, path)
+	if (failure !== null) return abort(failure)
 	return canonicalJson(document, path)
 }
 

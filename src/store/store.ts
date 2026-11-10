@@ -7,7 +7,9 @@ import type { Ctx } from "./context"
 import { guard } from "./guard"
 import { userVersion } from "./migrations"
 import { restore } from "./restore"
-import { deleteScenario, forkScenario, listScenarios, saveScenario } from "./scenarios"
+import { deleteScenario } from "./scenario-delete"
+import { forkScenario } from "./scenario-fork"
+import { getScenario, listScenarios, saveScenario } from "./scenarios"
 import { addTransaction } from "./transactions"
 import { amendTransaction } from "./tx-amend"
 import { importTransactions } from "./tx-import"
@@ -47,9 +49,10 @@ export function storeOver(path: string, ctx: Ctx): Store {
 		listTransactions: (options) => listTransactions(ctx, options),
 		getTransaction: (id) => getTransaction(ctx, id),
 		listPostings: (options) => listPostings(ctx, options),
-		saveScenario: (input) => saveScenario(ctx, input),
-		forkScenario: (id, name) => forkScenario(ctx, id, name),
-		deleteScenario: (id) => deleteScenario(ctx, id),
+		saveScenario: (input, options) => saveScenario(ctx, input, options),
+		forkScenario: (id, name, options) => forkScenario(ctx, id, name, options),
+		deleteScenario: (id, options) => deleteScenario(ctx, id, options),
+		getScenario: (idOrName) => getScenario(ctx, idOrName),
 		listScenarios: (options) => listScenarios(ctx, options),
 		restore: (rows) => restore(ctx, rows),
 		close: () => ctx.db.close(),

@@ -13,6 +13,7 @@ export type ErrorCode =
 	| "unknown_format"
 	| "not_found"
 	| "account_name_taken"
+	| "scenario_name_taken"
 	| "unsupported_currency"
 	| "account_archived"
 	| "external_ref_conflict"
@@ -52,6 +53,7 @@ export const registry: Record<ErrorCode, ErrorSpec> = {
 	unknown_format: { exit: 2, message: "Unknown output format." },
 	not_found: { exit: 4, message: "The requested resource was not found." },
 	account_name_taken: { exit: 5, message: "An account with this name already exists." },
+	scenario_name_taken: { exit: 5, message: "A scenario with this name already exists." },
 	unsupported_currency: { exit: 3, message: "The currency is not supported in v1." },
 	account_archived: { exit: 3, message: "The account is archived and accepts no postings." },
 	external_ref_conflict: {

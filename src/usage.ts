@@ -62,18 +62,34 @@ function documentUsage(leaf: Leaf, path: readonly string[]): string | undefined 
 		return spec === undefined ? [] : [`[${flagLabel(spec)}]`]
 	})
 	const file = flagLabel(flag).replace("<string>", "<file|->")
-	return `Usage: traj ${[...path, file, ...allowed].join(" ")}`
+	const words = leaf.positionals.map((name) => positionalLabel(leaf, name))
+	return `Usage: traj ${[...path, ...words, file, ...allowed].join(" ")}`
+}
+
+/** True when every flag is the document flag or one it allows: one usage line says it all. */
+function documentOnly(leaf: Leaf): boolean {
+	const document = leaf.document
+	if (document === undefined) return false
+	const keep = new Set([document.flag, ...(document.allowed ?? [])])
+	return leaf.flags.every((spec) => keep.has(spec.field))
 }
 
 function leafUsage(leaf: Leaf, path: readonly string[]): string {
 	const words = leaf.positionals.map((name) => positionalLabel(leaf, name))
-	const flags = leaf.flags.length > 0 ? ["[options]"] : []
 	const alternate = documentUsage(leaf, path)
+	// A document-only leaf has no flag form of its own, so the alternate line is its one usage.
+	const single = alternate !== undefined && documentOnly(leaf)
+	const flags = leaf.flags.length > 0 && !single ? ["[options]"] : []
 	const own = leaf.flags.map((spec) => [flagLabel(spec), flagNote(spec)] as const)
 	const examples = leaf.examples.map((example) => [example.command, example.description] as const)
+	const usage = single
+		? [alternate]
+		: [
+				`Usage: traj ${[...path, ...flags, ...words].join(" ")}`,
+				...(alternate === undefined ? [] : [alternate]),
+			]
 	return [
-		`Usage: traj ${[...path, ...flags, ...words].join(" ")}`,
-		...(alternate === undefined ? [] : [alternate]),
+		...usage,
 		"",
 		leaf.summary,
 		...(own.length > 0 ? ["", "Options:", ...table(own)] : []),
