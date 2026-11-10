@@ -14,4 +14,4 @@ Registering `"tx add"` as a literal name in a flat table was rejected: groups co
 
 Flags must follow the command path: `traj --amount 5 tx add` reads `5` as a subcommand. Global boolean flags may appear anywhere. A test fails if a file under `src/commands/` exports a leaf that the tree does not reach.
 
-Deferred, not decided here: a lazy database handle on the command context (waits for the schema in #5), and rendering hints for table-shaped results (waits for the first such command).
+Deferred, not decided here: a lazy database handle on the command context (waits for the schema in #5). Rendering hints for table-shaped results are decided in ADR-0027.
