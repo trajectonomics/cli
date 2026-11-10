@@ -168,6 +168,14 @@ _Avoid_: Option, switch
 How a command renders its result, `human` or `json`, chosen explicitly by flag or environment and never inferred from a terminal.
 _Avoid_: Mode, output type
 
+**Export format**:
+The file format of an export: `jsonl`, `csv` or `md`, chosen by `--format`. It is not **Format**, which is `human` or `json`; the two are separate axes and `--format` never changes the result's envelope.
+_Avoid_: Output format, mode
+
+**Dump**:
+Every stored row of every table, tombstones included, in the canonical order the export writes: entity, account, tx, posting, scenario. One read produces it, so `inspect` and every export format show the same rows.
+_Avoid_: Snapshot, backup
+
 **Result**:
 What a command returns when it succeeds, shaped by that command's output schema.
 _Avoid_: Output, response, payload

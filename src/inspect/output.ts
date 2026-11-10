@@ -3,6 +3,7 @@ import { dumpRowSchema } from "../dump/schema"
 import { DUMP_TABLES, type DumpRows, type DumpTable } from "../dump/view"
 import { FIELDS } from "../interchange/format"
 import type { ColumnHint, RenderHint } from "../table"
+import { RIGHT_ALIGNED } from "../table"
 
 /** One table in `inspect`'s result: its name, its row count, and its rows when it is a detail. */
 export type InspectTable = {
@@ -46,9 +47,6 @@ export const inspectOutput: z.ZodType<InspectOutput> = z.strictObject({
 		)
 		.describe("One entry per table shown, in record order."),
 })
-
-/** Ids, counts and amounts read best right-aligned; everything else is text. */
-const RIGHT_ALIGNED = new Set(["version", "ordinal", "amount"])
 
 function columnsOf(table: DumpTable): readonly ColumnHint[] {
 	return Object.keys(FIELDS[table]).map((key) => ({

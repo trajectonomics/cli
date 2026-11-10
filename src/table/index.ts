@@ -1,5 +1,8 @@
 import { cell } from "./escape"
 
+/** Columns whose values read best right-aligned: ids' counts and amounts. */
+export const RIGHT_ALIGNED: ReadonlySet<string> = new Set(["version", "ordinal", "amount"])
+
 /** One column of a table-shaped Result: its row key, its heading, and how it is padded. */
 export type ColumnHint = {
 	key: string

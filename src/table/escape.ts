@@ -1,4 +1,5 @@
-function textOf(value: unknown): string {
+/** A cell's text before any escaping: a null is empty, an object is its compact JSON. */
+export function plain(value: unknown): string {
 	if (value === null || value === undefined) return ""
 	if (typeof value === "string") return value
 	if (typeof value === "number" || typeof value === "boolean") return String(value)
@@ -30,5 +31,5 @@ function escaped(char: string): string {
  * a control code. Nothing is truncated.
  */
 export function cell(value: unknown): string {
-	return [...textOf(value)].map(escaped).join("")
+	return [...plain(value)].map(escaped).join("")
 }
