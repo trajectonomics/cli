@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { mkdtempSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { z } from "zod"
@@ -58,6 +58,16 @@ describe("contract", () => {
 			return capture(argv, { TRAJ_HOME: home })
 		},
 		not_found: () => capture(["account", "show", "Nope", "--json"], { TRAJ_HOME: tempHome() }),
+		output_exists: async () => {
+			const out = join(mkdtempSync(join(tmpdir(), "traj-test-")), "out")
+			mkdirSync(out)
+			return capture(["export", "--out", out, "--json"], { TRAJ_HOME: tempHome() })
+		},
+		export_failed: async () => {
+			const file = join(mkdtempSync(join(tmpdir(), "traj-test-")), "afile")
+			writeFileSync(file, "")
+			return capture(["export", "--out", join(file, "out"), "--json"], { TRAJ_HOME: tempHome() })
+		},
 		scenario_name_taken: async () => {
 			const home = tempHome()
 			const apply = ["scenario", "apply", "base", "--file", "-", "--json"]

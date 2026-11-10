@@ -13,6 +13,7 @@ describe("schema", () => {
 			"account close",
 			"account list",
 			"account show",
+			"export",
 			"help",
 			"init",
 			"inspect",

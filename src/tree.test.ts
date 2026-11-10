@@ -113,6 +113,7 @@ describe("schema addresses commands by path", () => {
 			"account show",
 			"demo doc",
 			"demo echo",
+			"export",
 			"help",
 			"init",
 			"inspect",

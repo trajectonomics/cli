@@ -20,6 +20,9 @@ export type StoreRaised = Exclude<
 	| "account_name_taken"
 	| "scenario_name_taken"
 	| "not_found"
+	// Raised by the export command, which is the only writer outside the data directory.
+	| "output_exists"
+	| "export_failed"
 >
 
 function fixture() {
