@@ -43,15 +43,20 @@ function normalize(text: string): string {
 	return body.replaceAll("\r\n", "\n").replaceAll("\r", "\n")
 }
 
-/** RFC 4180 records in order, with unquoted cells trimmed and quoted cells kept verbatim. */
-export function recordsOf(text: string): RawRecord[] | AppError {
+/**
+ * RFC 4180 records in order, with unquoted cells trimmed and quoted cells kept verbatim. It
+ * yields one record at a time, so the reader can check the header and each row's width before
+ * the next record is scanned; a syntax error is the last thing it yields.
+ */
+export function* recordsOf(text: string): Generator<RawRecord | AppError> {
 	const normalized = normalize(text)
 	const cursor: Cursor = { index: 0, line: 1 }
-	const records: RawRecord[] = []
 	while (cursor.index < normalized.length) {
 		const record = nextRecord(normalized, cursor)
-		if (isAppError(record)) return record
-		if (!record.blank) records.push({ line: record.line, fields: record.fields })
+		if (isAppError(record)) {
+			yield record
+			return
+		}
+		if (!record.blank) yield { line: record.line, fields: record.fields }
 	}
-	return records
 }

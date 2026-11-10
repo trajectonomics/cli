@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite"
 import { describe, expect, it } from "bun:test"
 import { join } from "node:path"
+import { run } from "./cli"
 import { capture } from "./test-support"
 import {
 	cli,
@@ -46,6 +47,26 @@ describe("tx import schema, help and listing", () => {
 				"unsupported_currency",
 			].sort(),
 		)
+	})
+
+	it("never reads stdin when naming neither a file nor --template", async () => {
+		let read = false
+		const stdin = async () => {
+			read = true
+			return HEADER
+		}
+		const out: string[] = []
+		const err: string[] = []
+		const code = await run(
+			["tx", "import", "--json"],
+			{ out: (line) => out.push(line), err: (line) => err.push(line) },
+			{ TRAJ_HOME: tempHome() },
+			undefined,
+			stdin,
+		)
+		expect(code).toBe(2)
+		expect(JSON.parse(err.join("\n")).error.path).toBe("file")
+		expect(read).toBe(false)
 	})
 
 	it("prints one byte-identical template for every data directory", async () => {

@@ -72,6 +72,26 @@ describe("tx import file-level failures", () => {
 		})
 	})
 
+	it("checks the header first, then reports the earliest malformed row", async () => {
+		const home = tempHome()
+		const traj = cli(home)
+		await seeded(traj)
+		const wrongHeader = await traj([
+			"tx",
+			"import",
+			csv(home, "wrong-later.csv", ["a;b;c", 'x,"open']),
+			"--json",
+		])
+		expect(errorOf(wrongHeader)).toMatchObject({ code: "invalid_input", path: "header" })
+		const earliest = await traj([
+			"tx",
+			"import",
+			csv(home, "earliest.csv", [HEADER, "2026-03-01,Cash", 'x,"open']),
+			"--json",
+		])
+		expect(errorOf(earliest)).toMatchObject({ code: "invalid_input", path: "line.2" })
+	})
+
 	it("rejects a short row, a long row and an unclosed quote at their physical line", async () => {
 		const cases = [
 			{ lines: [HEADER, "2026-03-01,Cash"], path: "line.2" },

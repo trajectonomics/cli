@@ -57,21 +57,23 @@ function rowOf(record: RawRecord): ImportRow {
  */
 export function readImportCsv(text: string): ImportRow[] | AppError {
 	const records = recordsOf(text)
-	if (isAppError(records)) return records
-	const [header, ...data] = records
-	if (header === undefined) {
+	const first = records.next()
+	if (first.done) {
 		return fail("invalid_input", {
 			path: "file",
 			message: "file: the CSV is empty; it needs the template header",
 			hint: templateHint(),
 		})
 	}
+	const header = first.value
+	if (isAppError(header)) return header
 	// A quoted header cell is compared after trimming, so a spreadsheet's quoting is harmless.
 	const actual = header.fields.map((cell) => cell.trim())
 	if (actual.length !== IMPORT_COLUMNS.length) return headerMismatch(actual)
 	if (actual.some((cell, at) => cell !== IMPORT_COLUMNS[at])) return headerMismatch(actual)
 	const rows: ImportRow[] = []
-	for (const record of data) {
+	for (const record of records) {
+		if (isAppError(record)) return record
 		if (record.fields.length !== IMPORT_COLUMNS.length) {
 			return wrongWidth(record.line, record.fields.length)
 		}
