@@ -1,32 +1,16 @@
+import { viewDump } from "../dump/view"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
-import { formatMinorUnits, type Store } from "../store"
-import { FIELDS, FORMAT_VERSION, RECORD_ORDER, type RecordType, type RowList } from "./format"
+import type { Store } from "../store"
+import { FIELDS, FORMAT_VERSION, RECORD_ORDER, type RecordType } from "./format"
 
 function encode(type: RecordType, row: Record<string, unknown>): string {
 	const members = Object.entries(FIELDS[type]).map(([key, kind]) => {
-		const value = row[key]
 		// Stored canonical text is already the JCS serialisation of the document object.
-		if (kind === "document") return `"${key}":${value as string}`
-		if (kind === "amount") {
-			const amount = formatMinorUnits(value as number, row["currency"] as string)
-			return `"${key}":${JSON.stringify(amount)}`
-		}
-		return `"${key}":${JSON.stringify(value)}`
+		if (kind === "document") return `"${key}":${row[key] as string}`
+		return `"${key}":${JSON.stringify(row[key])}`
 	})
 	return `{"record":${JSON.stringify(type)},${members.join(",")}}`
-}
-
-function readAll(store: Store): RowList | AppError {
-	const lists = {
-		entity: store.listEntities({ sort: "id", includeDeleted: true }),
-		account: store.listAccounts({ sort: "id", includeDeleted: true }),
-		tx: store.listTransactions({ sort: "date" }),
-		posting: store.listPostings({ sort: "tx_id" }),
-		scenario: store.listScenarios({ sort: "id", includeDeleted: true }),
-	}
-	for (const list of Object.values(lists)) if (isAppError(list)) return list
-	return lists as RowList
 }
 
 /**
@@ -37,12 +21,15 @@ function readAll(store: Store): RowList | AppError {
 export function exportJsonl(store: Store): string | AppError {
 	const schemaVersion = store.schemaVersion()
 	if (isAppError(schemaVersion)) return schemaVersion
-	const rows = readAll(store)
+	const rows = store.dump()
 	if (isAppError(rows)) return rows
+	const view = viewDump(rows)
 	const header = JSON.stringify({ record: "header", formatVersion: FORMAT_VERSION, schemaVersion })
 	const lines = [header]
 	for (const type of RECORD_ORDER) {
-		for (const row of rows[type]) lines.push(encode(type, row as Record<string, unknown>))
+		for (const row of view[type]) {
+			lines.push(encode(type, row as Record<string, unknown>))
+		}
 	}
 	return `${lines.join("\n")}\n`
 }

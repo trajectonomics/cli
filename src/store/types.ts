@@ -141,6 +141,13 @@ export interface Store {
 	getScenario(idOrName: string): ScenarioRow | null | AppError
 	listScenarios(options: ListOptions<ScenarioSort>): ScenarioRow[] | AppError
 	/**
+	 * Every row of every table, tombstones included, in the export's canonical order, read inside
+	 * one deferred read transaction so one dump never mixes two snapshots.
+	 */
+	dump(): RestoreRows | AppError
+	/** Each table's tombstone-inclusive row count, equal to the dump's own counts. */
+	counts(): RestoreCounts | AppError
+	/**
 	 * Writes `rows` verbatim (ids, versions, timestamps, tombstones) into a database holding only
 	 * the seeded personal entity, in one transaction that reads no clock. References may point
 	 * forward; any left dangling roll the whole restore back.
