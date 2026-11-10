@@ -60,6 +60,10 @@ _Avoid_: Amount, total, net
 Assets minus liabilities at an As-of. Liability Balances stay raw and negative, so net worth is their plain sum. Equity, income and expense are not part of it.
 _Avoid_: Equity, total wealth
 
+**Trial balance**:
+Every Leaf Account's Balance at an As-of, split into debit and credit columns whose totals agree.
+_Avoid_: Worksheet
+
 **Posting**:
 A single signed amount against one account, carrying its currency and optional dimensions.
 _Avoid_: Line, leg, split (a CSV row's `line` is a file position, not a Posting)

@@ -18,6 +18,8 @@ describe("schema", () => {
 			"help",
 			"init",
 			"inspect",
+			"report networth",
+			"report pnl",
 			"scenario apply",
 			"scenario diff",
 			"scenario fork",

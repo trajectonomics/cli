@@ -6,6 +6,7 @@ import { exportCommand } from "./export"
 import { help } from "./help"
 import { init } from "./init"
 import { inspect } from "./inspect"
+import { report } from "./report"
 import { scenario } from "./scenario"
 import { schema } from "./schema"
 import { tx } from "./tx"
@@ -15,6 +16,5 @@ import { version } from "./version"
 export const root: Group = defineGroup({
 	name: "traj",
 	summary: "trajectonomics command line",
-import { balance } from "./balance"
-import { exportCommand } from "./export"
+	children: [account, balance, exportCommand, help, init, inspect, report, scenario, schema, tx, version],
 })
