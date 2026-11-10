@@ -1,16 +1,10 @@
-import type { Transaction } from "@trajectonomics/ledger"
-import { LedgerValidationError, openingBalance, simple } from "@trajectonomics/ledger"
+import { openingBalance } from "@trajectonomics/ledger"
 import { type AppError, isAppError } from "../errors"
-import {
-	fromLedgerError,
-	type NewPosting,
-	type NewTransaction,
-	parseMinorUnits,
-	type Store,
-} from "../store"
+import type { NewTransaction, Store } from "../store"
 import type { TransactionDocument } from "./document"
 import { buildDocument } from "./document-build"
-import { unknownAccount } from "./errors"
+import { DRAFT_ID, identity, preparedTransfer, rewrite, written } from "./legs"
+import { buildSimple } from "./simple"
 
 /** The flag surface of `tx add`; all of it is also a field of the command's input schema. */
 export type FlagInput = {
@@ -26,77 +20,26 @@ export type FlagInput = {
 	postings?: string | undefined
 }
 
-// The core builder needs an id to shape a Transaction, but this draft id is never persisted:
-// the store mints the real UUIDv7 once, inside the write transaction.
-const DRAFT_ID = "01940000-0000-7000-8000-000000000000"
-
-function dimensionsOf(project: string | undefined): Pick<NewPosting, "dimensions"> | object {
-	return project === undefined ? {} : { dimensions: { project } }
-}
-
-function postingsOf(tx: Transaction): NewPosting[] {
-	return tx.postings.map((posting) => ({
-		accountId: posting.accountId,
-		amount: posting.amount,
-		currency: posting.currency,
-		...(posting.dimensions === undefined ? {} : { dimensions: posting.dimensions }),
-	}))
-}
-
-/** `debit`/`credit` are the core's words; the envelope names the caller's flags instead. */
-function rewrite(error: unknown, names: Record<string, string>): AppError {
-	if (!(error instanceof LedgerValidationError)) throw error
-	const [head = "", ...rest] = error.field.split(".")
-	const field = [names[head] ?? head, ...rest].filter(Boolean).join(".")
-	return fromLedgerError(new LedgerValidationError(error.code, field, error.value, error.reason))
-}
-
-function written(tx: Transaction, input: FlagInput): NewTransaction {
-	const memo = input.memo === undefined ? {} : { memo: input.memo }
-	const externalRef = input.externalRef === undefined ? {} : { externalRef: input.externalRef }
-	return { date: input.date, postings: postingsOf(tx), ...memo, ...externalRef }
-}
-
 /** Builds either flag form: a simple magnitude transfer, or a signed opening balance. */
 export function buildFlags(input: FlagInput, store: Store): NewTransaction | AppError {
-	const from = store.getAccount(input.from)
-	if (isAppError(from)) return from
-	if (from === null) return unknownAccount(input.from, "from")
-	const to = store.getAccount(input.to)
-	if (isAppError(to)) return to
-	if (to === null) return unknownAccount(input.to, "to")
-	const chart = store.chart()
-	if (isAppError(chart)) return chart
-	const amount = parseMinorUnits(input.amount, to.currency, "amount")
-	if (isAppError(amount)) return amount
-	const dimensions = dimensionsOf(input.project)
-	const base = { id: DRAFT_ID, date: input.date }
+	if (input.opening !== true) return buildSimple(input, store)
+	const parts = preparedTransfer(input, store, identity)
+	if (isAppError(parts)) return parts
+	const { from, to, chart, amount, dimensions } = parts
 	try {
-		const built =
-			input.opening === true
-				? openingBalance(
-						{
-							...base,
-							account: { accountId: to.id, ...dimensions },
-							contra: { accountId: from.id, ...dimensions },
-							amount,
-						},
-						chart,
-					)
-				: simple(
-						{
-							...base,
-							debit: { accountId: to.id, ...dimensions },
-							credit: { accountId: from.id, ...dimensions },
-							amount,
-						},
-						chart,
-					)
+		const built = openingBalance(
+			{
+				id: DRAFT_ID,
+				date: input.date,
+				account: { accountId: to.id, ...dimensions },
+				contra: { accountId: from.id, ...dimensions },
+				amount,
+			},
+			chart,
+		)
 		return written(built, input)
 	} catch (error) {
-		return input.opening === true
-			? rewrite(error, { account: "to", contra: "from" })
-			: rewrite(error, { debit: "to", credit: "from" })
+		return rewrite(error, { account: "to", contra: "from" }, identity)
 	}
 }
 

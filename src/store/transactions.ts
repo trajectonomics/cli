@@ -71,6 +71,21 @@ function replay(ctx: Ctx, input: NewTransaction, externalRef: string): TxAdded |
 	})
 }
 
+/**
+ * One row's outcome inside a write that is already open: replay its reference, run the store's
+ * checks, or append it under an id and timestamp the caller supplies. It reads no clock itself,
+ * so a batch can mint every row from one reading.
+ */
+export function attemptTransaction(
+	ctx: Ctx,
+	input: NewTransaction,
+	mint: () => Minted,
+): TxAdded | AppError {
+	const replayed = input.externalRef === undefined ? null : replay(ctx, input, input.externalRef)
+	if (replayed !== null) return replayed
+	return storeChecks(ctx, input) ?? appendTransaction(ctx, input, mint())
+}
+
 /** Validates through the core, then appends. A repeated `externalRef` is idempotent. */
 export function addTransaction(
 	ctx: Ctx,
@@ -79,11 +94,11 @@ export function addTransaction(
 ): TxAdded | AppError {
 	return write(
 		ctx.db,
-		() => {
-			const replayed =
-				input.externalRef === undefined ? null : replay(ctx, input, input.externalRef)
-			return replayed ?? storeChecks(ctx, input) ?? insertTransaction(ctx, input)
-		},
+		() =>
+			attemptTransaction(ctx, input, () => {
+				const at = ctx.clock()
+				return { id: newId(at), at: iso(at) }
+			}),
 		options,
 	)
 }
