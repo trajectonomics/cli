@@ -6,6 +6,7 @@ import {
 	rowOf,
 	scenario,
 	scenarioHome,
+	summariesOf,
 } from "./scenario-test-support"
 
 const STREAMS = {
@@ -49,6 +50,20 @@ describe("scenario fork --set paths", () => {
 			schemaVersion: 1,
 			items: [{ id: "0", v: 2 }],
 		})
+	})
+
+	it("refuses changing an item's id field as well as its whole value", async () => {
+		const home = scenarioHome()
+		await applyScenario(home, "base", STREAMS)
+		for (const set of ['streams.salary.id="bonus"', 'streams.salary.id="other"']) {
+			const res = await scenario(home, ["fork", "base", "early", "--set", set])
+			expect(res.code).toBe(2)
+			expect(errorOf(res)).toMatchObject({ path: "set", details: { segment: "salary" } })
+		}
+		const names = summariesOf(resultOf(await scenario(home, ["list"]))).map(
+			(summary) => summary.name,
+		)
+		expect(names).toEqual(["base"])
 	})
 
 	it("refuses a change to a list item's id", async () => {

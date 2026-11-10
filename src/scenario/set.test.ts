@@ -104,6 +104,7 @@ describe("applyOverrides", () => {
 	it("will not change a list item's id or walk into a scalar", () => {
 		const document = { schemaVersion: 1, list: [{ id: "a", v: 1 }], n: 1 }
 		expect(failed(document, 'list.a={"id":"b"}')).toMatchObject({ details: { segment: "a" } })
+		expect(failed(document, 'list.a.id="b"')).toMatchObject({ details: { segment: "a" } })
 		expect(failed(document, "list.a=5")).toMatchObject({ details: { segment: "a" } })
 		expect(failed(document, "n.x=1")).toMatchObject({ details: { segment: "n" } })
 	})

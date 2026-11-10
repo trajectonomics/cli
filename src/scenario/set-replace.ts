@@ -44,9 +44,8 @@ function replaceInList(
 	if (matches.length > 1) return ambiguousSegment(segment, prefix, ctx)
 	const child = replaceAt(found.item, rest, [...prefix, segment], ctx)
 	if (isAppError(child)) return child
-	if (rest === ctx.segments.length) {
-		if (!isPlainObject(child) || child["id"] !== segment) return identityFailure(segment, ctx)
-	}
+	// Whatever the depth, the item's own identity may not be rewritten through a value.
+	if (!isPlainObject(child) || child["id"] !== segment) return identityFailure(segment, ctx)
 	return node.map((item, at) => (at === found.at ? child : item))
 }
 
