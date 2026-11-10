@@ -11,7 +11,15 @@ function quoted(value: string): string {
 	return /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value
 }
 
-/** One table's CSV: the header, then one `\r\n`-terminated line per row. Empty is header only. */
+/**
+ * One table's CSV: the header, then one `\r\n`-terminated line per row. Empty is header only.
+ *
+ * The bytes are chosen for a spreadsheet, not for a restore: the UTF-8 BOM makes Excel read Thai
+ * text as UTF-8 instead of mojibake, CRLF is RFC 4180's line ending, and a cell is written
+ * exactly as stored. A spreadsheet may therefore coerce a numeric-looking cell, and may run a
+ * cell that begins with `=`, `+`, `-` or `@`; the owner chose raw cells, and the exact copy is
+ * the JSONL export.
+ */
 export function csvText(table: DumpTable, rows: readonly Record<string, unknown>[]): string {
 	const keys = Object.keys(FIELDS[table])
 	const line = (values: readonly string[]) => `${values.map(quoted).join(",")}\r\n`

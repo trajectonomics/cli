@@ -12,6 +12,10 @@ const fixture = (name: string) => Bun.file(new URL(`fixtures/${name}`, import.me
 
 const BOM = [0xef, 0xbb, 0xbf]
 
+/**
+ * The human acceptance is the owner opening one exported CSV in a spreadsheet and seeing Thai
+ * text and the quoted cell intact; these assertions are the bytes that make that work.
+ */
 async function exportCsv(home: string, out = outPath()) {
 	const res = await capture(["export", "--format", "csv", "--out", out, "--json"], {
 		TRAJ_HOME: home,
