@@ -93,6 +93,7 @@ describe("tx amend document", () => {
 			["--date", "2026-03-02"],
 			["--opening"],
 			["--project", "x"],
+			["--memo", "x"],
 			["--external-ref", "mixed"],
 		]) {
 			const res = await cli(
