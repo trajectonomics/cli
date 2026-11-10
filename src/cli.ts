@@ -4,6 +4,7 @@ import { type AppError, fail, isAppError } from "./errors"
 import { parseInput } from "./input"
 import { parseNodeArgs } from "./parse"
 import { type Format, renderError, renderResult, resolveFormat } from "./render"
+import type { RenderHint } from "./table"
 import { findNode, unknownCommand, walk } from "./tree"
 
 export interface Io {
@@ -42,12 +43,14 @@ async function route(argv: string[], root: Group, stdin: Stdin): Promise<Invocat
 	return { leaf: node, input: input.input, ...document }
 }
 
+type Dispatched = { data: unknown; hint?: RenderHint }
+
 async function dispatch(
 	argv: string[],
 	env: Env,
 	root: Group,
 	stdin: Stdin,
-): Promise<{ data: unknown } | AppError> {
+): Promise<Dispatched | AppError> {
 	const invocation = await route(argv, root, stdin)
 	if (isAppError(invocation)) return invocation
 	const ctx: Context = { env, root, stdin }
@@ -55,7 +58,8 @@ async function dispatch(
 	if (isAppError(result)) return result
 	// A result that breaks its own output schema is a programming error: it throws, and the
 	// top-level catch turns it into the fixed `internal` envelope.
-	return { data: invocation.leaf.output.parse(result.data) }
+	const data = invocation.leaf.output.parse(result.data)
+	return invocation.leaf.render === undefined ? { data } : { data, hint: invocation.leaf.render }
 }
 
 function failureOf(error: AppError, format: Format, io: Io): number {
@@ -86,7 +90,7 @@ export async function run(
 		if (choice.invalid !== undefined) return badFormat(choice.invalid, io)
 		const outcome = await dispatch(argv, env, root, stdin)
 		if (isAppError(outcome)) return failureOf(outcome, choice.format, io)
-		io.out(renderResult(outcome.data, choice.format))
+		io.out(renderResult(outcome.data, choice.format, outcome.hint))
 		return 0
 	} catch (error) {
 		// The message is fixed text; diagnostics go to stderr only when TRAJ_DEBUG asks for them.

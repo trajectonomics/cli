@@ -15,6 +15,7 @@ describe("schema", () => {
 			"account show",
 			"help",
 			"init",
+			"inspect",
 			"scenario apply",
 			"scenario diff",
 			"scenario fork",

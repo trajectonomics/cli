@@ -115,6 +115,7 @@ describe("schema addresses commands by path", () => {
 			"demo echo",
 			"help",
 			"init",
+			"inspect",
 			"scenario apply",
 			"scenario diff",
 			"scenario fork",

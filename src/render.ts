@@ -1,5 +1,6 @@
 import type { Env } from "./command"
 import type { AppError } from "./errors"
+import { type RenderHint, renderTableResult } from "./table"
 
 /** How a command renders its result, chosen explicitly and never inferred from a terminal. */
 export type Format = "human" | "json"
@@ -55,10 +56,11 @@ function renderHumanLines(value: unknown, indent: string): string[] {
 }
 
 /** Renders a validated result. A string is printed as is, so `--version` stays bare. */
-export function renderResult(data: unknown, format: Format): string {
+export function renderResult(data: unknown, format: Format, hint?: RenderHint): string {
 	if (format === "json") return JSON.stringify(data)
 	if (typeof data === "string") return data
-	return renderHumanLines(data, "").join("\n")
+	const tables = hint === undefined ? null : renderTableResult(data, hint)
+	return tables ?? renderHumanLines(data, "").join("\n")
 }
 
 /** Renders a failure: the JSON envelope when the Format is json, otherwise text. */

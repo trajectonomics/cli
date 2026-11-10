@@ -18,10 +18,27 @@ export function goldenJsonl(): Promise<string> {
  */
 export async function goldenStore(clock: Clock = steppingClock()): Promise<Store> {
 	const store = mustOpen(tempHome(), clock)
+	await applyGolden(store)
+	return store
+}
+
+/**
+ * A fresh data directory holding the golden fixture database, with the store closed so the CLI
+ * opens it itself. `capture()` then sees the same bytes on every run.
+ */
+export async function goldenHome(): Promise<string> {
+	const home = tempHome()
+	const store = mustOpen(home)
+	await applyGolden(store)
+	store.close()
+	return home
+}
+
+async function applyGolden(store: Store): Promise<void> {
+	// `goldenStore` keeps its connection open for the caller; the home is written through a second one.
 	const db = new Database(store.path)
 	db.run(await Bun.file(new URL("golden.sql", FIXTURES)).text())
 	db.close()
-	return store
 }
 
 const TABLES = {
