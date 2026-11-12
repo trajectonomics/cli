@@ -112,6 +112,7 @@ describe("schema addresses commands by path", () => {
 			"account list",
 			"account show",
 			"balance",
+			"baseline show",
 			"demo doc",
 			"demo echo",
 			"export",

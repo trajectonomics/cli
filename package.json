@@ -38,6 +38,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.6.3",
 		"@trajectonomics/ledger": "0.1.0-alpha.0",
+		"@trajectonomics/sim": "0.1.0",
 		"@trajectonomics/tooling": "1.1.0",
 		"@types/bun": "^1.4.4",
 		"typescript": "^7.0.2",

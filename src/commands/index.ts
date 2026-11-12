@@ -2,6 +2,7 @@ import type { Group } from "../command"
 import { defineGroup } from "../command"
 import { account } from "./account"
 import { balance } from "./balance"
+import { baseline } from "./baseline"
 import { exportCommand } from "./export"
 import { help } from "./help"
 import { init } from "./init"
@@ -19,6 +20,7 @@ export const root: Group = defineGroup({
 	children: [
 		account,
 		balance,
+		baseline,
 		exportCommand,
 		help,
 		init,
