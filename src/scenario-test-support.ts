@@ -71,7 +71,7 @@ export function errorOf(res: Captured): {
 	message: string
 	path?: string
 	hint?: string
-	details?: Record<string, unknown>
+	details?: object
 } {
 	return JSON.parse(res.err).error
 }

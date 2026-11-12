@@ -1,5 +1,6 @@
 import type { AppError } from "../errors"
-import { formatPath } from "./path"
+import { documentPath, type ScenarioProblem } from "./document"
+import { formatPath, overrideSegments } from "./path"
 import { badSet } from "./set-parse"
 import { closeEnough, knownPaths, nearest } from "./set-suggest"
 
@@ -63,22 +64,54 @@ export function identityFailure(segment: string, ctx: SegmentContext): AppError 
 	})
 }
 
-/** The error for a document the overrides left outside the envelope. */
+/**
+ * The Set whose path covers a problem: the last in command-line order when several do, `-1` when
+ * none does.
+ */
+function matchingSet(
+	overrides: readonly AppliedOverride[],
+	problem: ScenarioProblem,
+	document: unknown,
+): number {
+	const segments = overrideSegments(document, problem.segments)
+	const prefixes = new Set(segments.map((_, index) => formatPath(segments.slice(0, index + 1))))
+	let found = -1
+	for (const [index, override] of overrides.entries()) {
+		if (prefixes.has(override.path)) found = index
+	}
+	return found
+}
+
+/**
+ * The error for a document the overrides left outside `sim-core`'s Scenario schema, at a Set. It
+ * reports the first problem a Set covers, so a later problem cannot hide the one that names the
+ * cause; when no Set covers a problem it reports the first and falls back to the last Set.
+ */
 export function documentFailure(
 	overrides: readonly AppliedOverride[],
-	problem: { segments: readonly string[]; why: string },
+	problems: readonly [ScenarioProblem, ...ScenarioProblem[]],
+	document: unknown,
 ): AppError {
-	const failing = formatPath(problem.segments)
-	const found = overrides.findIndex((override) => override.path === failing)
-	const index = found === -1 ? Math.max(0, overrides.length - 1) : found
+	const candidates = problems.map((problem) => ({
+		problem,
+		match: matchingSet(overrides, problem, document),
+	}))
+	const chosen = candidates.find((candidate) => candidate.match !== -1) ?? candidates[0]
+	if (chosen === undefined) throw new Error("a document failure needs at least one problem")
+	const index = chosen.match === -1 ? Math.max(0, overrides.length - 1) : chosen.match
 	const selected = overrides[index]
-	const documentPath = ["document", ...problem.segments].join(".")
+	const path = documentPath("document", chosen.problem.segments)
 	return badSet(
 		index,
-		`the document is invalid after the overrides: ${documentPath}: ${problem.why}`,
+		`the document is invalid after the overrides: ${path}: ${chosen.problem.code}`,
 		{
-			hint: `The overrides leave ${documentPath} invalid; change that value or the path.`,
-			details: { index, path: selected?.path ?? failing, documentPath },
+			hint: `The overrides leave ${path} invalid; change that value or the path.`,
+			details: {
+				index,
+				path: selected?.path ?? formatPath(overrideSegments(document, chosen.problem.segments)),
+				documentPath: path,
+				code: chosen.problem.code,
+			},
 		},
 	)
 }

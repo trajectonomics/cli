@@ -7,24 +7,18 @@ import {
 	scenario,
 	scenarioHome,
 } from "./scenario-test-support"
+import { SCENARIO_DOCUMENT } from "./store/testing"
 import { capture } from "./test-support"
 
-const A = {
-	schemaVersion: 1,
-	goal: { amount: 1_000, note: "old" },
-	streams: [
-		{ id: "salary", amount: 1 },
-		{ id: "bonus", amount: 2 },
-	],
-}
+const A = SCENARIO_DOCUMENT
+const [CASH, LOAN] = A.accounts
+const BROKER = { id: "broker", kind: "asset", rate: 0 }
 
 const B = {
-	schemaVersion: 1,
-	goal: { amount: 2_000, extra: true },
-	streams: [
-		{ id: "salary", amount: 5 },
-		{ id: "bonus", amount: 2 },
-	],
+	...A,
+	currency: "USD",
+	economy: { inflation: 100 },
+	accounts: [{ ...CASH, rate: 250 }, BROKER],
 }
 
 type ChangeBody = { path: string; kind: string; before?: unknown; after?: unknown }
@@ -59,68 +53,55 @@ describe("scenario diff", () => {
 		expect(data.a).toEqual({ id: a.id, name: "a", contentHash: a.contentHash })
 		expect(data.b).toEqual({ id: b.id, name: "b", contentHash: b.contentHash })
 		expect(changesOf(data)).toEqual([
-			{ path: "goal.amount", kind: "changed", before: 1_000, after: 2_000 },
-			{ path: "goal.extra", kind: "added", after: true },
-			{ path: "goal.note", kind: "removed", before: "old" },
-			{ path: "streams.salary.amount", kind: "changed", before: 1, after: 5 },
+			{ path: "accounts.broker", kind: "added", after: BROKER },
+			{ path: "accounts.cash.rate", kind: "changed", before: CASH.rate, after: 250 },
+			{ path: "accounts.loan", kind: "removed", before: LOAN },
+			{ path: "currency", kind: "changed", before: "THB", after: "USD" },
+			{ path: "economy.inflation", kind: "changed", before: 0, after: 100 },
 		])
 	})
 
-	it("matches id-keyed items by id and reports an added or removed item whole", async () => {
+	it("reports a reordered id list as one atomic change", async () => {
 		const home = scenarioHome()
-		await applyScenario(home, "a", {
-			schemaVersion: 1,
-			items: [
-				{ id: "one", v: 1 },
-				{ id: "two", v: 2 },
-			],
-		})
-		await applyScenario(home, "b", {
-			schemaVersion: 1,
-			items: [
-				{ id: "one", v: 9 },
-				{ id: "three", v: 3 },
-			],
-		})
-		const changes = changesOf(resultOf(await scenario(home, ["diff", "a", "b"])))
-		expect(changes).toEqual([
-			{ path: "items.one.v", kind: "changed", before: 1, after: 9 },
-			{ path: "items.three", kind: "added", after: { id: "three", v: 3 } },
-			{ path: "items.two", kind: "removed", before: { id: "two", v: 2 } },
-		])
-	})
-
-	it("reports a reordered id list as one atomic change, even with items added or removed", async () => {
-		const home = scenarioHome()
-		const before = { schemaVersion: 1, items: [{ id: "a" }, { id: "b" }, { id: "c" }] }
-		const after = { schemaVersion: 1, items: [{ id: "c" }, { id: "d" }, { id: "a" }] }
+		const before = A
+		const after = { ...A, accounts: [LOAN, CASH] }
 		await applyScenario(home, "a", before)
 		await applyScenario(home, "b", after)
 		const changes = changesOf(resultOf(await scenario(home, ["diff", "a", "b"])))
 		expect(changes).toEqual([
-			{ path: "items", kind: "changed", before: before.items, after: after.items },
+			{ path: "accounts", kind: "changed", before: [CASH, LOAN], after: [LOAN, CASH] },
 		])
 	})
 
-	it("treats a list without ids, or id-keyed on one side only, as one value", async () => {
+	it("treats a list without ids as one value", async () => {
 		const home = scenarioHome()
-		await applyScenario(home, "a", { schemaVersion: 1, list: [1, 2], mixed: [{ id: "x" }] })
-		await applyScenario(home, "b", { schemaVersion: 1, list: [2, 1], mixed: [] })
+		const before = { ...A, cashflow: { ...A.cashflow, withdraw: ["cash"] } }
+		const after = { ...A, cashflow: { ...A.cashflow, withdraw: [] } }
+		await applyScenario(home, "a", before)
+		await applyScenario(home, "b", after)
 		const changes = changesOf(resultOf(await scenario(home, ["diff", "a", "b"])))
 		expect(changes).toEqual([
-			{ path: "list", kind: "changed", before: [1, 2], after: [2, 1] },
-			{ path: "mixed", kind: "changed", before: [{ id: "x" }], after: [] },
+			{ path: "cashflow.withdraw", kind: "changed", before: ["cash"], after: [] },
 		])
 	})
 
 	it("sorts changes by unescaped segment and repeats byte for byte", async () => {
 		const home = scenarioHome()
-		await applyScenario(home, "a", { schemaVersion: 1, B: 1, a: 1, "a.b": 1 })
-		await applyScenario(home, "b", { schemaVersion: 1, B: 2, a: 2, "a.b": 2 })
+		await applyScenario(home, "a", A)
+		await applyScenario(home, "b", {
+			...A,
+			currency: "USD",
+			economy: { inflation: 100 },
+			accounts: [{ ...CASH, rate: 250 }, LOAN],
+		})
 		const first = await scenario(home, ["diff", "a", "b"])
 		const second = await scenario(home, ["diff", "a", "b"])
 		expect(second.out).toBe(first.out)
-		expect(changesOf(resultOf(first)).map((change) => change.path)).toEqual(["B", "a", "a\\.b"])
+		expect(changesOf(resultOf(first)).map((change) => change.path)).toEqual([
+			"accounts.cash.rate",
+			"currency",
+			"economy.inflation",
+		])
 	})
 
 	it("reports a missing side as not_found at a or b", async () => {

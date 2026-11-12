@@ -57,10 +57,15 @@ export function parseDocument(spec: DocumentSpec, text: string, path: string): u
 	}
 	const result = spec.schema.safeParse(value)
 	if (result.success) return result.data
-	const issues = result.error.issues.map((issue) => ({
-		path: ["document", ...issue.path].filter((part) => part !== "").join("."),
-		message: issue.message,
-	}))
+	const issues = result.error.issues.map((issue) => {
+		const params = "params" in issue ? issue.params : undefined
+		const code = typeof params === "object" && params !== null ? params["code"] : undefined
+		return {
+			path: ["document", ...issue.path].filter((part) => part !== "").join("."),
+			message: issue.message,
+			...(typeof code === "string" ? { code } : {}),
+		}
+	})
 	const first = issues[0]
 	return fail("invalid_input", {
 		message: first === undefined ? `${path}: the document is invalid` : first.message,

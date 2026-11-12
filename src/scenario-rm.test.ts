@@ -7,9 +7,10 @@ import {
 	scenario,
 	scenarioHome,
 } from "./scenario-test-support"
+import { SCENARIO_DOCUMENT } from "./store/testing"
 import { capture } from "./test-support"
 
-const BASE = { schemaVersion: 1, goal: { amount: 1_000_000 } }
+const BASE = SCENARIO_DOCUMENT
 
 describe("scenario rm", () => {
 	it("tombstones a Scenario and reports the deletion once", async () => {

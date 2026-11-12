@@ -44,19 +44,3 @@ describe("applyOverrides suggestions", () => {
 		expect(body.details).toMatchObject({ segment: "goal.amount", suggestion: null })
 	})
 })
-
-describe("applyOverrides envelope", () => {
-	it("reports a set that leaves the document outside the envelope", () => {
-		const body = failed({ schemaVersion: 1 }, "schemaVersion=0")
-		expect(body).toMatchObject({
-			code: "invalid_input",
-			path: "set",
-			details: { index: 0, path: "schemaVersion", documentPath: "document.schemaVersion" },
-		})
-	})
-
-	it("names the set that broke the document, not merely the last one", () => {
-		const body = failed({ schemaVersion: 1, a: 1 }, 'a="x"', 'schemaVersion="1"')
-		expect(body.details).toMatchObject({ index: 1, path: "schemaVersion" })
-	})
-})

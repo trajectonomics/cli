@@ -1,6 +1,6 @@
 import type { AccountType, ChartOfAccounts } from "@trajectonomics/ledger"
 import type { AppError } from "../errors"
-import type { ScenarioDocument } from "../scenario/envelope"
+import type { ScenarioDocument } from "../scenario/document"
 import type { Ledger } from "./ledger"
 import type { AccountRow, EntityRow, PostingRow, ScenarioRow, TxRow } from "./rows"
 import type { TxFilter } from "./tx-filter"

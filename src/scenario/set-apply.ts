@@ -1,6 +1,6 @@
 import { type AppError, isAppError } from "../errors"
 import { isPlainObject } from "../json"
-import { envelopeProblem, type ScenarioDocument } from "./envelope"
+import { type ScenarioDocument, scenarioProblems } from "./document"
 import { formatPath } from "./path"
 import { type AppliedOverride, documentFailure } from "./set-error"
 import { badSet, type ParsedSet, parseSet } from "./set-parse"
@@ -62,6 +62,22 @@ export function applyOverrides(
 		current = next
 		overrides.push({ path, value: set.value })
 	}
-	const problem = envelopeProblem(current)
-	return problem === null ? { document: current, overrides } : documentFailure(overrides, problem)
+	return { document: current, overrides }
+}
+
+/**
+ * Applies the Sets and refuses a final document `sim-core` does not accept, reported at the Set at
+ * fault. The pre-check lives beside `applyOverrides` so a caller cannot forget it (ADR-0024).
+ */
+export function applyScenarioSets(
+	document: ScenarioDocument,
+	sets: readonly string[],
+): AppliedOverrides | AppError {
+	// A plain fork has no Set to blame: the Store's canonicaliser reports a stale row at `document`.
+	if (sets.length === 0) return { document, overrides: [] }
+	const applied = applyOverrides(document, sets)
+	if (isAppError(applied)) return applied
+	const [first, ...rest] = scenarioProblems(applied.document)
+	if (first === undefined) return applied
+	return documentFailure(applied.overrides, [first, ...rest], applied.document)
 }

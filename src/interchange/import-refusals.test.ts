@@ -103,13 +103,13 @@ describe("importJsonl refusals", () => {
 				"invalid_input",
 				"line.4.entityId",
 			],
-			['"rate":0.025', '"rate":0.026', "invalid_input", "line.23.contentHash"],
-			['"draft":true,', '"draft":true,"x":NaN,', "invalid_input", "line.24"],
+			['"rate":250', '"rate":251', "invalid_input", "line.23.contentHash"],
+			['"id":"draft-salary"', '"id":"draft-salary","x":NaN', "invalid_input", "line.24"],
 			[
-				'{"draft":true,"events":[],"schemaVersion":2}',
-				'{"draft":true}',
+				'"id":"draft-salary"',
+				'"id":"draft-salary","nope":1',
 				"invalid_input",
-				"line.24.document.schemaVersion",
+				"line.24.document.flows.0.nope",
 			],
 		]
 		for (const [from, to, code, path] of cases) {

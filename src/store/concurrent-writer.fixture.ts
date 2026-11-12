@@ -3,6 +3,7 @@
 // printed as its envelope and sets a non-zero exit code; only src/index.ts calls process.exit.
 import { type AppError, isAppError } from "../errors"
 import { openStore, type Store } from "./index"
+import { SCENARIO_DOCUMENT } from "./testing"
 
 const [home = "", writer = "0", count = "0"] = process.argv.slice(2)
 
@@ -18,7 +19,10 @@ function write(store: Store): void {
 	if (failed(accounts)) return
 	const [cash, food] = accounts.map((a) => a.id)
 	for (let n = 0; n < Number(count); n++) {
-		if (failed(store.saveScenario({ name: "shared", document: { schemaVersion: 1, writer, n } }))) {
+		// One valid Scenario per write, distinct per writer and step.
+		const variant = Number(writer) * 1000 + n
+		const document = { ...SCENARIO_DOCUMENT, economy: { inflation: variant } }
+		if (failed(store.saveScenario({ name: "shared", document }))) {
 			return
 		}
 		if (cash === undefined || food === undefined) continue
