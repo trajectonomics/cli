@@ -5,16 +5,14 @@ import {
 	errorOf,
 	resultOf,
 	rowOf,
+	SCENARIO_DOCUMENT,
 	scenario,
 	scenarioHome,
 } from "./scenario-test-support"
 import { capture } from "./test-support"
 
-const DOC = {
-	schemaVersion: 1,
-	goal: { amount: 1_000_000 },
-	streams: [{ id: "salary", amount: 40_000 }],
-}
+const DOC = SCENARIO_DOCUMENT
+const SALARY = DOC.flows[0]
 
 describe("scenario apply", () => {
 	it("creates a Scenario from a file and reports the written row", async () => {
@@ -32,11 +30,7 @@ describe("scenario apply", () => {
 		expect(scenario.version).toBe(1)
 		expect(scenario.forkedFrom).toBeNull()
 		expect(scenario.contentHash).toMatch(/^jcs1:sha256:/)
-		expect(scenario.document).toEqual({
-			schemaVersion: 1,
-			goal: { amount: 1_000_000 },
-			streams: [{ id: "salary", amount: 40_000 }],
-		})
+		expect(scenario.document).toEqual(DOC)
 	})
 
 	it("reads the same document from stdin with --file -", async () => {
@@ -50,8 +44,14 @@ describe("scenario apply", () => {
 		const home = scenarioHome()
 		const first = await applyScenario(home, "base", DOC)
 		const before = rowOf(resultOf(first))
-		const reordered =
-			'{\n  "streams": [{"amount": 40000, "id": "salary"}],\n  "goal": {"amount": 1000000},\n  "schemaVersion": 1\n}\n'
+		const reordered = JSON.stringify({
+			cashflow: DOC.cashflow,
+			flows: DOC.flows,
+			accounts: DOC.accounts,
+			economy: DOC.economy,
+			currency: DOC.currency,
+			schemaVersion: DOC.schemaVersion,
+		})
 		const second = await applyScenario(home, "base", reordered)
 		expect(second.code).toBe(0)
 		expect(resultOf(second).status).toBe("unchanged")
@@ -61,7 +61,7 @@ describe("scenario apply", () => {
 	it("updates a changed document, keeping the id and bumping the version once", async () => {
 		const home = scenarioHome()
 		const first = rowOf(resultOf(await applyScenario(home, "base", DOC)))
-		const changed = { ...DOC, goal: { amount: 2_000_000 } }
+		const changed = { ...DOC, economy: { inflation: 100 } }
 		const second = resultOf(await applyScenario(home, "base", changed))
 		expect(second.status).toBe("updated")
 		const scenario = rowOf(second)
@@ -69,26 +69,53 @@ describe("scenario apply", () => {
 		expect(scenario.forkedFrom).toBeNull()
 		expect(scenario.version).toBe(2)
 		expect(scenario.createdAt).toBe(first.createdAt)
-		expect(scenario.document).toMatchObject({ goal: { amount: 2_000_000 } })
+		expect(scenario.document).toMatchObject({ economy: { inflation: 100 } })
 	})
 
-	it("refuses a document that is not the envelope, at the documented path", async () => {
+	it("refuses a document sim-core refuses, at the failing document path and code", async () => {
 		const home = scenarioHome()
-		const cases: [string, string][] = [
-			["", "file"],
-			["{not json", "file"],
-			["[]", "document"],
-			['{"goal":{}}', "document.schemaVersion"],
-			['{"schemaVersion":"1"}', "document.schemaVersion"],
-			['{"schemaVersion":0}', "document.schemaVersion"],
-			['{"schemaVersion":1.5}', "document.schemaVersion"],
+		const cases: [string, string, string][] = [
+			["", "file", "invalid_input"],
+			["{not json", "file", "invalid_input"],
+			["[]", "document", "NOT_AN_OBJECT"],
+			['{"goal":{}}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
+			['{"schemaVersion":"1"}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
+			['{"schemaVersion":0}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
+			['{"schemaVersion":1.5}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
 		]
-		for (const [document, path] of cases) {
+		for (const [document, path, code] of cases) {
 			const res = await applyScenario(home, "base", document)
 			expect(res.code).toBe(2)
-			expect(errorOf(res)).toMatchObject({ code: "invalid_input", path })
+			const error = errorOf(res)
+			expect(error).toMatchObject({ code: "invalid_input", path })
+			if (path !== "file") expect(error.details).toEqual([expect.objectContaining({ code })])
 		}
 		expect(resultOf(await scenario(home, ["list"])).scenarios).toEqual([])
+	})
+
+	it("lists every problem in details, in sim-core's order", async () => {
+		const home = scenarioHome()
+		const document = { ...DOC, flows: [{ ...SALARY, nope: 1, amount: -1 }] }
+		const res = await applyScenario(home, "base", document)
+		expect(res.code).toBe(2)
+		const error = errorOf(res)
+		expect(error).toMatchObject({
+			code: "invalid_input",
+			path: "document.flows.0.nope",
+			message: "document.flows.0.nope: UNKNOWN_KEY",
+		})
+		expect(error.details).toEqual([
+			{
+				path: "document.flows.0.nope",
+				message: "document.flows.0.nope: UNKNOWN_KEY",
+				code: "UNKNOWN_KEY",
+			},
+			{
+				path: "document.flows.0.amount",
+				message: "document.flows.0.amount: NEGATIVE_AMOUNT",
+				code: "NEGATIVE_AMOUNT",
+			},
+		])
 	})
 
 	it("requires --file before any document is read", async () => {
@@ -116,24 +143,29 @@ describe("scenario apply", () => {
 	it("keeps an existing id on a dry-run update and rolls the document back", async () => {
 		const home = scenarioHome()
 		const first = rowOf(resultOf(await applyScenario(home, "base", DOC)))
-		const changed = { ...DOC, goal: { amount: 9_000_000 } }
+		const changed = { ...DOC, economy: { inflation: 900 } }
 		const dry = resultOf(await applyScenario(home, "base", changed, ["--dry-run"]))
 		expect(dry.status).toBe("updated")
 		expect(rowOf(dry).id).toBe(first.id)
 		const shown = rowOf(resultOf(await scenario(home, ["show", "base"])))
 		expect(shown.version).toBe(1)
-		expect(shown.document).toMatchObject({ goal: { amount: 1_000_000 } })
+		expect(shown.document).toMatchObject({ economy: { inflation: 0 } })
 	})
 
-	it("is listed by the schema with its document shape", async () => {
+	it("is listed by the schema with sim-core's document shape", async () => {
 		const home = scenarioHome()
 		const listing = resultOf(await scenario(home, ["list"]))
 		expect(listing).toEqual({ scenarios: [] })
 		const described = resultOf(await capture(["schema", "scenario", "apply", "--json"]))
 		expect(described.name).toBe("scenario apply")
-		const document = described.document as { flag: string; schema: { required: string[] } }
+		const document = described.document as {
+			flag: string
+			schema: { required: string[]; description: string }
+		}
 		expect(document.flag).toBe("file")
 		expect(document.schema.required).toEqual(["schemaVersion"])
+		expect(document.schema.description).toContain("@trajectonomics/sim@0.2.0-alpha.15")
+		expect(document.schema.description).toContain("check()")
 		expect(described.errorCodes).toContain("invalid_input")
 		expect(described.errorCodes).toContain("database_busy")
 	})

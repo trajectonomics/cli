@@ -1,5 +1,5 @@
 import { type AppError, fail, isAppError } from "../errors"
-import type { ScenarioDocument } from "../scenario/envelope"
+import type { ScenarioDocument } from "../scenario/document"
 import type { Ctx } from "./context"
 import { write } from "./guard"
 import { canonicalDocument, insertScenario, liveScenario } from "./scenario-rows"

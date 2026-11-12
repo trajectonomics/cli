@@ -4,12 +4,13 @@ import {
 	errorOf,
 	resultOf,
 	rowOf,
+	SCENARIO_DOCUMENT,
 	scenario,
 	scenarioHome,
 } from "./scenario-test-support"
 import { capture } from "./test-support"
 
-const BASE = { schemaVersion: 1, goal: { amount: 1_000_000 } }
+const BASE = SCENARIO_DOCUMENT
 
 describe("scenario rm", () => {
 	it("tombstones a Scenario and reports the deletion once", async () => {

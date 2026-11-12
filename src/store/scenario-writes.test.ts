@@ -1,8 +1,9 @@
 import { describe, expect, it } from "bun:test"
 import { fail, isAppError } from "../errors"
+import { SCENARIO_DOCUMENT } from "../scenario-test-support"
 import { must, mustOpen, tempHome } from "./testing"
 
-const DOC = { schemaVersion: 1, a: 1 }
+const DOC = SCENARIO_DOCUMENT
 
 describe("scenario reads and dry runs", () => {
 	it("resolves an id first and then a live name, never a tombstone", () => {
@@ -28,7 +29,10 @@ describe("scenario reads and dry runs", () => {
 		const store = mustOpen(tempHome())
 		const base = must(store.saveScenario({ name: "base", document: DOC })).scenario
 		const dry = must(
-			store.saveScenario({ name: "base", document: { schemaVersion: 1, a: 2 } }, { dryRun: true }),
+			store.saveScenario(
+				{ name: "base", document: { ...DOC, economy: { inflation: 100 } } },
+				{ dryRun: true },
+			),
 		)
 		expect(dry.status).toBe("updated")
 		expect(dry.scenario.version).toBe(2)
@@ -50,16 +54,13 @@ describe("forkScenario transform", () => {
 		const base = must(store.saveScenario({ name: "base", document: DOC })).scenario
 		const fork = must(
 			store.forkScenario(base.id, "early", {
-				transform: (document) => ({ ...document, a: 2 }),
+				transform: (document) => ({ ...document, currency: "USD" }),
 			}),
 		)
 		expect(fork.status).toBe("forked")
 		if (fork.status === "not_found") return
-		expect(fork.scenario).toMatchObject({
-			forkedFrom: base.id,
-			version: 1,
-			document: '{"a":2,"schemaVersion":1}',
-		})
+		expect(fork.scenario).toMatchObject({ forkedFrom: base.id, version: 1 })
+		expect(JSON.parse(fork.scenario.document)).toMatchObject({ currency: "USD" })
 		expect(must(store.getScenario(base.id))).toEqual(base)
 	})
 

@@ -3,7 +3,7 @@ import { type AppError, fail, isAppError } from "../errors"
 /** One parsed `--set`: the dotted segments and the JSON value they take. */
 export type ParsedSet = { segments: string[]; value: unknown }
 
-const SET_HINT = "A --set is path=json, such as --set streams.salary.amount=50000."
+const SET_HINT = "A --set is path=json, such as --set flows.salary.amount=50000."
 
 /** An invalid `--set` always points at the input field `set`, never at a document path. */
 export function badSet(

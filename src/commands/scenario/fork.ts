@@ -3,10 +3,10 @@ import { UUID_SHAPED } from "../../account/name"
 import type { Leaf, Result } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { type AppError, isAppError } from "../../errors"
-import type { ScenarioDocument } from "../../scenario/envelope"
+import { type ScenarioDocument, scenarioProblems } from "../../scenario/document"
 import { invalidScenarioName, scenarioNameTaken, scenarioNotFound } from "../../scenario/errors"
 import { applyOverrides } from "../../scenario/set-apply"
-import type { AppliedOverride } from "../../scenario/set-error"
+import { type AppliedOverride, documentFailure } from "../../scenario/set-error"
 import { view, type WrittenScenario, writtenScenario } from "../../scenario/view"
 import type { ForkOptions, ScenarioForked, ScenarioTransform } from "../../store"
 import { withStore } from "../../with-store"
@@ -31,6 +31,8 @@ function transformFor(
 	return (document: ScenarioDocument) => {
 		const applied = applyOverrides(document, sets)
 		if (isAppError(applied)) return applied
+		const [problem] = scenarioProblems(applied.document)
+		if (problem !== undefined) return documentFailure(applied.overrides, problem, applied.document)
 		echo(applied.overrides)
 		return applied.document
 	}
@@ -75,7 +77,7 @@ export const fork: Leaf = defineCommand({
 	examples: [
 		{ command: "traj scenario fork base early", description: "Copy a Scenario under a new name." },
 		{
-			command: "traj scenario fork base early --set streams.salary.amount=50000",
+			command: "traj scenario fork base early --set flows.salary.amount=50000",
 			description: "Copy it with one assumption changed.",
 		},
 	],

@@ -1,8 +1,8 @@
 import { type AppError, isAppError } from "../errors"
 import { isPlainObject } from "../json"
-import { envelopeProblem, type ScenarioDocument } from "./envelope"
+import type { ScenarioDocument } from "./document"
 import { formatPath } from "./path"
-import { type AppliedOverride, documentFailure } from "./set-error"
+import type { AppliedOverride } from "./set-error"
 import { badSet, type ParsedSet, parseSet } from "./set-parse"
 import { replaceAt } from "./set-replace"
 
@@ -62,6 +62,5 @@ export function applyOverrides(
 		current = next
 		overrides.push({ path, value: set.value })
 	}
-	const problem = envelopeProblem(current)
-	return problem === null ? { document: current, overrides } : documentFailure(overrides, problem)
+	return { document: current, overrides }
 }

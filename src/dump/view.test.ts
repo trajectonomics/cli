@@ -29,9 +29,9 @@ describe("the dump row view", () => {
 	it("keeps a Scenario document as its stored canonical text, never re-parsed", async () => {
 		const view = await goldenView()
 		expect(view.scenario.map((row) => row.document)).toEqual([
-			'{"accounts":[{"balance":"150000.00","name":"ออมทรัพย์","rate":0.07}],"goal":{"fiMultiple":25},"inflation":0.03,"note":null,"schemaVersion":1}',
-			'{"accounts":[{"balance":"150000.00","name":"ออมทรัพย์","rate":0.025}],"goal":{"fiMultiple":25},"inflation":0.03,"schemaVersion":1}',
-			'{"draft":true,"events":[],"schemaVersion":2}',
+			'{"accounts":[{"id":"savings","kind":"asset","rate":275},{"id":"mortgage","kind":"liability","rate":500}],"cashflow":{"contribute":[],"surplus":[{"account":"savings"}],"withdraw":["savings"]},"currency":"THB","economy":{"inflation":300},"flows":[{"amount":5500000,"earned":true,"frequency":"monthly","growth":"inflation","id":"salary","kind":"income","start":"2026-01-01"}],"schemaVersion":4}',
+			'{"accounts":[{"id":"savings","kind":"asset","rate":250},{"id":"mortgage","kind":"liability","rate":500}],"cashflow":{"contribute":[],"surplus":[{"account":"savings"}],"withdraw":["savings"]},"currency":"THB","economy":{"inflation":300},"flows":[{"amount":5000000,"earned":true,"frequency":"monthly","growth":"inflation","id":"salary","kind":"income","start":"2026-01-01"}],"schemaVersion":4}',
+			'{"accounts":[{"id":"draft-cash","kind":"asset","rate":125}],"cashflow":{"contribute":[],"surplus":[{"account":"draft-cash"}],"withdraw":["draft-cash"]},"currency":"THB","economy":{"inflation":0},"flows":[{"amount":1,"earned":true,"frequency":"monthly","growth":"inflation","id":"draft-salary","kind":"income","start":"2026-01-01"}],"schemaVersion":4}',
 		])
 	})
 

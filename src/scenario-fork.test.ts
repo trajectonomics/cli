@@ -4,13 +4,14 @@ import {
 	errorOf,
 	resultOf,
 	rowOf,
+	SCENARIO_DOCUMENT,
 	scenario,
 	scenarioHome,
 	summariesOf,
 } from "./scenario-test-support"
 import { capture } from "./test-support"
 
-const BASE = { schemaVersion: 1, goal: { amount: 1_000_000 } }
+const BASE = SCENARIO_DOCUMENT
 
 describe("scenario fork", () => {
 	it("copies a Scenario under a new name and keeps the source byte-identical", async () => {

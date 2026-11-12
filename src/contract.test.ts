@@ -5,6 +5,7 @@ import { join } from "node:path"
 import { z } from "zod"
 import { defineCommand, defineGroup } from "./command"
 import { type ErrorCode, isAppError, registry } from "./errors"
+import { SCENARIO_DOCUMENT } from "./scenario-test-support"
 import { type StoreRaised, storeTriggers, type Trigger } from "./store/store-triggers"
 import { tempHome } from "./store/testing"
 import { type Captured, capture } from "./test-support"
@@ -71,7 +72,7 @@ describe("contract", () => {
 		scenario_name_taken: async () => {
 			const home = tempHome()
 			const apply = ["scenario", "apply", "base", "--file", "-", "--json"]
-			await capture(apply, { TRAJ_HOME: home }, undefined, '{"schemaVersion":1}')
+			await capture(apply, { TRAJ_HOME: home }, undefined, JSON.stringify(SCENARIO_DOCUMENT))
 			return capture(["scenario", "fork", "base", "base", "--json"], { TRAJ_HOME: home })
 		},
 		...probed(storeTriggers),

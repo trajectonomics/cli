@@ -4,12 +4,13 @@ import {
 	errorOf,
 	resultOf,
 	rowOf,
+	SCENARIO_DOCUMENT,
 	scenario,
 	scenarioHome,
 	summariesOf,
 } from "./scenario-test-support"
 
-const BASE = { schemaVersion: 1, streams: [{ id: "salary", amount: 40_000 }] }
+const BASE = SCENARIO_DOCUMENT
 
 describe("scenario list and show", () => {
 	it("returns an empty list at exit 0 for an empty database", async () => {
@@ -44,7 +45,7 @@ describe("scenario list and show", () => {
 		expect(byName).toEqual(created)
 		expect(byId).toEqual(created)
 		const view = byName
-		expect(view.document).toEqual({ schemaVersion: 1, streams: [{ amount: 40_000, id: "salary" }] })
+		expect(view.document).toEqual(SCENARIO_DOCUMENT)
 		expect(view).not.toHaveProperty("deletedAt")
 		expect(view.forkedFrom).toBeNull()
 	})

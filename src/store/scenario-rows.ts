@@ -1,5 +1,5 @@
 import type { AppError } from "../errors"
-import { envelopeError } from "../scenario/envelope"
+import { scenarioDocumentError } from "../scenario/document"
 import { canonicalJson, contentHash } from "./canonical"
 import { SCENARIO_COLUMNS } from "./columns"
 import type { Ctx } from "./context"
@@ -17,11 +17,11 @@ export function liveScenario(ctx: Ctx, column: "id" | "name", value: string): Sc
 }
 
 /**
- * The document as canonical text. `sim-core` does not exist, so a scenario is opaque apart from
- * the shared envelope (ADR-0024). Must run inside `guard`.
+ * The document as canonical text. `sim-core`'s `check()` decides whether it is a Scenario
+ * (ADR-0024). Must run inside `guard`.
  */
 export function canonicalDocument(document: unknown, path = "document"): string {
-	const failure = envelopeError(document, path)
+	const failure = scenarioDocumentError(document, path)
 	if (failure !== null) return abort(failure)
 	return canonicalJson(document, path)
 }

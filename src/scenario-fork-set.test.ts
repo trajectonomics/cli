@@ -4,19 +4,13 @@ import {
 	errorOf,
 	resultOf,
 	rowOf,
+	SCENARIO_DOCUMENT,
 	scenario,
 	scenarioHome,
 	summariesOf,
 } from "./scenario-test-support"
 
-const STREAMS = {
-	schemaVersion: 1,
-	streams: [
-		{ id: "salary", amount: 40_000 },
-		{ id: "bonus", amount: 5_000 },
-	],
-	goal: { amount: 1_000_000 },
-}
+const DOC = SCENARIO_DOCUMENT
 
 type OverrideBody = { path: string; value: unknown }
 
@@ -27,71 +21,71 @@ function overridesOf(data: unknown): OverrideBody[] {
 describe("scenario fork --set", () => {
 	it("changes only the fork's copy and echoes the applied override", async () => {
 		const home = scenarioHome()
-		const base = rowOf(resultOf(await applyScenario(home, "base", STREAMS)))
+		const base = rowOf(resultOf(await applyScenario(home, "base", DOC)))
 		const res = await scenario(home, [
 			"fork",
 			"base",
 			"early",
 			"--set",
-			"streams.salary.amount=50000",
+			"flows.salary.amount=200000",
 		])
 		expect(res.code).toBe(0)
 		const data = resultOf(res)
-		expect(overridesOf(data)).toEqual([{ path: "streams.salary.amount", value: 50_000 }])
+		expect(overridesOf(data)).toEqual([{ path: "flows.salary.amount", value: 200_000 }])
 		const fork = rowOf(data)
-		expect((fork.document as { streams: unknown[] }).streams).toContainEqual({
-			id: "salary",
-			amount: 50_000,
+		expect((fork.document as { flows: unknown[] }).flows).toContainEqual({
+			...DOC.flows[0],
+			amount: 200_000,
 		})
 		expect(rowOf(resultOf(await scenario(home, ["show", "base"]))).document).toEqual(base.document)
 	})
 
 	it("applies several sets in command-line order and echoes them in that order", async () => {
 		const home = scenarioHome()
-		await applyScenario(home, "base", STREAMS)
+		await applyScenario(home, "base", DOC)
 		const res = await scenario(home, [
 			"fork",
 			"base",
 			"early",
 			"--set",
-			"goal.amount=2000000",
+			"economy.inflation=100",
 			"--set",
-			"streams.bonus.amount=7000",
+			"flows.bonus.amount=7000",
 		])
 		const data = resultOf(res)
 		expect(overridesOf(data).map((override) => override.path)).toEqual([
-			"goal.amount",
-			"streams.bonus.amount",
+			"economy.inflation",
+			"flows.bonus.amount",
 		])
 		expect(rowOf(data).document).toMatchObject({
-			goal: { amount: 2_000_000 },
+			economy: { inflation: 100 },
 		})
 	})
 
 	it("refuses an exact duplicate path", async () => {
 		const home = scenarioHome()
-		await applyScenario(home, "base", STREAMS)
+		await applyScenario(home, "base", DOC)
 		const res = await scenario(home, [
 			"fork",
 			"base",
 			"early",
 			"--set",
-			"goal.amount=1",
+			"economy.inflation=1",
 			"--set",
-			"goal.amount=2",
+			"economy.inflation=2",
 		])
 		expect(res.code).toBe(2)
 		expect(errorOf(res)).toMatchObject({
 			code: "invalid_input",
 			path: "set",
-			details: { path: "goal.amount" },
+			details: { path: "economy.inflation" },
 		})
 	})
 
 	it("fails a typo with a did-you-mean hint and writes no fork", async () => {
 		const home = scenarioHome()
-		await applyScenario(home, "base", STREAMS)
-		const res = await scenario(home, ["fork", "base", "early", "--set", "streams.salery.amount=1"])
+		await applyScenario(home, "base", DOC)
+		const res = await scenario(home, ["fork", "base", "early", "--set", "flows.salery.amount=1"])
 		expect(res.code).toBe(2)
 		const error = errorOf(res)
 		expect(error).toMatchObject({
@@ -99,12 +93,12 @@ describe("scenario fork --set", () => {
 			path: "set",
 			details: {
 				index: 0,
-				path: "streams.salery.amount",
+				path: "flows.salery.amount",
 				segment: "salery",
-				suggestion: "streams.salary.amount",
+				suggestion: "flows.salary.amount",
 			},
 		})
-		expect(error.hint).toContain("streams.salary.amount")
+		expect(error.hint).toContain("flows.salary.amount")
 		const names = summariesOf(resultOf(await scenario(home, ["list"]))).map(
 			(summary) => summary.name,
 		)
@@ -113,51 +107,45 @@ describe("scenario fork --set", () => {
 
 	it("lists known siblings when no candidate is close", async () => {
 		const home = scenarioHome()
-		await applyScenario(home, "base", STREAMS)
+		await applyScenario(home, "base", DOC)
 		const res = await scenario(home, ["fork", "base", "early", "--set", "nothing.at.all=1"])
 		expect(res.code).toBe(2)
 		expect(errorOf(res).details).toMatchObject({ suggestion: null })
 		expect(errorOf(res).hint).toContain("schemaVersion")
 	})
 
-	it("keeps JSON value types", async () => {
+	it("names the set that broke the document, not merely the last one", async () => {
 		const home = scenarioHome()
-		const doc = { schemaVersion: 1, n: 1, s: "a", b: false, z: 1, o: { k: 1 }, list: [1, 2] }
-		await applyScenario(home, "base", doc)
+		await applyScenario(home, "base", DOC)
 		const res = await scenario(home, [
 			"fork",
 			"base",
-			"typed",
+			"early",
 			"--set",
-			"n=50000",
+			"schemaVersion=0",
 			"--set",
-			's="50000"',
-			"--set",
-			"b=true",
-			"--set",
-			"z=null",
-			"--set",
-			'o={"k":2}',
-			"--set",
-			"list=[1,2,3]",
+			'economy.inflation="x"',
 		])
-		expect(res.code).toBe(0)
-		const fork = rowOf(resultOf(res))
-		expect(fork.document).toEqual({
-			schemaVersion: 1,
-			b: true,
-			list: [1, 2, 3],
-			n: 50_000,
-			o: { k: 2 },
-			s: "50000",
-			z: null,
+		expect(res.code).toBe(2)
+		expect(errorOf(res)).toMatchObject({
+			code: "invalid_input",
+			path: "set",
+			details: {
+				index: 0,
+				path: "schemaVersion",
+				documentPath: "document.schemaVersion",
+				code: "UNSUPPORTED_SCHEMA_VERSION",
+			},
 		})
+		expect(summariesOf(resultOf(await scenario(home, ["list"]))).map((one) => one.name)).toEqual([
+			"base",
+		])
 	})
 
 	it("refuses a bare word with a quoting hint", async () => {
 		const home = scenarioHome()
-		await applyScenario(home, "base", STREAMS)
-		const res = await scenario(home, ["fork", "base", "early", "--set", "goal.amount=not-json"])
+		await applyScenario(home, "base", DOC)
+		const res = await scenario(home, ["fork", "base", "early", "--set", "economy.inflation=no"])
 		expect(res.code).toBe(2)
 		expect(errorOf(res).hint).toContain("Quote a string")
 	})

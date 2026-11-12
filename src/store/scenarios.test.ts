@@ -1,10 +1,14 @@
 import { describe, expect, it } from "bun:test"
 import { isAppError } from "../errors"
+import { SCENARIO_DOCUMENT } from "../scenario-test-support"
 import { must, mustOpen, tempHome } from "./testing"
 
-const DOC = { schemaVersion: 1, b: null, accounts: [{ rate: 0.025, name: "ออมทรัพย์" }] }
-const CANONICAL = '{"accounts":[{"name":"ออมทรัพย์","rate":0.025}],"b":null,"schemaVersion":1}'
-const HASH = "jcs1:sha256:76c6971cb0c71649e3028526cc4dd121091ff061844fd189cc271046f41d6686"
+const DOC = SCENARIO_DOCUMENT
+const CANONICAL =
+	'{"accounts":[{"id":"cash","kind":"asset","rate":0},{"id":"loan","kind":"liability","rate":0}],"cashflow":{"contribute":[],"surplus":[{"account":"cash"}],"withdraw":["cash"]},"currency":"THB","economy":{"inflation":0},"flows":[{"amount":100000,"earned":true,"frequency":"monthly","growth":"inflation","id":"salary","kind":"income","start":"2026-01-01"},{"amount":5000,"earned":true,"frequency":"annual","growth":"inflation","id":"bonus","kind":"income","start":"2026-01-01"}],"schemaVersion":4}'
+const HASH = "jcs1:sha256:3a931d4544af1f2fc01894242ee6c22ab252cb7333ad14eb18988693a07556f1"
+const CHANGED =
+	'{"accounts":[{"id":"cash","kind":"asset","rate":0},{"id":"loan","kind":"liability","rate":0}],"cashflow":{"contribute":[],"surplus":[{"account":"cash"}],"withdraw":["cash"]},"currency":"THB","economy":{"inflation":100},"flows":[{"amount":100000,"earned":true,"frequency":"monthly","growth":"inflation","id":"salary","kind":"income","start":"2026-01-01"},{"amount":5000,"earned":true,"frequency":"annual","growth":"inflation","id":"bonus","kind":"income","start":"2026-01-01"}],"schemaVersion":4}'
 
 describe("scenarios", () => {
 	it("stores a new scenario as JCS canonical text with an algorithm-tagged hash", () => {
@@ -25,14 +29,26 @@ describe("scenarios", () => {
 	it("leaves an unchanged document alone and versions a changed one", () => {
 		const store = mustOpen(tempHome())
 		const first = must(store.saveScenario({ name: "base", document: DOC }))
-		const reordered = { accounts: [{ name: "ออมทรัพย์", rate: 0.025 }], b: null, schemaVersion: 1 }
+		const reordered = {
+			schemaVersion: DOC.schemaVersion,
+			flows: DOC.flows,
+			currency: DOC.currency,
+			economy: DOC.economy,
+			cashflow: DOC.cashflow,
+			accounts: [
+				{ rate: 0, kind: "asset", id: "cash" },
+				{ id: "loan", rate: 0, kind: "liability" },
+			],
+		}
 		const same = must(store.saveScenario({ name: "base", document: reordered }))
 		expect(same).toEqual({ status: "unchanged", scenario: first.scenario })
-		const changed = must(store.saveScenario({ name: "base", document: { schemaVersion: 2 } }))
+		const changed = must(
+			store.saveScenario({ name: "base", document: { ...DOC, economy: { inflation: 100 } } }),
+		)
 		expect(changed.status).toBe("updated")
 		expect(changed.scenario).toMatchObject({
 			id: first.scenario.id,
-			document: '{"schemaVersion":2}',
+			document: CHANGED,
 			version: 2,
 			createdAt: first.scenario.createdAt,
 			// The unchanged save read no clock, so this is the second reading.
@@ -40,13 +56,13 @@ describe("scenarios", () => {
 		})
 	})
 
-	it("refuses a document that is not an object with an integer schemaVersion", () => {
+	it("refuses a document sim-core does not accept, at the failing document path", () => {
 		const store = mustOpen(tempHome())
 		const cases: [unknown, string][] = [
 			[[1], "document"],
 			[{ name: "x" }, "document.schemaVersion"],
 			[{ schemaVersion: "1" }, "document.schemaVersion"],
-			[{ schemaVersion: 1, rate: Number.NaN }, "document.rate"],
+			[{ ...DOC, economy: { inflation: Number.NaN } }, "document.economy.inflation"],
 		]
 		for (const [document, path] of cases) {
 			const outcome = store.saveScenario({ name: "x", document })

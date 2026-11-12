@@ -1,4 +1,5 @@
 import type { AppError } from "../errors"
+import { documentPath, overrideSegments, type ScenarioProblem } from "./document"
 import { formatPath } from "./path"
 import { badSet } from "./set-parse"
 import { closeEnough, knownPaths, nearest } from "./set-suggest"
@@ -63,22 +64,24 @@ export function identityFailure(segment: string, ctx: SegmentContext): AppError 
 	})
 }
 
-/** The error for a document the overrides left outside the envelope. */
+/** The error for a document the overrides left outside `sim-core`'s Scenario schema, at a set. */
 export function documentFailure(
 	overrides: readonly AppliedOverride[],
-	problem: { segments: readonly string[]; why: string },
+	problem: ScenarioProblem,
+	document: unknown,
 ): AppError {
-	const failing = formatPath(problem.segments)
-	const found = overrides.findIndex((override) => override.path === failing)
-	const index = found === -1 ? Math.max(0, overrides.length - 1) : found
+	const segments = overrideSegments(document, problem.segments)
+	const failing = formatPath(segments)
+	const prefixes = new Set(segments.map((_, index) => formatPath(segments.slice(0, index + 1))))
+	let index = -1
+	for (const [at, override] of overrides.entries()) {
+		if (prefixes.has(override.path)) index = at
+	}
+	if (index === -1) index = Math.max(0, overrides.length - 1)
 	const selected = overrides[index]
-	const documentPath = ["document", ...problem.segments].join(".")
-	return badSet(
-		index,
-		`the document is invalid after the overrides: ${documentPath}: ${problem.why}`,
-		{
-			hint: `The overrides leave ${documentPath} invalid; change that value or the path.`,
-			details: { index, path: selected?.path ?? failing, documentPath },
-		},
-	)
+	const path = documentPath("document", problem.segments)
+	return badSet(index, `the document is invalid after the overrides: ${path}: ${problem.code}`, {
+		hint: `The overrides leave ${path} invalid; change that value or the path.`,
+		details: { index, path: selected?.path ?? failing, documentPath: path, code: problem.code },
+	})
 }

@@ -4,7 +4,7 @@ An `entity`, `account`, `tx` and `scenario` each carry a client-generated UUIDv7
 
 The canonical JSONL export is a lossless dump of those rows. Records come in a fixed type order (entity, account, tx, posting, scenario), one row per line, keys in the writer's declared order, tombstones included, sync columns written verbatim and preserved on import, money as decimal strings per ADR-0009, timestamps `YYYY-MM-DDTHH:MM:SS.sssZ`. Byte-identical round trip therefore means "the restore lost nothing", not "the restore recomputed the same values". The header holds a format version and the schema version and nothing else: any wall-clock or build metadata would make two exports of the same database differ.
 
-The schema version lives in `PRAGMA user_version`, not in a table, so the interchange document never carries the database's own bookkeeping. Scenario documents are stored as RFC 8785 (JCS) canonical bytes with an algorithm-tagged `jcs1:sha256:` hash, because `sim-core` does not exist yet and the store is in no position to understand them.
+The schema version lives in `PRAGMA user_version`, not in a table, so the interchange document never carries the database's own bookkeeping. Scenario documents are stored as RFC 8785 (JCS) canonical bytes with an algorithm-tagged `jcs1:sha256:` hash; the Store validates them with `sim-core`'s `check()` (ADR-0024), which changes neither the canonical bytes nor the hash.
 
 ## Considered options
 
