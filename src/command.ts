@@ -1,6 +1,7 @@
 import type { z } from "zod"
 import type { AppError, ErrorCode } from "./errors"
 import { checkPositionals, deriveFlags, type FlagSpec } from "./flags"
+import type { RenderHint } from "./table"
 
 export type Env = Readonly<Record<string, string | undefined>>
 
@@ -61,6 +62,8 @@ export type Command<
 	document?: DocumentSpec<NonNullable<D>>
 	output: O
 	examples: readonly Example[]
+	/** How a table-shaped result renders in the human Format; JSON ignores it. */
+	render?: RenderHint
 	/** Codes this command raises itself. Global codes such as `unknown_flag` are not listed. */
 	errorCodes: readonly ErrorCode[]
 	run: (...args: RunArgs<I, D>) => Outcome<z.input<O>>
@@ -77,6 +80,7 @@ export type Leaf = {
 	output: z.ZodType
 	flags: readonly FlagSpec[]
 	examples: readonly Example[]
+	render?: RenderHint
 	errorCodes: readonly ErrorCode[]
 	run: (input: unknown, document: unknown, ctx: Context) => Outcome<unknown>
 }

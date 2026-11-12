@@ -1,0 +1,2 @@
+# An exported CSV golden is CRLF on purpose (RFC 4180), so git must not normalize it.
+*.csv text eol=crlf

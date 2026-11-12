@@ -32,9 +32,6 @@ export type RecordRows = {
 }
 export type RecordType = keyof RecordRows
 
-/** Every row of a dump, listed by record type. */
-export type RowList = { [T in RecordType]: RecordRows[T][] }
-
 /** The fixed order record types appear in after the header. */
 export const RECORD_ORDER: readonly RecordType[] = [
 	"entity",

@@ -2,6 +2,7 @@ import type { AccountType, ChartOfAccounts } from "@trajectonomics/ledger"
 import type { AppError } from "../errors"
 import type { ScenarioDocument } from "../scenario/envelope"
 import type { AccountRow, EntityRow, PostingRow, ScenarioRow, TxRow } from "./rows"
+import type { TxFilter } from "./tx-filter"
 import type { NewAmendment, NewTransaction, TxAdded, TxAmended, TxVoided } from "./tx-types"
 
 export type {
@@ -12,6 +13,7 @@ export type {
 	TxCorrection,
 	TxRow,
 } from "./rows"
+export type { TxFilter } from "./tx-filter"
 export type {
 	ImportRejection,
 	NewAmendment,
@@ -38,22 +40,6 @@ export type ListOptions<S> = {
 	sort: S
 	/** Include tombstoned rows (the export needs them). Defaults to false. */
 	includeDeleted?: boolean
-}
-
-/** Narrows a transaction listing. Every field is optional and they all must hold together. */
-export type TxFilter = {
-	/** Inclusive lower bound on the transaction's date, `YYYY-MM-DD`. */
-	since?: string
-	/** Inclusive upper bound on the transaction's date, `YYYY-MM-DD`. */
-	until?: string
-	/** At least one of the transaction's postings names this account. */
-	accountId?: string
-	/** At least one of the transaction's postings carries this `project` dimension value. */
-	project?: string
-	/** The transaction links to this id, as a reversal or replacement does. */
-	linkedTo?: string
-	/** Only this transaction; the show read uses it to fetch one row's postings. */
-	id?: string
 }
 
 /** Runs the write for real, then rolls it back before commit (ADR-0019). */
@@ -140,6 +126,13 @@ export interface Store {
 	/** The live Scenario this id or exact name names; an id is read first (ADR-0018). */
 	getScenario(idOrName: string): ScenarioRow | null | AppError
 	listScenarios(options: ListOptions<ScenarioSort>): ScenarioRow[] | AppError
+	/**
+	 * Every row of every table, tombstones included, in the export's canonical order, read inside
+	 * one deferred read transaction so one dump never mixes two snapshots.
+	 */
+	dump(): RestoreRows | AppError
+	/** Each table's tombstone-inclusive row count, equal to the dump's own counts. */
+	counts(): RestoreCounts | AppError
 	/**
 	 * Writes `rows` verbatim (ids, versions, timestamps, tombstones) into a database holding only
 	 * the seeded personal entity, in one transaction that reads no clock. References may point

@@ -20,6 +20,8 @@ export type ErrorCode =
 	| "database_busy"
 	| "database_too_new"
 	| "migration_failed"
+	| "output_exists"
+	| "export_failed"
 	| "SINGLE_POSTING"
 	| "INVALID_AMOUNT"
 	| "ZERO_AMOUNT_POSTING"
@@ -63,6 +65,8 @@ export const registry: Record<ErrorCode, ErrorSpec> = {
 	database_busy: { exit: 5, message: "The database is busy; another writer holds it." },
 	database_too_new: { exit: 5, message: "The database was written by a newer traj." },
 	migration_failed: { exit: 1, message: "The database could not be migrated." },
+	output_exists: { exit: 5, message: "The output path already exists." },
+	export_failed: { exit: 1, message: "The export could not be written." },
 	SINGLE_POSTING: { exit: 3, message: "A transaction needs at least two postings." },
 	INVALID_AMOUNT: { exit: 3, message: "The amount is not a safe integer of minor units." },
 	ZERO_AMOUNT_POSTING: { exit: 3, message: "A posting amount cannot be zero." },

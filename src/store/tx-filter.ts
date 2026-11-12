@@ -1,4 +1,18 @@
-import type { TxFilter } from "./types"
+/** Narrows a transaction listing. Every field is optional and they all must hold together. */
+export type TxFilter = {
+	/** Inclusive lower bound on the transaction's date, `YYYY-MM-DD`. */
+	since?: string
+	/** Inclusive upper bound on the transaction's date, `YYYY-MM-DD`. */
+	until?: string
+	/** At least one of the transaction's postings names this account. */
+	accountId?: string
+	/** At least one of the transaction's postings carries this `project` dimension value. */
+	project?: string
+	/** The transaction links to this id, as a reversal or replacement does. */
+	linkedTo?: string
+	/** Only this transaction; the show read uses it to fetch one row's postings. */
+	id?: string
+}
 
 /** The `AND ...` clauses narrowing a transaction query, and their bound values in order. */
 export function whereOf(filter: TxFilter): { sql: string; params: string[] } {
