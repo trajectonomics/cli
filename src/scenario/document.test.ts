@@ -24,19 +24,19 @@ const SALARY = {
 	id: "salary",
 	kind: "income",
 	earned: true,
+	amount: 100_000,
 	frequency: "monthly",
 	start: "2026-01-01",
-	amount: 100_000,
 	growth: "inflation",
 }
 
 const VALID = {
-	schemaVersion: 4,
+	schemaVersion: 1,
 	currency: "THB",
 	economy: { inflation: 0 },
 	accounts: [{ id: "cash", kind: "asset", rate: 0 }],
 	flows: [SALARY],
-	cashflow: { surplus: [{ account: "cash" }], contribute: [], withdraw: ["cash"] },
+	cashflow: { surplus: [{ account: "cash" }], withdraw: ["cash"] },
 }
 
 describe("scenarioProblems", () => {
@@ -57,7 +57,7 @@ describe("scenarioProblems", () => {
 
 	it("reports a non-object and an unsupported schemaVersion by sim-core's codes", () => {
 		expect(scenarioProblems([])).toEqual([{ code: "NOT_AN_OBJECT", segments: [] }])
-		expect(scenarioProblems({ ...VALID, schemaVersion: 1 })).toEqual([
+		expect(scenarioProblems({ ...VALID, schemaVersion: 2 })).toEqual([
 			{ code: "UNSUPPORTED_SCHEMA_VERSION", segments: ["schemaVersion"] },
 		])
 	})
@@ -136,24 +136,11 @@ describe("scenario document validation", () => {
 })
 
 describe("the scenario problems that depend on the Baseline or Timeline", () => {
-	// The validator gives `check()` an empty Baseline and no Timeline. This pins the one exception
-	// that makes that safe: besides `MISSING_CARRY_IN`, a `scenario.*` problem never depends on the
-	// other two inputs, so validating a document alone cannot disagree with `project()`.
-	const WITH_LEVY = {
-		...VALID,
-		flows: [{ ...SALARY, label: "inc" }],
-		levies: [
-			{
-				id: "tax",
-				period: { month: 1, day: 1 },
-				settlement: { month: 4, day: 1 },
-				measures: [{ id: "due", op: "tally", label: "inc", basis: "gross" }],
-				due: "due",
-			},
-		],
-	}
+	// The validator gives `check()` an empty Baseline and no Timeline. This pins the property that
+	// makes that safe: no `scenario.*` problem depends on the other two inputs. Scenario v1 has no
+	// Levy and so no Timeline-dependent Scenario problem; the validator's `MISSING_CARRY_IN`
+	// exclusion is the forward guard for a later Scenario version.
 	const INVALID: readonly [string, unknown][] = [
-		["a Levy with no carry-in", WITH_LEVY],
 		["an unknown flow key", { ...VALID, flows: [{ ...SALARY, nope: 1 }] }],
 		["a missing cashflow", { ...VALID, cashflow: undefined }],
 		["a negative amount", { ...VALID, flows: [{ ...SALARY, amount: -1 }] }],
@@ -170,14 +157,12 @@ describe("the scenario problems that depend on the Baseline or Timeline", () => 
 		{ start: "2025-01-01", horizon: "2030-01-01", resolution: "month" },
 	]
 
-	it("are only MISSING_CARRY_IN", () => {
+	it("never change a scenario problem", () => {
 		for (const [name, document] of INVALID) {
 			const expected = scenarioProblems(document)
 			for (const baseline of BASELINES) {
 				for (const timeline of TIMELINES) {
-					const found = scenarioPrefix(check(baseline, document, timeline)).filter(
-						(problem) => problem.code !== "MISSING_CARRY_IN",
-					)
+					const found = scenarioPrefix(check(baseline, document, timeline))
 					expect({ name, found }).toEqual({ name, found: expected })
 				}
 			}

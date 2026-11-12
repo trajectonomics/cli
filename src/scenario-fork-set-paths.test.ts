@@ -43,12 +43,12 @@ describe("scenario fork --set paths", () => {
 	it("addresses a numeric-looking id as an id", async () => {
 		const home = scenarioHome()
 		const document = {
-			schemaVersion: 4,
+			schemaVersion: 1,
 			currency: "THB",
 			economy: { inflation: 0 },
 			accounts: [{ id: "0", kind: "asset", rate: 0 }],
 			flows: [],
-			cashflow: { surplus: [{ account: "0" }], contribute: [], withdraw: ["0"] },
+			cashflow: { surplus: [{ account: "0" }], withdraw: ["0"] },
 		}
 		await applyScenario(home, "base", document)
 		const res = await scenario(home, ["fork", "base", "zero", "--set", "accounts.0.rate=100"])

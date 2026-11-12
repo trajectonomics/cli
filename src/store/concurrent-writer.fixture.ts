@@ -18,14 +18,14 @@ function write(store: Store): void {
 	if (failed(accounts)) return
 	const [cash, food] = accounts.map((a) => a.id)
 	for (let n = 0; n < Number(count); n++) {
-		// One valid Scenario v4 per write, distinct by its inflation step.
+		// One valid Scenario v1 per write, distinct per writer and step.
 		const document = {
-			schemaVersion: 4,
+			schemaVersion: 1,
 			currency: "THB",
-			economy: { inflation: n },
+			economy: { inflation: Number(writer) * 1000 + n },
 			accounts: [{ id: "cash", kind: "asset", rate: 0 }],
 			flows: [],
-			cashflow: { surplus: [{ account: "cash" }], contribute: [], withdraw: ["cash"] },
+			cashflow: { surplus: [{ account: "cash" }], withdraw: ["cash"] },
 		}
 		if (failed(store.saveScenario({ name: "shared", document }))) {
 			return

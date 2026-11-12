@@ -88,7 +88,7 @@ describe("inspect <table>", () => {
 		const [scenario] = JSON.parse(res.out).tables
 		expect(scenario.count).toBe(3)
 		expect(scenario.rows[0].document).toBe(
-			'{"accounts":[{"id":"savings","kind":"asset","rate":275},{"id":"mortgage","kind":"liability","rate":500}],"cashflow":{"contribute":[],"surplus":[{"account":"savings"}],"withdraw":["savings"]},"currency":"THB","economy":{"inflation":300},"flows":[{"amount":5500000,"earned":true,"frequency":"monthly","growth":"inflation","id":"salary","kind":"income","start":"2026-01-01"}],"schemaVersion":4}',
+			'{"accounts":[{"id":"savings","kind":"asset","rate":275},{"id":"mortgage","kind":"liability","rate":500}],"cashflow":{"surplus":[{"account":"savings"}],"withdraw":["savings"]},"currency":"THB","economy":{"inflation":300},"flows":[{"amount":5500000,"earned":true,"frequency":"monthly","growth":"inflation","id":"salary","kind":"income","start":"2026-01-01"}],"schemaVersion":1}',
 		)
 		expect(scenario.rows[0].contentHash).toStartWith("jcs1:sha256:")
 	})

@@ -75,13 +75,13 @@ describe("scenario diff", () => {
 
 	it("treats a list without ids as one value", async () => {
 		const home = scenarioHome()
-		const before = { ...A, cashflow: { ...A.cashflow, contribute: [] } }
-		const after = { ...A, cashflow: { ...A.cashflow, contribute: ["cash"] } }
+		const before = { ...A, cashflow: { ...A.cashflow, withdraw: ["cash"] } }
+		const after = { ...A, cashflow: { ...A.cashflow, withdraw: [] } }
 		await applyScenario(home, "a", before)
 		await applyScenario(home, "b", after)
 		const changes = changesOf(resultOf(await scenario(home, ["diff", "a", "b"])))
 		expect(changes).toEqual([
-			{ path: "cashflow.contribute", kind: "changed", before: [], after: ["cash"] },
+			{ path: "cashflow.withdraw", kind: "changed", before: ["cash"], after: [] },
 		])
 	})
 

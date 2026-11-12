@@ -82,6 +82,7 @@ describe("scenario apply", () => {
 			['{"schemaVersion":"1"}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
 			['{"schemaVersion":0}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
 			['{"schemaVersion":1.5}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
+			['{"schemaVersion":2}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
 		]
 		for (const [document, path, code] of cases) {
 			const res = await applyScenario(home, "base", document)
@@ -164,7 +165,7 @@ describe("scenario apply", () => {
 		}
 		expect(document.flag).toBe("file")
 		expect(document.schema.required).toEqual(["schemaVersion"])
-		expect(document.schema.description).toContain("@trajectonomics/sim@0.2.0-alpha.15")
+		expect(document.schema.description).toContain("@trajectonomics/sim@0.1.0")
 		expect(document.schema.description).toContain("check()")
 		expect(described.errorCodes).toContain("invalid_input")
 		expect(described.errorCodes).toContain("database_busy")
