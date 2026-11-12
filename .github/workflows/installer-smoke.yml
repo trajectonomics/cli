@@ -1,0 +1,121 @@
+name: Installer smoke
+
+# The installers are shell and PowerShell, which bun test cannot drive: this is their
+# test on every pull request that touches them. Each job compiles a binary, serves it
+# and a matching checksums file over local HTTP, installs, and runs the round trip.
+on:
+  pull_request:
+    paths:
+      - install.sh
+      - install.ps1
+      - .github/workflows/installer-smoke.yml
+      - .github/smoke.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VERSION: 0.0.0-smoke
+  PORT: 8765
+
+jobs:
+  install:
+    name: install (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            asset: traj-linux-x64
+          - runner: macos-15
+            asset: traj-darwin-arm64
+          - runner: windows-latest
+            asset: traj-windows-x64.exe
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - run: bun install --frozen-lockfile
+      - name: Build the binary and the release tree the script installs from
+        shell: bash
+        env:
+          ASSET: ${{ matrix.asset }}
+        run: |
+          set -euo pipefail
+          npm version "$VERSION" --no-git-tag-version
+          mkdir -p "release/download/v$VERSION" "release/bad/download/v$VERSION"
+          bun build src/index.ts --compile --outfile "release/download/v$VERSION/$ASSET"
+          cd "release/download/v$VERSION"
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "$ASSET" > checksums.txt
+          else
+            shasum -a 256 "$ASSET" > checksums.txt
+          fi
+          cp "$ASSET" "../../bad/download/v$VERSION/$ASSET"
+          printf '%064d  %s\n' 0 "$ASSET" > "../../bad/download/v$VERSION/checksums.txt"
+      - name: Install from the local server, then round trip and refuse a bad checksum
+        shell: bash
+        env:
+          ASSET: ${{ matrix.asset }}
+          BASE: http://127.0.0.1:8765
+        run: |
+          set -euo pipefail
+          bun -e '
+            const root = process.argv[1] ?? "release"
+            Bun.serve({
+              port: Number(process.env.PORT),
+              fetch: async (request) => {
+                const path = root + new URL(request.url).pathname
+                return (await Bun.file(path).exists())
+                  ? new Response(Bun.file(path))
+                  : new Response("not found", { status: 404 })
+              },
+            })
+          ' release &
+          server=$!
+          trap 'kill $server 2>/dev/null || true' EXIT
+
+          code=000
+          attempt=0
+          while [ "$attempt" -lt 100 ]; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/download/v$VERSION/checksums.txt" || true)
+            [ "$code" = "200" ] && break
+            attempt=$((attempt + 1))
+            sleep 0.2
+          done
+          [ "$code" = "200" ] || { echo "::error::the local release server never answered."; exit 1; }
+
+          install="$RUNNER_TEMP/install"
+          bad="$RUNNER_TEMP/bad-install"
+          log="$RUNNER_TEMP/install.log"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            TRAJ_INSTALL_DIR="$install" TRAJ_VERSION="$VERSION" TRAJ_DOWNLOAD_BASE_URL="$BASE" \
+              pwsh -NoProfile -File ./install.ps1 >"$log" 2>&1
+            binary="$install/traj.exe"
+            refused="$bad/traj.exe"
+          else
+            TRAJ_INSTALL_DIR="$install" TRAJ_VERSION="$VERSION" TRAJ_DOWNLOAD_BASE_URL="$BASE" \
+              sh ./install.sh >"$log" 2>&1
+            binary="$install/traj"
+            refused="$bad/traj"
+          fi
+          cat "$log"
+          grep -qF "downloading" "$log" || { echo "::error::the installer did not say what it downloads."; exit 1; }
+          grep -qF "$install" "$log" || { echo "::error::the installer did not say where it installed."; exit 1; }
+          sh .github/smoke.sh "$VERSION" "$binary"
+
+          status=0
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            TRAJ_INSTALL_DIR="$bad" TRAJ_VERSION="$VERSION" TRAJ_DOWNLOAD_BASE_URL="$BASE/bad" \
+              pwsh -NoProfile -File ./install.ps1 >/dev/null 2>&1 || status=$?
+          else
+            TRAJ_INSTALL_DIR="$bad" TRAJ_VERSION="$VERSION" TRAJ_DOWNLOAD_BASE_URL="$BASE/bad" \
+              sh ./install.sh >/dev/null 2>&1 || status=$?
+          fi
+          [ "$status" -ne 0 ] || { echo "::error::the installer accepted a bad checksum."; exit 1; }
+          [ ! -e "$refused" ] || { echo "::error::a refused install left a binary behind."; exit 1; }
+
+          echo "installer smoke ok"

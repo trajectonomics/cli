@@ -1,0 +1,271 @@
+name: Binaries
+
+# One release's five binaries, smoke-tested twice and attached beside the install
+# scripts and one checksums file. release.yml calls it after npm publishes; a
+# manual dispatch with a tag repairs a release whose binaries failed.
+#
+# Nothing here publishes: the tag, the npm package and the GitHub release are
+# release.yml's publish job, and this job cannot run before it (needs: publish).
+on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing stable tag to rebuild the assets for, for example v1.2.3.
+        required: true
+        type: string
+  pull_request:
+    paths:
+      - .github/workflows/binaries.yml
+      - .github/workflows/release.yml
+      - .github/smoke.sh
+      - install.sh
+      - install.ps1
+
+permissions:
+  contents: read
+
+concurrency:
+  group: binaries-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+      ref: ${{ steps.resolve.outputs.ref }}
+      upload: ${{ steps.resolve.outputs.upload }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: resolve
+        shell: bash
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          stable='^v[0-9]+\.[0-9]+\.[0-9]+$'
+
+          if [ -n "$INPUT_TAG" ]; then
+            # Dispatch mode: a repair rebuilds the tag it is given, whatever the SHA.
+            [[ "$INPUT_TAG" =~ $stable ]] || { echo "::error::$INPUT_TAG is not a stable vX.Y.Z tag."; exit 1; }
+            tag=$INPUT_TAG
+            upload=true
+          elif [ "$EVENT" = "pull_request" ]; then
+            # A pull request proves the build and the smoke, and attaches nothing.
+            echo "::notice::Pull request run: building and smoking, uploading nothing."
+            version=$(jq -r .version package.json)
+            {
+              echo "tag="
+              echo "version=$version"
+              echo "ref="
+              echo "upload=false"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          else
+            # Call mode: the tag the publish job just created at this commit, never a guess.
+            git fetch --tags --force origin
+            tag=
+            while read -r candidate; do
+              [[ "$candidate" =~ $stable ]] || continue
+              if [ "$(git rev-list -n 1 "$candidate")" = "$GITHUB_SHA" ]; then
+                tag=$candidate
+                break
+              fi
+            done < <(git tag --list 'v*' --sort=-v:refname)
+            [ -n "$tag" ] || { echo "::error::No stable vX.Y.Z tag points at $GITHUB_SHA."; exit 1; }
+            upload=true
+          fi
+
+          {
+            echo "tag=$tag"
+            echo "version=${tag#v}"
+            echo "ref=refs/tags/$tag"
+            echo "upload=$upload"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.resolve.outputs.ref }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - run: bun install --frozen-lockfile
+      - name: Stamp the version the tag names, before compiling
+        # The compiler inlines package.json, so a binary built at 0.0.0 reports
+        # 0.0.0 whatever npm publishes: this step is what makes --version a sentinel.
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$(jq -r .version package.json)" != "$VERSION" ]; then
+            npm version "$VERSION" --no-git-tag-version
+          fi
+      - name: Compile the five assets, x64 from the baseline targets
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          bun build src/index.ts --compile --target=bun-darwin-arm64 --outfile assets/traj-darwin-arm64
+          bun build src/index.ts --compile --target=bun-darwin-x64-baseline --outfile assets/traj-darwin-x64
+          bun build src/index.ts --compile --target=bun-linux-arm64 --outfile assets/traj-linux-arm64
+          bun build src/index.ts --compile --target=bun-linux-x64-baseline --outfile assets/traj-linux-x64
+          bun build src/index.ts --compile --target=bun-windows-x64-baseline --outfile assets/traj-windows-x64.exe
+      - name: Write the checksums in a fixed order
+        run: |
+          set -euo pipefail
+          cd assets
+          sha256sum \
+            traj-darwin-arm64 \
+            traj-darwin-x64 \
+            traj-linux-arm64 \
+            traj-linux-x64 \
+            traj-windows-x64.exe > checksums.txt
+          cat checksums.txt
+      - name: Stage the install scripts beside the binaries
+        run: cp install.sh install.ps1 assets/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: assets/
+          if-no-files-found: error
+          retention-days: 7
+
+  artifact-smoke:
+    needs: [resolve, build]
+    name: artifact smoke (${{ matrix.asset }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            asset: traj-linux-x64
+          - runner: ubuntu-24.04-arm
+            asset: traj-linux-arm64
+          - runner: macos-15-intel
+            asset: traj-darwin-x64
+          - runner: macos-15
+            asset: traj-darwin-arm64
+          - runner: windows-latest
+            asset: traj-windows-x64.exe
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+          path: assets
+      - name: Run the round trip on the asset for this runner
+        # Nothing here downloads from the release: a failure stops the upload.
+        shell: bash
+        env:
+          ASSET: ${{ matrix.asset }}
+          VERSION: ${{ needs.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          chmod +x "assets/$ASSET"
+          sh .github/smoke.sh "$VERSION" "$PWD/assets/$ASSET"
+
+  attach:
+    needs: [resolve, build, artifact-smoke]
+    if: needs.resolve.outputs.upload == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+          path: assets
+      - name: Attach the binaries and the install scripts first
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" \
+            assets/traj-darwin-arm64 \
+            assets/traj-darwin-x64 \
+            assets/traj-linux-arm64 \
+            assets/traj-linux-x64 \
+            assets/traj-windows-x64.exe \
+            assets/install.sh \
+            assets/install.ps1 \
+            --clobber
+      - name: Attach the checksums last
+        # A separate command, because one upload with several files runs concurrently:
+        # an interrupted upload must never leave checksums that describe a half-uploaded set.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: gh release upload "$TAG" assets/checksums.txt --clobber
+      - name: List what the release now carries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: gh release view "$TAG" --json assets --jq '.assets[].name'
+
+  channel-smoke:
+    needs: [resolve, attach]
+    if: needs.resolve.outputs.upload == 'true'
+    name: channel smoke (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+          - runner: ubuntu-24.04-arm
+          - runner: macos-15-intel
+          - runner: macos-15
+          - runner: windows-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Round trip through npx, retrying while npm catches up
+        # npm serves a new version a minute or three before this release has assets.
+        shell: bash
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          deadline=$((SECONDS + 600))
+          wait=5
+          until npx --yes "@trajectonomics/cli@$VERSION" --version; do
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "::error::npm did not serve @trajectonomics/cli@$VERSION within ten minutes."
+              exit 1
+            fi
+            echo "npm is not serving @trajectonomics/cli@$VERSION yet; waiting ${wait}s."
+            sleep "$wait"
+            wait=$((wait * 2))
+            [ "$wait" -le 60 ] || wait=60
+          done
+          sh .github/smoke.sh "$VERSION" npx --yes "@trajectonomics/cli@$VERSION"
+      - uses: oven-sh/setup-bun@v2
+        if: runner.os == 'Linux'
+        with:
+          bun-version: "1.4.4"
+      - name: The same launcher under bunx
+        if: runner.os == 'Linux'
+        shell: bash
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+        run: sh .github/smoke.sh "$VERSION" bunx "@trajectonomics/cli@$VERSION"

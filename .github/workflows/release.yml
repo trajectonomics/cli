@@ -1,0 +1,38 @@
+name: Release
+
+# Thin caller: every publishing step lives in trajectonomics/cicd. Keep the filename
+# release.yml, because npm trusted publishing validates the calling workflow's name.
+#
+#   Run workflow -> publishes a stable version (dist-tag "latest"), creates the tag
+#                   vX.Y.Z and the GitHub release, then this repo's binaries job
+#                   builds the assets, smokes them and attaches them to that release.
+#
+# package.json "version" is never edited by hand: the shared publisher computes it and
+# the binaries job stamps it from the tag before compiling.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump. auto reads commit messages since the last release.
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    uses: trajectonomics/cicd/.github/workflows/publish.yml@v1
+    with:
+      bump: ${{ inputs.bump || 'auto' }}
+    secrets: inherit
+
+  binaries:
+    # A tag or release created with this workflow's token starts no second run, so the
+    # assets are a job in this workflow rather than a trigger of their own.
+    needs: publish
+    permissions:
+      contents: write
+    uses: ./.github/workflows/binaries.yml

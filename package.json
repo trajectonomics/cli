@@ -1,13 +1,29 @@
 {
 	"name": "@trajectonomics/cli",
 	"version": "0.0.0",
-	"private": true,
 	"description": "trajectonomics command line",
 	"license": "MIT",
 	"type": "module",
 	"packageManager": "bun@1.4.4",
 	"bin": {
-		"traj": "./src/index.ts"
+		"traj": "./bin/traj.js"
+	},
+	"files": [
+		"bin/"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/trajectonomics/cli.git"
+	},
+	"homepage": "https://github.com/trajectonomics/cli#readme",
+	"bugs": {
+		"url": "https://github.com/trajectonomics/cli/issues"
 	},
 	"scripts": {
 		"dev": "bun run src/index.ts",
@@ -21,12 +37,10 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.6.3",
+		"@trajectonomics/ledger": "0.1.0-alpha.0",
 		"@trajectonomics/tooling": "1.1.0",
 		"@types/bun": "^1.4.4",
-		"typescript": "^7.0.2"
-	},
-	"dependencies": {
-		"@trajectonomics/ledger": "0.1.0-alpha.0",
+		"typescript": "^7.0.2",
 		"zod": "^4.6.7"
 	}
 }
