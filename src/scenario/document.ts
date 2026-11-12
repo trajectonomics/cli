@@ -48,15 +48,13 @@ function detailsOf(problems: readonly ScenarioProblem[], base: string) {
 
 /** The `invalid_input` for a document `sim-core` refuses, or null when it accepts the document. */
 export function scenarioDocumentError(value: unknown, base = "document"): AppError | null {
-	const problems = scenarioProblems(value)
-	if (problems.length === 0) return null
-	const first = problems[0]
+	const [first, ...rest] = scenarioProblems(value)
 	if (first === undefined) return null
 	const path = documentPath(base, first.segments)
 	return fail("invalid_input", {
 		path,
 		message: `${path}: ${first.code}`,
-		details: detailsOf(problems, base),
+		details: detailsOf([first, ...rest], base),
 	})
 }
 

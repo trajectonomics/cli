@@ -34,9 +34,8 @@ export function must<T>(outcome: T): Exclude<T, AppError> {
 }
 
 /**
- * One valid Scenario v1 document (the Scenario version of the pinned
- * `@trajectonomics/sim@0.1.0`), shared by every test that stores a Scenario: an asset, a liability, two incomes and a routed
- * surplus. Tests spread it and change one field.
+ * One valid Scenario v1 document, shared by every test that stores a Scenario: an asset, a
+ * liability, two incomes and a routed surplus. Tests spread it and change one field.
  */
 export const SCENARIO_DOCUMENT = {
 	schemaVersion: 1,

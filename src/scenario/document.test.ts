@@ -1,8 +1,9 @@
 import { describe, expect, it } from "bun:test"
 import { check, type Problem } from "@trajectonomics/sim"
 import { isAppError } from "../errors"
-import { applyScenario, errorOf, SCENARIO_DOCUMENT, scenarioHome } from "../scenario-test-support"
+import { applyScenario, errorOf, scenarioHome } from "../scenario-test-support"
 import { canonicalScenarioDocument } from "../store"
+import { SCENARIO_DOCUMENT } from "../store/testing"
 import { scenarioDocumentError, scenarioProblems } from "./document"
 
 const NEUTRAL_BASELINE = { schemaVersion: 1, balances: [] }

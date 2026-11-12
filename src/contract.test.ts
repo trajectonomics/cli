@@ -5,9 +5,8 @@ import { join } from "node:path"
 import { z } from "zod"
 import { defineCommand, defineGroup } from "./command"
 import { type ErrorCode, isAppError, registry } from "./errors"
-import { SCENARIO_DOCUMENT } from "./scenario-test-support"
 import { type StoreRaised, storeTriggers, type Trigger } from "./store/store-triggers"
-import { tempHome } from "./store/testing"
+import { SCENARIO_DOCUMENT, tempHome } from "./store/testing"
 import { type Captured, capture } from "./test-support"
 
 /**

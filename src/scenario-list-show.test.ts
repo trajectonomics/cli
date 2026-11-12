@@ -4,11 +4,11 @@ import {
 	errorOf,
 	resultOf,
 	rowOf,
-	SCENARIO_DOCUMENT,
 	scenario,
 	scenarioHome,
 	summariesOf,
 } from "./scenario-test-support"
+import { SCENARIO_DOCUMENT } from "./store/testing"
 
 const BASE = SCENARIO_DOCUMENT
 

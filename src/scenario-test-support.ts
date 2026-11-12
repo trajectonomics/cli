@@ -4,8 +4,6 @@ import { join } from "node:path"
 import { tempHome } from "./store/testing"
 import { type Captured, capture } from "./test-support"
 
-export { SCENARIO_DOCUMENT } from "./store/testing"
-
 /** A fresh data directory for one Scenario test. */
 export function scenarioHome(): string {
 	return tempHome()

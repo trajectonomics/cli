@@ -73,6 +73,7 @@ export function applyScenarioSets(
 	document: ScenarioDocument,
 	sets: readonly string[],
 ): AppliedOverrides | AppError {
+	if (sets.length === 0) return { document, overrides: [] }
 	const applied = applyOverrides(document, sets)
 	if (isAppError(applied)) return applied
 	const [first, ...rest] = scenarioProblems(applied.document)

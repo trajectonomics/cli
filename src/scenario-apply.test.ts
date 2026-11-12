@@ -5,10 +5,10 @@ import {
 	errorOf,
 	resultOf,
 	rowOf,
-	SCENARIO_DOCUMENT,
 	scenario,
 	scenarioHome,
 } from "./scenario-test-support"
+import { SCENARIO_DOCUMENT } from "./store/testing"
 import { capture } from "./test-support"
 
 const DOC = SCENARIO_DOCUMENT
