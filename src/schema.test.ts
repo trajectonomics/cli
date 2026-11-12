@@ -14,6 +14,7 @@ describe("schema", () => {
 			"account list",
 			"account show",
 			"balance",
+			"baseline show",
 			"export",
 			"help",
 			"init",
