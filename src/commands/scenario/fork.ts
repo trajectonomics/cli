@@ -31,8 +31,8 @@ function transformFor(
 	return (document: ScenarioDocument) => {
 		const applied = applyOverrides(document, sets)
 		if (isAppError(applied)) return applied
-		const [problem] = scenarioProblems(applied.document)
-		if (problem !== undefined) return documentFailure(applied.overrides, problem, applied.document)
+		const problems = scenarioProblems(applied.document)
+		if (problems.length > 0) return documentFailure(applied.overrides, problems, applied.document)
 		echo(applied.overrides)
 		return applied.document
 	}

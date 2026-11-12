@@ -64,24 +64,48 @@ export function identityFailure(segment: string, ctx: SegmentContext): AppError 
 	})
 }
 
-/** The error for a document the overrides left outside `sim-core`'s Scenario schema, at a set. */
-export function documentFailure(
+/**
+ * The Set whose path covers a problem: the last in command-line order when several do, `-1` when
+ * none does.
+ */
+function matchingSet(
 	overrides: readonly AppliedOverride[],
 	problem: ScenarioProblem,
 	document: unknown,
-): AppError {
+): number {
 	const segments = overrideSegments(document, problem.segments)
-	const failing = formatPath(segments)
 	const prefixes = new Set(segments.map((_, index) => formatPath(segments.slice(0, index + 1))))
-	let index = -1
-	for (const [at, override] of overrides.entries()) {
-		if (prefixes.has(override.path)) index = at
+	let found = -1
+	for (const [index, override] of overrides.entries()) {
+		if (prefixes.has(override.path)) found = index
 	}
-	if (index === -1) index = Math.max(0, overrides.length - 1)
+	return found
+}
+
+/**
+ * The error for a document the overrides left outside `sim-core`'s Scenario schema, at a Set. It
+ * reports the first problem a Set covers, so a later problem cannot hide the one that names the
+ * cause; when no Set covers a problem it reports the first and falls back to the last Set.
+ */
+export function documentFailure(
+	overrides: readonly AppliedOverride[],
+	problems: readonly ScenarioProblem[],
+	document: unknown,
+): AppError {
+	const covered = problems.find((problem) => matchingSet(overrides, problem, document) !== -1)
+	const problem = covered ?? problems[0]
+	if (problem === undefined) throw new Error("a document failure needs at least one problem")
+	const match = matchingSet(overrides, problem, document)
+	const index = match === -1 ? Math.max(0, overrides.length - 1) : match
 	const selected = overrides[index]
 	const path = documentPath("document", problem.segments)
 	return badSet(index, `the document is invalid after the overrides: ${path}: ${problem.code}`, {
 		hint: `The overrides leave ${path} invalid; change that value or the path.`,
-		details: { index, path: selected?.path ?? failing, documentPath: path, code: problem.code },
+		details: {
+			index,
+			path: selected?.path ?? formatPath(overrideSegments(document, problem.segments)),
+			documentPath: path,
+			code: problem.code,
+		},
 	})
 }

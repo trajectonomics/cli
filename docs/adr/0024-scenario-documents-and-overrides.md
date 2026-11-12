@@ -12,7 +12,7 @@ A live Scenario name is a conflict at exit 5, with the new `scenario_name_taken`
 
 ## Considered options
 
-Blocking Scenario commands on `sim-core` was rejected: the Store already accepts Scenario documents, the command surface is useful before projections exist, and ADR-0017 already records why the document is opaque. Inventing a Scenario schema in the CLI was rejected as a competing model; `sim-core`'s `check()` is the schema instead, and the document form only prints the envelope-level shape it needs for discovery.
+Blocking Scenario commands on `sim-core` was rejected: the Store already accepts Scenario documents, the command surface is useful before projections exist, and ADR-0017 records how the Store writes and restores the document's canonical bytes. Inventing a Scenario schema in the CLI was rejected as a competing model; `sim-core`'s `check()` is the schema instead, and the document form only prints the envelope-level shape it needs for discovery.
 
 RFC 6902 JSON Patch was rejected for `diff`: it uses JSON Pointer and array indexes, so a user would translate between `/flows/0/amount` for a diff and `flows.salary.amount` for an Override. Positional paths also break when a list is reordered. Treating a bare non-JSON `--set` value as a string was rejected because it silently turns `50000` into a number but `001` into text.
 
