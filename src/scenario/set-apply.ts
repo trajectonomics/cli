@@ -73,6 +73,7 @@ export function applyScenarioSets(
 	document: ScenarioDocument,
 	sets: readonly string[],
 ): AppliedOverrides | AppError {
+	// A plain fork has no Set to blame: the Store's canonicaliser reports a stale row at `document`.
 	if (sets.length === 0) return { document, overrides: [] }
 	const applied = applyOverrides(document, sets)
 	if (isAppError(applied)) return applied

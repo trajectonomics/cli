@@ -92,19 +92,26 @@ export function documentFailure(
 	problems: readonly [ScenarioProblem, ...ScenarioProblem[]],
 	document: unknown,
 ): AppError {
-	const covered = problems.find((problem) => matchingSet(overrides, problem, document) !== -1)
-	const problem = covered ?? problems[0]
-	const match = matchingSet(overrides, problem, document)
-	const index = match === -1 ? Math.max(0, overrides.length - 1) : match
+	const candidates = problems.map((problem) => ({
+		problem,
+		match: matchingSet(overrides, problem, document),
+	}))
+	const chosen = candidates.find((candidate) => candidate.match !== -1) ?? candidates[0]
+	if (chosen === undefined) throw new Error("a document failure needs at least one problem")
+	const index = chosen.match === -1 ? Math.max(0, overrides.length - 1) : chosen.match
 	const selected = overrides[index]
-	const path = documentPath("document", problem.segments)
-	return badSet(index, `the document is invalid after the overrides: ${path}: ${problem.code}`, {
-		hint: `The overrides leave ${path} invalid; change that value or the path.`,
-		details: {
-			index,
-			path: selected?.path ?? formatPath(overrideSegments(document, problem.segments)),
-			documentPath: path,
-			code: problem.code,
+	const path = documentPath("document", chosen.problem.segments)
+	return badSet(
+		index,
+		`the document is invalid after the overrides: ${path}: ${chosen.problem.code}`,
+		{
+			hint: `The overrides leave ${path} invalid; change that value or the path.`,
+			details: {
+				index,
+				path: selected?.path ?? formatPath(overrideSegments(document, chosen.problem.segments)),
+				documentPath: path,
+				code: chosen.problem.code,
+			},
 		},
-	})
+	)
 }

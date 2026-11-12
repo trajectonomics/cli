@@ -115,7 +115,7 @@ _Avoid_: Default entity, main entity
 ### Scenario
 
 **Stream**:
-A recurring flow of money in a scenario, either earned (stops when earning stops) or passive (continues).
+A recurring flow of money in a scenario, either earned (stops when earning stops) or passive (continues). `sim-core`'s Scenario calls the same thing a `flow`, and the CLI's document paths address them as `flows.<id>...`.
 _Avoid_: Income source
 
 **Event**:
