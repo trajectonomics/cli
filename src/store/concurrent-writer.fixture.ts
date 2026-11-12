@@ -19,10 +19,11 @@ function write(store: Store): void {
 	const [cash, food] = accounts.map((a) => a.id)
 	for (let n = 0; n < Number(count); n++) {
 		// One valid Scenario v1 per write, distinct per writer and step.
+		const variant = Number(writer) * 1000 + n
 		const document = {
 			schemaVersion: 1,
 			currency: "THB",
-			economy: { inflation: Number(writer) * 1000 + n },
+			economy: { inflation: variant },
 			accounts: [{ id: "cash", kind: "asset", rate: 0 }],
 			flows: [],
 			cashflow: { surplus: [{ account: "cash" }], withdraw: ["cash"] },

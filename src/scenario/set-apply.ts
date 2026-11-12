@@ -1,8 +1,8 @@
 import { type AppError, isAppError } from "../errors"
 import { isPlainObject } from "../json"
-import type { ScenarioDocument } from "./document"
+import { type ScenarioDocument, scenarioProblems } from "./document"
 import { formatPath } from "./path"
-import type { AppliedOverride } from "./set-error"
+import { type AppliedOverride, documentFailure } from "./set-error"
 import { badSet, type ParsedSet, parseSet } from "./set-parse"
 import { replaceAt } from "./set-replace"
 
@@ -63,4 +63,19 @@ export function applyOverrides(
 		overrides.push({ path, value: set.value })
 	}
 	return { document: current, overrides }
+}
+
+/**
+ * Applies the Sets and refuses a final document `sim-core` does not accept, reported at the Set at
+ * fault. The pre-check lives beside `applyOverrides` so a caller cannot forget it (ADR-0024).
+ */
+export function applyScenarioSets(
+	document: ScenarioDocument,
+	sets: readonly string[],
+): AppliedOverrides | AppError {
+	const applied = applyOverrides(document, sets)
+	if (isAppError(applied)) return applied
+	const [first, ...rest] = scenarioProblems(applied.document)
+	if (first === undefined) return applied
+	return documentFailure(applied.overrides, [first, ...rest], applied.document)
 }

@@ -3,10 +3,10 @@ import { UUID_SHAPED } from "../../account/name"
 import type { Leaf, Result } from "../../command"
 import { defineCommand, ok } from "../../command"
 import { type AppError, isAppError } from "../../errors"
-import { type ScenarioDocument, scenarioProblems } from "../../scenario/document"
+import type { ScenarioDocument } from "../../scenario/document"
 import { invalidScenarioName, scenarioNameTaken, scenarioNotFound } from "../../scenario/errors"
-import { applyOverrides } from "../../scenario/set-apply"
-import { type AppliedOverride, documentFailure } from "../../scenario/set-error"
+import { applyScenarioSets } from "../../scenario/set-apply"
+import type { AppliedOverride } from "../../scenario/set-error"
 import { view, type WrittenScenario, writtenScenario } from "../../scenario/view"
 import type { ForkOptions, ScenarioForked, ScenarioTransform } from "../../store"
 import { withStore } from "../../with-store"
@@ -29,10 +29,8 @@ function transformFor(
 	echo: (overrides: AppliedOverride[]) => void,
 ): ScenarioTransform {
 	return (document: ScenarioDocument) => {
-		const applied = applyOverrides(document, sets)
+		const applied = applyScenarioSets(document, sets)
 		if (isAppError(applied)) return applied
-		const problems = scenarioProblems(applied.document)
-		if (problems.length > 0) return documentFailure(applied.overrides, problems, applied.document)
 		echo(applied.overrides)
 		return applied.document
 	}

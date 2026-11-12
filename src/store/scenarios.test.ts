@@ -1,14 +1,12 @@
 import { describe, expect, it } from "bun:test"
 import { isAppError } from "../errors"
-import { SCENARIO_DOCUMENT } from "../scenario-test-support"
-import { must, mustOpen, tempHome } from "./testing"
+import { must, mustOpen, SCENARIO_DOCUMENT, tempHome } from "./testing"
 
 const DOC = SCENARIO_DOCUMENT
 const CANONICAL =
 	'{"accounts":[{"id":"cash","kind":"asset","rate":0},{"id":"loan","kind":"liability","rate":0}],"cashflow":{"surplus":[{"account":"cash"}],"withdraw":["cash"]},"currency":"THB","economy":{"inflation":0},"flows":[{"amount":100000,"earned":true,"frequency":"monthly","growth":"inflation","id":"salary","kind":"income","start":"2026-01-01"},{"amount":5000,"earned":true,"frequency":"annual","growth":"inflation","id":"bonus","kind":"income","start":"2026-01-01"}],"schemaVersion":1}'
 const HASH = "jcs1:sha256:d1a135c445a13c504106685155f5a2b630ed5414138d5351475d1d7ff1cd499c"
-const CHANGED =
-	'{"accounts":[{"id":"cash","kind":"asset","rate":0},{"id":"loan","kind":"liability","rate":0}],"cashflow":{"surplus":[{"account":"cash"}],"withdraw":["cash"]},"currency":"THB","economy":{"inflation":100},"flows":[{"amount":100000,"earned":true,"frequency":"monthly","growth":"inflation","id":"salary","kind":"income","start":"2026-01-01"},{"amount":5000,"earned":true,"frequency":"annual","growth":"inflation","id":"bonus","kind":"income","start":"2026-01-01"}],"schemaVersion":1}'
+const CHANGED = CANONICAL.replace('"economy":{"inflation":0}', '"economy":{"inflation":100}')
 
 describe("scenarios", () => {
 	it("stores a new scenario as JCS canonical text with an algorithm-tagged hash", () => {

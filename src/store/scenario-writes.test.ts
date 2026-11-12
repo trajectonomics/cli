@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { fail, isAppError } from "../errors"
-import { SCENARIO_DOCUMENT } from "../scenario-test-support"
-import { must, mustOpen, tempHome } from "./testing"
+import { must, mustOpen, SCENARIO_DOCUMENT, tempHome } from "./testing"
 
 const DOC = SCENARIO_DOCUMENT
 

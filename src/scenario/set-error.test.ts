@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { SCENARIO_DOCUMENT } from "../scenario-test-support"
+import { SCENARIO_DOCUMENT } from "../store/testing"
 import type { ScenarioProblem } from "./document"
 import { type AppliedOverride, documentFailure } from "./set-error"
 

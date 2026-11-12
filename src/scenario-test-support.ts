@@ -4,46 +4,12 @@ import { join } from "node:path"
 import { tempHome } from "./store/testing"
 import { type Captured, capture } from "./test-support"
 
+export { SCENARIO_DOCUMENT } from "./store/testing"
+
 /** A fresh data directory for one Scenario test. */
 export function scenarioHome(): string {
 	return tempHome()
 }
-
-/**
- * One valid Scenario v1 document (the Scenario version of the pinned
- * `@trajectonomics/sim@0.1.0`), shared by every test that stores a Scenario: an asset, a
- * liability, two incomes and a routed surplus. Tests spread it and change one field.
- */
-export const SCENARIO_DOCUMENT = {
-	schemaVersion: 1,
-	currency: "THB",
-	economy: { inflation: 0 },
-	accounts: [
-		{ id: "cash", kind: "asset", rate: 0 },
-		{ id: "loan", kind: "liability", rate: 0 },
-	],
-	flows: [
-		{
-			id: "salary",
-			kind: "income",
-			earned: true,
-			amount: 100_000,
-			frequency: "monthly",
-			start: "2026-01-01",
-			growth: "inflation",
-		},
-		{
-			id: "bonus",
-			kind: "income",
-			earned: true,
-			amount: 5_000,
-			frequency: "annual",
-			start: "2026-01-01",
-			growth: "inflation",
-		},
-	],
-	cashflow: { surplus: [{ account: "cash" }], withdraw: ["cash"] },
-} as const
 
 /** Runs `traj scenario ...` against one data directory, with optional stdin. */
 export function scenario(home: string, argv: readonly string[], stdin?: string): Promise<Captured> {

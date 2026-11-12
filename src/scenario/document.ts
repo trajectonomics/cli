@@ -2,7 +2,6 @@ import { check, type Problem } from "@trajectonomics/sim"
 import { version as simVersion } from "@trajectonomics/sim/package.json"
 import { z } from "zod"
 import { type AppError, fail } from "../errors"
-import { isPlainObject } from "../json"
 
 // `sim-core` owns the Scenario model (AGENTS.md rule 5, ADR-0024). Its `check()` reads a Baseline,
 // a Scenario and a Timeline in one pass and returns `{ code, path }` problems, so the CLI validates
@@ -51,58 +50,14 @@ function detailsOf(problems: readonly ScenarioProblem[], base: string) {
 export function scenarioDocumentError(value: unknown, base = "document"): AppError | null {
 	const problems = scenarioProblems(value)
 	if (problems.length === 0) return null
-	const details = detailsOf(problems, base)
-	const first = details[0]
+	const first = problems[0]
+	if (first === undefined) return null
+	const path = documentPath(base, first.segments)
 	return fail("invalid_input", {
-		path: first?.path ?? base,
-		message: first?.message ?? `${base}: the document is invalid`,
-		details,
+		path,
+		message: `${path}: ${first.code}`,
+		details: detailsOf(problems, base),
 	})
-}
-
-/**
- * The problem's path in the Override grammar (ADR-0024): a list item is addressed by its unique
- * string `id`, never by index, and a list whose items have no unique id is cut back to the list's
- * own path, the only path a `--set` may replace there.
- */
-export function overrideSegments(
-	document: unknown,
-	segments: readonly (string | number)[],
-): readonly string[] {
-	const resolved: string[] = []
-	let current: unknown = document
-	for (const segment of segments) {
-		if (Array.isArray(current)) {
-			const step = listStep(current, segment)
-			if (step === null) return resolved
-			resolved.push(step.id)
-			current = step.item
-			continue
-		}
-		resolved.push(String(segment))
-		current = isPlainObject(current) ? current[String(segment)] : undefined
-	}
-	return resolved
-}
-
-type ListStep = { id: string; item: unknown }
-
-/** The list item a numeric segment names, when its string `id` is unique in the list. */
-function listStep(items: readonly unknown[], segment: string | number): ListStep | null {
-	if (typeof segment !== "number") return null
-	const item = items[segment]
-	if (!isPlainObject(item)) return null
-	const id = item["id"]
-	if (typeof id !== "string" || countId(items, id) !== 1) return null
-	return { id, item }
-}
-
-function countId(items: readonly unknown[], id: string): number {
-	let seen = 0
-	for (const item of items) {
-		if (isPlainObject(item) && item["id"] === id) seen += 1
-	}
-	return seen
 }
 
 /**

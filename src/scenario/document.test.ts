@@ -1,43 +1,19 @@
 import { describe, expect, it } from "bun:test"
 import { check, type Problem } from "@trajectonomics/sim"
 import { isAppError } from "../errors"
-import { applyScenario, errorOf, scenarioHome } from "../scenario-test-support"
+import { applyScenario, errorOf, SCENARIO_DOCUMENT, scenarioHome } from "../scenario-test-support"
 import { canonicalScenarioDocument } from "../store"
-import {
-	documentPath,
-	overrideSegments,
-	type ScenarioProblem,
-	scenarioDocumentError,
-	scenarioProblems,
-} from "./document"
+import { scenarioDocumentError, scenarioProblems } from "./document"
 
 const NEUTRAL_BASELINE = { schemaVersion: 1, balances: [] }
 
-/** The `scenario.` problems of one `check()` call, with the prefix stripped. */
-function scenarioPrefix(problems: readonly Problem[]): ScenarioProblem[] {
-	return problems
-		.filter((problem) => problem.path[0] === "scenario")
-		.map((problem) => ({ code: problem.code, segments: problem.path.slice(1) }))
+/** The problems `check()` reports under `scenario.`, the only ones a document can own. */
+function scenarioOnly(problems: readonly Problem[]): Problem[] {
+	return problems.filter((problem) => problem.path[0] === "scenario")
 }
 
-const SALARY = {
-	id: "salary",
-	kind: "income",
-	earned: true,
-	amount: 100_000,
-	frequency: "monthly",
-	start: "2026-01-01",
-	growth: "inflation",
-}
-
-const VALID = {
-	schemaVersion: 1,
-	currency: "THB",
-	economy: { inflation: 0 },
-	accounts: [{ id: "cash", kind: "asset", rate: 0 }],
-	flows: [SALARY],
-	cashflow: { surplus: [{ account: "cash" }], withdraw: ["cash"] },
-}
+const SALARY = SCENARIO_DOCUMENT.flows[0]
+const VALID = SCENARIO_DOCUMENT
 
 describe("scenarioProblems", () => {
 	it("accepts a valid Scenario when the Timeline is absent", () => {
@@ -47,7 +23,7 @@ describe("scenarioProblems", () => {
 	it("keeps sim-core's codes and order, with a list index as a number", () => {
 		const document = {
 			...VALID,
-			flows: [{ ...SALARY, nope: 1, amount: -1 }],
+			flows: [{ ...SALARY, nope: 1, amount: -1 }, ...VALID.flows.slice(1)],
 		}
 		expect(scenarioProblems(document)).toEqual([
 			{ code: "UNKNOWN_KEY", segments: ["flows", 0, "nope"] },
@@ -65,7 +41,10 @@ describe("scenarioProblems", () => {
 
 describe("scenarioDocumentError", () => {
 	it("builds invalid_input at the caller's base, with every problem in details", () => {
-		const document = { ...VALID, flows: [{ ...SALARY, nope: 1, amount: -1 }] }
+		const document = {
+			...VALID,
+			flows: [{ ...SALARY, nope: 1, amount: -1 }, ...VALID.flows.slice(1)],
+		}
 		const error = scenarioDocumentError(document, "line.24.document")
 		if (error === null) throw new Error("the document was accepted")
 		expect(error.body).toEqual({
@@ -93,30 +72,25 @@ describe("scenarioDocumentError", () => {
 	})
 })
 
-describe("overrideSegments", () => {
-	it("addresses a list item by its unique id", () => {
-		expect(overrideSegments(VALID, ["flows", 0, "amount"])).toEqual(["flows", "salary", "amount"])
-	})
-
-	it("cuts a list without a unique id back to the list's own path", () => {
-		expect(overrideSegments(VALID, ["cashflow", "surplus", 0, "upTo"])).toEqual([
-			"cashflow",
-			"surplus",
-		])
-		const duplicated = { list: [{ id: "a" }, { id: "a" }] }
-		expect(overrideSegments(duplicated, ["list", 1])).toEqual(["list"])
-	})
-
-	it("is the document path the CLI prints for a list index", () => {
-		expect(documentPath("document", ["flows", 0, "amount"])).toBe("document.flows.0.amount")
-	})
-})
-
 describe("scenario document validation", () => {
 	it("reports the same path, message and details from the document form and the store", async () => {
 		const home = scenarioHome()
-		for (const document of ["[]", '{"a":1}', '{"schemaVersion":"1"}', '{"schemaVersion":0}']) {
+		const cases: [string, string, string][] = [
+			["[]", "document", "NOT_AN_OBJECT"],
+			['{"a":1}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
+			['{"schemaVersion":"1"}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
+			['{"schemaVersion":0}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
+		]
+		for (const [document, path, code] of cases) {
+			const message = `${path}: ${code}`
 			const cli = errorOf(await applyScenario(home, "base", document))
+			expect(cli).toEqual({
+				code: "invalid_input",
+				exitCode: 2,
+				path,
+				message,
+				details: [{ path, message, code }],
+			})
 			const stored = canonicalScenarioDocument(JSON.parse(document))
 			if (!isAppError(stored)) throw new Error(`the store accepted ${document}`)
 			expect(cli).toEqual(JSON.parse(JSON.stringify(stored.body)))
@@ -141,9 +115,12 @@ describe("the scenario problems that depend on the Baseline or Timeline", () => 
 	// Levy and so no Timeline-dependent Scenario problem; the validator's `MISSING_CARRY_IN`
 	// exclusion is the forward guard for a later Scenario version.
 	const INVALID: readonly [string, unknown][] = [
-		["an unknown flow key", { ...VALID, flows: [{ ...SALARY, nope: 1 }] }],
+		["an unknown flow key", { ...VALID, flows: [{ ...SALARY, nope: 1 }, ...VALID.flows.slice(1)] }],
 		["a missing cashflow", { ...VALID, cashflow: undefined }],
-		["a negative amount", { ...VALID, flows: [{ ...SALARY, amount: -1 }] }],
+		[
+			"a negative amount",
+			{ ...VALID, flows: [{ ...SALARY, amount: -1 }, ...VALID.flows.slice(1)] },
+		],
 		["a duplicate account id", { ...VALID, accounts: [VALID.accounts[0], VALID.accounts[0]] }],
 	]
 	const BASELINES: readonly unknown[] = [
@@ -159,10 +136,10 @@ describe("the scenario problems that depend on the Baseline or Timeline", () => 
 
 	it("never change a scenario problem", () => {
 		for (const [name, document] of INVALID) {
-			const expected = scenarioProblems(document)
+			const expected = scenarioOnly(check(NEUTRAL_BASELINE, document, null))
 			for (const baseline of BASELINES) {
 				for (const timeline of TIMELINES) {
-					const found = scenarioPrefix(check(baseline, document, timeline))
+					const found = scenarioOnly(check(baseline, document, timeline))
 					expect({ name, found }).toEqual({ name, found: expected })
 				}
 			}

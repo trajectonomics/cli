@@ -1,6 +1,6 @@
 import type { AppError } from "../errors"
-import { documentPath, overrideSegments, type ScenarioProblem } from "./document"
-import { formatPath } from "./path"
+import { documentPath, type ScenarioProblem } from "./document"
+import { formatPath, overrideSegments } from "./path"
 import { badSet } from "./set-parse"
 import { closeEnough, knownPaths, nearest } from "./set-suggest"
 
@@ -89,12 +89,11 @@ function matchingSet(
  */
 export function documentFailure(
 	overrides: readonly AppliedOverride[],
-	problems: readonly ScenarioProblem[],
+	problems: readonly [ScenarioProblem, ...ScenarioProblem[]],
 	document: unknown,
 ): AppError {
 	const covered = problems.find((problem) => matchingSet(overrides, problem, document) !== -1)
 	const problem = covered ?? problems[0]
-	if (problem === undefined) throw new Error("a document failure needs at least one problem")
 	const match = matchingSet(overrides, problem, document)
 	const index = match === -1 ? Math.max(0, overrides.length - 1) : match
 	const selected = overrides[index]
