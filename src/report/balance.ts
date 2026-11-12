@@ -1,0 +1,77 @@
+import { balances, netWorth, trialBalance } from "@trajectonomics/ledger"
+import type { AppError } from "../errors"
+import { fail, isAppError } from "../errors"
+import type { Ledger } from "../store"
+import { type FieldMap, type FieldRules, query, respell } from "./errors"
+import {
+	type AccountIndex,
+	accountIndex,
+	inAccountOrder,
+	reportRowsOf,
+	totalsOf,
+	trialRowOf,
+	trialTotalOf,
+} from "./rows"
+import type { ReportRow, TotalView, TrialBalanceView } from "./view"
+
+// The core names its own queries; every one of these paths is respelled into this result's keys.
+const FIELDS: FieldRules = [
+	["balances[", "rows["],
+	["netWorth.totals[", "netWorth["],
+	["netWorth.rows[", "rows["],
+]
+
+const fields: FieldMap = (field) => respell(field, FIELDS)
+
+/** `traj balance`: every Leaf Account's Balance, the net-worth total, and an optional Trial Balance. */
+export type BalanceResult = {
+	asOf: string
+	rows: ReportRow[]
+	netWorth: TotalView[]
+	trialBalance?: TrialBalanceView | undefined
+}
+
+function readings(ledger: Ledger, asOf: string) {
+	const rows = query(() => balances(ledger.transactions, asOf, ledger.chart), fields)
+	if (isAppError(rows)) return rows
+	const worth = query(() => netWorth(ledger.transactions, asOf, ledger.chart), fields)
+	if (isAppError(worth)) return worth
+	return { rows, totals: worth.totals }
+}
+
+/**
+ * The Trial Balance, asserting the one thing it exists to say: each currency's debits equal its
+ * credits. The core re-validates every stored Transaction, so a tampered Posting fails earlier
+ * with UNBALANCED_TRANSACTION; this guards a core arithmetic bug and is not a declared code.
+ */
+function trialOf(ledger: Ledger, asOf: string, index: AccountIndex) {
+	const result = query(
+		() => trialBalance(ledger.transactions, asOf, ledger.chart),
+		(field) => respell(field, []),
+	)
+	if (isAppError(result)) return result
+	// ADR-0013 keeps the catch-all's bytes fixed, so the guard states nothing of its own.
+	if (result.totals.some((row) => row.debit !== row.credit)) return fail("internal")
+	return {
+		rows: inAccountOrder(result.rows, index).map((row) => trialRowOf(row, index)),
+		totals: result.totals.map(trialTotalOf),
+	}
+}
+
+/** Assembles the balance result from one assembled read; the Command only renders it. */
+export function balanceOf(
+	ledger: Ledger,
+	input: { asOf: string; trialBalance?: boolean | undefined },
+): BalanceResult | AppError {
+	const index = accountIndex(ledger.accounts)
+	const read = readings(ledger, input.asOf)
+	if (isAppError(read)) return read
+	const trial = input.trialBalance === true ? trialOf(ledger, input.asOf, index) : undefined
+	if (isAppError(trial)) return trial
+	return {
+		asOf: input.asOf,
+		rows: reportRowsOf(read.rows, index),
+		netWorth: totalsOf(read.totals),
+		...(trial === undefined ? {} : { trialBalance: trial }),
+	}
+}

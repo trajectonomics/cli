@@ -27,7 +27,7 @@ The month-by-month result of running a baseline through a scenario. The same bas
 _Avoid_: Run, output
 
 **As-of**:
-The date a baseline or projection is evaluated at. Every result states it.
+The date a result is evaluated at. Every result states it.
 _Avoid_: Today, now, snapshot date
 
 ### Ledger
@@ -35,6 +35,14 @@ _Avoid_: Today, now, snapshot date
 **Account**:
 A named place in the ledger where value sits or comes from, such as a bank account, an expense category, or an equity account.
 _Avoid_: Wallet
+
+**Leaf Account**:
+An Account that no other Account names as its parent. Postings land on it, and a report lists it: zeros and archived Accounts included.
+_Avoid_: Posting account, detail account
+
+**Header Account**:
+An Account that groups other Accounts of its own type and takes no Postings, so it never appears as a report row and its Balance cannot be double counted.
+_Avoid_: Parent account, group account
 
 **Transaction**:
 One balanced, immutable record of money moving, made of two or more postings that sum to zero.
@@ -47,6 +55,14 @@ _Avoid_: Ref
 **Balance**:
 The amount one account holds at an as-of date, signed the way the ledger signs it: debit positive, credit negative, so a liability is normally negative.
 _Avoid_: Amount, total, net
+
+**Net worth**:
+Assets minus liabilities at an As-of. Liability Balances stay raw and negative, so net worth is their plain sum. Equity, income and expense are not part of it.
+_Avoid_: Equity, total wealth
+
+**Trial balance**:
+Every Leaf Account's Balance at an As-of, split into debit and credit columns whose totals agree.
+_Avoid_: Worksheet
 
 **Posting**:
 A single signed amount against one account, carrying its currency and optional dimensions.
