@@ -1,9 +1,16 @@
 import { describe, expect, it } from "bun:test"
-import type { Baseline } from "@trajectonomics/sim"
 import { check, project } from "@trajectonomics/sim"
 import simPackage from "@trajectonomics/sim/package.json"
 import { SIM_SCENARIO, SIM_TIMELINE } from "./baseline/fixture"
-import { cli, goldenJson, goldenText, recordGolden, type Shown, show } from "./baseline/testing"
+import {
+	baselineFrom,
+	cli,
+	goldenJson,
+	goldenText,
+	recordGolden,
+	type Shown,
+	show,
+} from "./baseline/testing"
 import { FIXTURE_ACCOUNTS, FIXTURE_AS_OF, fixtureHome } from "./ledger-fixture"
 import { parseMinorUnits } from "./store"
 
@@ -33,30 +40,16 @@ const HAND_COMPUTED: Shown = {
 	],
 }
 
-function minor(amount: string, currency: string): number {
-	const parsed = parseMinorUnits(amount, currency, "golden")
-	if (typeof parsed !== "number") throw new Error(`"${amount}" is not a money amount`)
-	return parsed
-}
-
-/** The CLI's rows turned back into the engine's document, through the parser it formats with. */
-function rebuilt(data: Shown): Baseline {
-	return {
-		schemaVersion: 1,
-		balances: data.rows.map((row) => ({
-			account: row.account.id,
-			amount: minor(row.amount, data.currency),
-		})),
-	}
-}
-
 /** The Ledger's net worth at the As-of, from the net-worth report's own total: THB, or nothing. */
 async function ledgerNetWorth(home: string): Promise<number> {
 	const res = await cli(home)(["report", "networth", "--as-of", FIXTURE_AS_OF, "--json"])
 	expect(res.code).toBe(0)
 	const { totals } = JSON.parse(res.out) as { totals: { currency: string; amount: string }[] }
 	const thb = totals.find((total) => total.currency === "THB")
-	return thb === undefined ? 0 : minor(thb.amount, "THB")
+	if (thb === undefined) return 0
+	const parsed = parseMinorUnits(thb.amount, "THB", "netWorth")
+	if (typeof parsed !== "number") throw new Error(`"${thb.amount}" is not a money amount`)
+	return parsed
 }
 
 describe("the Baseline contract golden", () => {
@@ -68,7 +61,7 @@ describe("the Baseline contract golden", () => {
 
 	it("produces a Baseline the engine's own validator accepts", async () => {
 		const data = JSON.parse((await show(fixtureHome())).out) as Shown
-		const baseline = rebuilt(data)
+		const baseline = baselineFrom(data)
 		expect(check(baseline, SIM_SCENARIO, SIM_TIMELINE)).toEqual([])
 	})
 
@@ -88,7 +81,7 @@ describe("the Baseline contract golden", () => {
 
 	it("keeps unmet zero, so no withdrawal or cap can mask a shift", async () => {
 		const data = JSON.parse((await show(fixtureHome())).out) as Shown
-		const result = project(rebuilt(data), SIM_SCENARIO, SIM_TIMELINE)
+		const result = project(baselineFrom(data), SIM_SCENARIO, SIM_TIMELINE)
 		if (!result.ok) throw new Error(JSON.stringify(result.problems))
 		expect(result.projection.annual.every((year) => year.unmet === 0)).toBe(true)
 		expect(SIM_SCENARIO.cashflow.surplus.every((step) => step.upTo === undefined)).toBe(true)
@@ -96,7 +89,7 @@ describe("the Baseline contract golden", () => {
 
 	it("projects the fixture into the committed golden, byte for byte", async () => {
 		const data = JSON.parse((await show(fixtureHome())).out) as Shown
-		const result = project(rebuilt(data), SIM_SCENARIO, SIM_TIMELINE)
+		const result = project(baselineFrom(data), SIM_SCENARIO, SIM_TIMELINE)
 		expect(result.ok).toBe(true)
 		if (!result.ok) return
 		const { projection } = result
@@ -115,7 +108,7 @@ describe("the Baseline contract golden", () => {
 	it("opens the projection at the Ledger's own net worth, not at the first row", async () => {
 		const home = fixtureHome()
 		const data = JSON.parse((await show(home)).out) as Shown
-		const result = project(rebuilt(data), SIM_SCENARIO, SIM_TIMELINE)
+		const result = project(baselineFrom(data), SIM_SCENARIO, SIM_TIMELINE)
 		if (!result.ok) throw new Error(JSON.stringify(result.problems))
 		const opening = result.projection.annual[0]?.openingNetWorth
 		expect(opening).toBe(await ledgerNetWorth(home))

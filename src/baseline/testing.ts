@@ -1,8 +1,10 @@
 import { Database } from "bun:sqlite"
 import { join } from "node:path"
+import type { Baseline } from "@trajectonomics/sim"
 import { FIXTURE_ACCOUNTS, FIXTURE_AS_OF, FIXTURE_ROWS } from "../ledger-fixture"
 import { posting, transaction } from "../ledger-fixture/rows"
 import type { PostingRow, RestoreRows, TxRow } from "../store"
+import { parseMinorUnits } from "../store"
 import { type Captured, capture } from "../test-support"
 import type { SimKind } from "./kind"
 
@@ -103,5 +105,22 @@ export function goldenJson(value: unknown): string {
 export async function recordGolden(name: string, value: unknown): Promise<void> {
 	if (process.env["TRAJ_UPDATE_GOLDEN"] === "1") {
 		await Bun.write(new URL(name, GOLDENS), goldenJson(value))
+	}
+}
+
+function minor(amount: string, currency: string): number {
+	const parsed = parseMinorUnits(amount, currency, "baseline")
+	if (typeof parsed !== "number") throw new Error(`"${amount}" is not a money amount`)
+	return parsed
+}
+
+/** The CLI's rows turned back into the engine's document, through the parser it formats with. */
+export function baselineFrom(data: Shown): Baseline {
+	return {
+		schemaVersion: 1,
+		balances: data.rows.map((row) => ({
+			account: row.account.id,
+			amount: minor(row.amount, data.currency),
+		})),
 	}
 }
