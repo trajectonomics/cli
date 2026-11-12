@@ -1,0 +1,16 @@
+name: Tooling drift
+
+# The schedule lives in the caller: a reusable workflow's own `schedule` does not
+# fire for the repositories that call it.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    uses: trajectonomics/cicd/.github/workflows/drift.yml@v1
