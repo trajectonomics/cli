@@ -4,6 +4,7 @@ import { FIXTURE_ACCOUNTS, FIXTURE_AS_OF, FIXTURE_ROWS } from "../ledger-fixture
 import { posting, transaction } from "../ledger-fixture/rows"
 import type { PostingRow, RestoreRows, TxRow } from "../store"
 import { type Captured, capture } from "../test-support"
+import type { SimKind } from "./kind"
 
 /** Runs `traj ...` against one data directory. */
 export function cli(home: string): (argv: string[]) => Promise<Captured> {
@@ -15,7 +16,7 @@ export function show(home: string, ...args: string[]): Promise<Captured> {
 	return cli(home)(["baseline", "show", "--as-of", FIXTURE_AS_OF, ...args, "--json"])
 }
 
-export type Row = { account: { id: string; name: string }; kind: string; amount: string }
+export type Row = { account: { id: string; name: string }; kind: SimKind; amount: string }
 export type Shown = { asOf: string; currency: string; rows: Row[] }
 
 export const TX_ONE = "0194b000-0009-7000-8000-000000000009"
@@ -82,3 +83,25 @@ export function edited(home: string, ...sql: string[]): string {
 /** The fixture's id for the Transaction one test damages. */
 export const CORRUPT_TX = "0194b000-0003-7000-8000-000000000003"
 export const UNBALANCE: string = `UPDATE posting SET amount = amount + 1 WHERE tx_id = '${CORRUPT_TX}' AND ordinal = 0`
+
+const GOLDENS = new URL("./fixtures/", import.meta.url)
+
+/** A committed golden's exact bytes, so a test compares text rather than re-deriving a shape. */
+export function goldenText(name: string): Promise<string> {
+	return Bun.file(new URL(name, GOLDENS)).text()
+}
+
+/** The one serialization this module's goldens use: tab indents and one trailing newline. */
+export function goldenJson(value: unknown): string {
+	return `${JSON.stringify(value, null, "\t")}\n`
+}
+
+/**
+ * Rewrites a golden when `TRAJ_UPDATE_GOLDEN=1` asks for a deliberate re-baseline; otherwise it
+ * writes nothing, so a diff is the only thing an ordinary test run can produce.
+ */
+export async function recordGolden(name: string, value: unknown): Promise<void> {
+	if (process.env["TRAJ_UPDATE_GOLDEN"] === "1") {
+		await Bun.write(new URL(name, GOLDENS), goldenJson(value))
+	}
+}
