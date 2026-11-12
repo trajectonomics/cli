@@ -12,7 +12,7 @@ import { CROSSING, type SimKind } from "./kind"
 export type MappedBalance = {
 	account: { id: string; name: string }
 	kind: SimKind
-	/** Signed minor units as the engine states them: non-negative, a liability positive. */
+	/** Non-negative minor units, as the engine's own document states them. */
 	amount: number
 }
 

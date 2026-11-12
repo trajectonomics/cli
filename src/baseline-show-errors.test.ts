@@ -119,6 +119,12 @@ describe("baseline show surface", () => {
 		})
 	})
 
+	it("gives no rows for a date before every Transaction, still stating THB", async () => {
+		const res = await cli(fixtureHome())(["baseline", "show", "--as-of", "2025-12-31", "--json"])
+		expect(res.code).toBe(0)
+		expect(JSON.parse(res.out)).toEqual({ asOf: "2025-12-31", currency: "THB", rows: [] })
+	})
+
 	it("renders an empty Ledger as no rows at exit 0, still stating THB", async () => {
 		const res = await show(tempHome())
 		expect(res.code).toBe(0)

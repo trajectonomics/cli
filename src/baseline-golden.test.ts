@@ -14,6 +14,22 @@ import {
 import { FIXTURE_ACCOUNTS, FIXTURE_AS_OF, fixtureHome } from "./ledger-fixture"
 import { parseMinorUnits } from "./store"
 
+type Golden = { simVersion: string }
+
+async function readGolden(): Promise<Golden> {
+	return JSON.parse(await goldenText("projection.json")) as Golden
+}
+
+/** Fails before any comparison when the installed engine is not the one the golden pins. */
+async function expectEngineVersion(): Promise<void> {
+	const { simVersion } = await readGolden()
+	if (simVersion !== simPackage.version) {
+		throw new Error(
+			`The golden was produced with @trajectonomics/sim ${simVersion}, but ${simPackage.version} is installed. Re-baseline it deliberately: TRAJ_UPDATE_GOLDEN=1 bun test src/baseline-golden.test.ts`,
+		)
+	}
+}
+
 /** The hand-computed Baseline the fixture Ledger states at the As-of (see its arithmetic). */
 const HAND_COMPUTED: Shown = {
 	asOf: FIXTURE_AS_OF,
@@ -88,6 +104,8 @@ describe("the Baseline contract golden", () => {
 	})
 
 	it("projects the fixture into the committed golden, byte for byte", async () => {
+		// The engine version is checked first, so a bump fails before any comparison.
+		await expectEngineVersion()
 		const data = JSON.parse((await show(fixtureHome())).out) as Shown
 		const result = project(baselineFrom(data), SIM_SCENARIO, SIM_TIMELINE)
 		expect(result.ok).toBe(true)
@@ -115,11 +133,7 @@ describe("the Baseline contract golden", () => {
 	})
 
 	it("records the engine version the golden was produced with", async () => {
-		const golden = JSON.parse(await goldenText("projection.json")) as { simVersion: string }
-		if (golden.simVersion !== simPackage.version) {
-			throw new Error(
-				`The golden was produced with @trajectonomics/sim ${golden.simVersion}, but ${simPackage.version} is installed. Re-baseline it deliberately: TRAJ_UPDATE_GOLDEN=1 bun test src/baseline-golden.test.ts`,
-			)
-		}
+		const { simVersion } = await readGolden()
+		expect(simVersion).toBe(simPackage.version)
 	})
 })
