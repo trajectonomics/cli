@@ -1,6 +1,7 @@
 # trajectonomics
 
-The trajectonomics command line. The sources are Bun-only; a released binary needs nothing.
+`traj` is a free and open source command line for personal money. An AI agent operates it.
+The command line never calls a model, so every result is repeatable.
 
 ## Install
 
@@ -26,6 +27,15 @@ npx @trajectonomics/cli@latest --version
 bunx @trajectonomics/cli@latest --version
 ```
 
+Then give your agent the `traj` skill, so it can operate the command line:
+
+```bash
+npx skills add trajectonomics/internal-skills --skill traj -y
+```
+
+That adds only the `traj` skill, not the others in that repository. It uses `npx`, so it
+needs Node, which the npm channel already requires; the install scripts do not.
+
 Which channel: all three end at the same compiled binary and the same version. Use the
 script for a machine that should keep `traj` on `PATH`, npm when you already have Node or
 Bun and want one command. Pin a release with `TRAJ_VERSION=X.Y.Z` for the script, or
@@ -35,6 +45,8 @@ Uninstall by deleting the one file: `~/.local/bin/traj`, `%LOCALAPPDATA%\traj\bi
 `~/.traj/bin` (the download cache), or nothing at all for `npx`.
 
 ## Development
+
+The sources are Bun-only; a released binary needs nothing.
 
 ```bash
 bun install
