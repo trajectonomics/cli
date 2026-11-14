@@ -1,42 +1,15 @@
 import { describe, expect, it } from "bun:test"
+import type { CompareSide } from "./projection/compare-side"
+import type { CompareView } from "./projection/compare-view"
 import { AS_OF, dateFlags, errorOf, projection, projectionHome } from "./projection/testing"
-import { capture } from "./test-support"
+import { type Captured, capture } from "./test-support"
 
-type Figure = { age: number; nominal: string | null; real: string | null }
-
-type Side = {
-	scenario: { name: string; contentHash: string; effectiveContentHash: string }
-	overrides: { path: string; value: unknown }[]
-	fi: { reachable: boolean; fiDate?: string }
-	runOut: { date: string; unmet: string } | null
-	netWorth: {
-		final: { date: string; nominal: string; real: string }
-		atAges: Figure[]
-	}
+function bodyOf(res: Captured): CompareView {
+	return JSON.parse(res.out) as CompareView
 }
 
-type CompareBody = {
-	asOf: string
-	horizon: string
-	currency: string
-	birthDate: string | null
-	sides: { a: Side; b: Side }
-	deltas: {
-		fiMonths: number | null
-		runOutYears: number | null
-		netWorth: { nominal: string; real: string }
-		atAges: Figure[]
-	}
-	tax: string
-	notes: string[]
-}
-
-function bodyOf(res: { out: string }): CompareBody {
-	return JSON.parse(res.out) as CompareBody
-}
-
-/** The three fields a what-if and a persisted fork state differently. */
-function withoutScenarioIdentity(side: Side): Omit<Side, "scenario" | "overrides"> {
+/** The two fields a what-if and a persisted fork state differently: which row it came from. */
+function withoutIdentity(side: CompareSide): Omit<CompareSide, "scenario" | "overrides"> {
 	const { scenario: _scenario, overrides: _overrides, ...rest } = side
 	return rest
 }
@@ -51,7 +24,7 @@ describe("projection compare", () => {
 		})
 		expect(forked.code).toBe(0)
 		const stored = bodyOf(await projection(home, ["compare", "base", "raised", ...dateFlags()]))
-		expect(withoutScenarioIdentity(whatIf.sides.b)).toEqual(withoutScenarioIdentity(stored.sides.b))
+		expect(withoutIdentity(whatIf.sides.b)).toEqual(withoutIdentity(stored.sides.b))
 		expect(whatIf.sides.a).toEqual(stored.sides.a)
 		expect(whatIf.deltas).toEqual(stored.deltas)
 		// A what-if states the Overrides it applied; a stored fork already holds them.
@@ -71,14 +44,23 @@ describe("projection compare", () => {
 		expect(body.sides.a.runOut).toBeNull()
 		expect(body.sides.b.runOut).not.toBeNull()
 		expect(body.deltas.runOutYears).toBeNull()
-		expect(body.deltas.netWorth.nominal).toMatch(/^-?[0-9]+\.[0-9]{2}$/)
+		// The first side ends at the horizon, the second at its run-out, so the two final figures
+		// are not comparable and the delta is null rather than a subtraction across dates.
+		expect(body.sides.b.netWorth.final.date).toBe("2026-04-01")
+		expect(body.deltas.netWorth).toBeNull()
+	})
+
+	it("reports the final net-worth delta when both sides end on the same date", async () => {
+		const home = await projectionHome()
+		const body = bodyOf(await projection(home, ["compare", "base", "drained-2029", ...dateFlags()]))
+		// The one-off expense is dated after this horizon, so both sides end on it.
+		expect(body.sides.a.netWorth.final.date).toBe(body.sides.b.netWorth.final.date)
+		expect(body.deltas.netWorth?.nominal).toMatch(/^-?[0-9]+\.[0-9]{2}$/)
+		expect(body.deltas.netWorth?.real).toMatch(/^-?[0-9]+\.[0-9]{2}$/)
 	})
 
 	it("delta fiMonths counts whole calendar months between two FI dates", async () => {
 		const home = await projectionHome()
-		const body = bodyOf(await projection(home, ["compare", "base", "unreachable", ...dateFlags()]))
-		const reachable = body.sides.a.fi.fiDate
-		expect(reachable).toBe("2026-04-01")
 		// A later FI date on the second side, made by an expense raise, moves the delta by months.
 		const later = bodyOf(
 			await projection(home, [
@@ -123,9 +105,9 @@ describe("projection compare", () => {
 		// Age 60 is 2045: past the horizon, so the figure has no meaning and is null.
 		expect(body.sides.a.netWorth.atAges[1]).toEqual({ age: 60, nominal: null, real: null })
 		expect(body.deltas.atAges[1]).toEqual({ age: 60, nominal: null, real: null })
-		// The final net worth at the horizon is always reported.
+		// The final net worth at the horizon is always reported for a side that reaches it.
 		expect(body.sides.a.netWorth.final.date).toBe("2028-03-30")
-		expect(body.deltas.netWorth.nominal).toBeDefined()
+		expect(body.deltas.netWorth?.nominal).toMatch(/^-?[0-9]+\.[0-9]{2}$/)
 	})
 
 	it("refuses both or neither of a second Scenario and --set", async () => {

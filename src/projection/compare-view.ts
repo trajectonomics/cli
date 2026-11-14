@@ -8,7 +8,7 @@ import { type EngineEcho, engineEcho, notesField, type TaxStatus, taxField } fro
 export type CompareDeltas = {
 	fiMonths: number | null
 	runOutYears: number | null
-	netWorth: { nominal: string; real: string }
+	netWorth: { nominal: string; real: string } | null
 	atAges: AgeFigure[]
 }
 
@@ -48,10 +48,13 @@ export const compareView: z.ZodType<CompareView> = z.strictObject({
 			.int()
 			.nullable()
 			.describe("Calendar years from the first run-out to the second; null unless both run out."),
-		netWorth: z.strictObject({
-			nominal: moneyField("Second minus first, at the Projection's end"),
-			real: moneyField("The same difference in start-of-timeline terms"),
-		}),
+		netWorth: z
+			.strictObject({
+				nominal: moneyField("Second minus first, at the Projection's end"),
+				real: moneyField("The same difference in start-of-timeline terms"),
+			})
+			.nullable()
+			.describe("Null unless both Projections end on the same date, as two that run out need not."),
 		atAges: ageFigures("Second minus first at that age"),
 	}),
 	tax: taxField,

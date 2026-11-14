@@ -38,7 +38,8 @@ function timelineFailure(problems: readonly ProjectionProblem[]): AppError | nul
 			path: last === "start" ? "asOf" : "horizon",
 			message: `--${flag}: ${timeline.code}`,
 			hint: "The Timeline starts at --as-of and ends at --horizon.",
-			details: { code: timeline.code },
+			// Every problem the engine reported, in its order, so a sibling problem is not lost.
+			details: problems.map(detailOf),
 		})
 	}
 	return fail("invalid_input", {

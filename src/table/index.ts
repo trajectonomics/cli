@@ -22,8 +22,9 @@ export type RenderHint = {
 	/** One table's columns, keyed by the entry's `name`. */
 	columns: Readonly<Record<string, readonly ColumnHint[]>>
 	/**
-	 * A result field holding plain sentences, printed after the tables. It is for a fact a person
-	 * must read (such as a status only the JSON would otherwise show), never for a layout choice.
+	 * A result field holding plain sentences, printed after the tables, one per line. It is for a
+	 * fact a person must read (such as a status only the JSON would otherwise show), never a
+	 * layout choice.
 	 */
 	note?: string
 }
@@ -96,8 +97,9 @@ export function renderTableResult(data: unknown, hint: RenderHint): string | nul
 		if (block === null) return null
 		blocks.push(block)
 	}
-	blocks.push(...noteLines(data, hint))
-	return blocks.join("\n\n")
+	const notes = noteLines(data, hint)
+	const tables = blocks.join("\n\n")
+	return notes.length === 0 ? tables : `${tables}\n\n${notes.join("\n")}`
 }
 
 /** The hint's note field, one sentence per line; a result without one prints nothing extra. */

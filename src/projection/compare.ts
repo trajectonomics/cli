@@ -24,8 +24,8 @@ export type CompareInput = {
 type Birthday = { age: number; birthday: string }
 
 function dataOf(prepared: Prepared, birthdays: readonly Birthday[]): SideData | AppError {
-	const fi = fiAnswerOf(prepared)
-	if (isAppError(fi)) return fi
+	const solution = fiAnswerOf(prepared)
+	if (isAppError(solution)) return solution
 	const result = project(prepared.baseline, prepared.document, prepared.timeline)
 	if (!result.ok) return refusal(result.problems)
 	const { rows, runsOut } = result.projection
@@ -35,7 +35,7 @@ function dataOf(prepared: Prepared, birthdays: readonly Birthday[]): SideData | 
 	}
 	return {
 		prepared,
-		fi,
+		fi: solution,
 		runsOut,
 		final,
 		atAges: birthdays.map(({ age, birthday }) => ({

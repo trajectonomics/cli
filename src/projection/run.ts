@@ -1,5 +1,6 @@
 import { project } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
+import { isAppError } from "../errors"
 import { echoOf } from "./echo"
 import { refusal } from "./engine"
 import type { Prepared } from "./prepare"
@@ -15,13 +16,13 @@ export function projectionOf(prepared: Prepared, monthly: boolean): ProjectionRu
 	const result = project(baseline, prepared.document, timeline)
 	if (!result.ok) return refusal(result.problems)
 	const { projection } = result
-	const tables: ProjectionTable[] = [
-		{
-			name: "annual",
-			count: projection.annual.length,
-			rows: projection.annual.map((rollup) => annualRow(rollup, projection.rows, currency)),
-		},
-	]
+	const annual = []
+	for (const rollup of projection.annual) {
+		const row = annualRow(rollup, projection.rows, currency)
+		if (isAppError(row)) return row
+		annual.push(row)
+	}
+	const tables: ProjectionTable[] = [{ name: "annual", count: annual.length, rows: annual }]
 	if (monthly) {
 		tables.push({
 			name: "monthly",

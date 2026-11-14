@@ -23,7 +23,7 @@ describe("projection date arithmetic", () => {
 })
 
 describe("the row an age reads", () => {
-	const rows = [{ date: "2026-03-31" }, { date: "2026-04-30" }, { date: "2026-05-31" }] as never
+	const rows = [{ date: "2026-03-31" }, { date: "2026-04-30" }, { date: "2026-05-31" }]
 
 	it("takes the last month end on or before the birthday", () => {
 		expect(rowAt(rows, "2026-05-15", undefined)?.date).toBe("2026-04-30")
@@ -33,7 +33,7 @@ describe("the row an age reads", () => {
 	it("has no figure before the first row, past the last, or after a run-out", () => {
 		expect(rowAt(rows, "2026-03-30", undefined)).toBeUndefined()
 		expect(rowAt(rows, "2026-06-01", undefined)).toBeUndefined()
-		expect(rowAt(rows, "2026-05-31", { date: "2026-04-30", unmet: 1 })).toBeUndefined()
-		expect(rowAt(rows, "2026-04-30", { date: "2026-04-30", unmet: 1 })?.date).toBe("2026-04-30")
+		expect(rowAt(rows, "2026-05-31", { date: "2026-04-30" })).toBeUndefined()
+		expect(rowAt(rows, "2026-04-30", { date: "2026-04-30" })?.date).toBe("2026-04-30")
 	})
 })

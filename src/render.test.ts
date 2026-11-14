@@ -18,6 +18,34 @@ function result(rows: unknown[], count = rows.length) {
 	return { tables: [{ name: "thing", count, rows }] }
 }
 
+const hinted: RenderHint = { ...hint, note: "notes" }
+
+describe("the human table hint's note", () => {
+	it("prints the named field's sentences under the tables, one per line", () => {
+		const data = {
+			...result([{ id: "a", name: "cash", version: 1 }]),
+			notes: ["No tax is applied.", "Second sentence."],
+		}
+		expect(renderResult(data, "human", hinted)).toBe(
+			[
+				"thing (1 row)",
+				"id  name  version",
+				"a   cash        1",
+				"",
+				"No tax is applied.",
+				"Second sentence.",
+			].join("\n"),
+		)
+	})
+
+	it("prints no note when the result has none, and JSON ignores the hint", () => {
+		const data = result([{ id: "a", name: "cash", version: 1 }])
+		expect(renderResult(data, "human", hinted)).not.toContain("\n\n\n")
+		expect(renderResult(data, "human", hinted)).not.toContain("No tax")
+		expect(renderResult({ ...data, notes: ["x"] }, "json", hinted)).toContain('"notes":["x"]')
+	})
+})
+
 describe("the human table hint", () => {
 	it("renders an aligned table under a heading naming the table and its row count", () => {
 		const data = result([

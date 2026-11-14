@@ -30,7 +30,7 @@ export const compareSide: z.ZodType<CompareSide> = z.strictObject({
 	runOut: runsOut.nullable().describe("The month this side runs out of money, or null."),
 	netWorth: z.strictObject({
 		final: z.strictObject({
-			date: dateField("The Projection's last row"),
+			date: dateField("The Projection's last row: the horizon, or the run-out month"),
 			nominal: moneyField("Net worth at the Projection's end"),
 			real: moneyField("The same figure in start-of-timeline terms"),
 		}),

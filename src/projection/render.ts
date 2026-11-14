@@ -9,8 +9,7 @@ const column = (key: string, align?: ColumnHint["align"]): ColumnHint =>
  * under them. Only the human Format reads it; `--json` keeps the output schema as the contract.
  *
  * Every field of a row is a column, headed by its own key, so the table neither drops nor renames
- * a value (ADR-0027). A row without one (`levy`, for a Scenario with no Levy) reads as an empty
- * cell, and the nested `realNetWorth` reads as its compact JSON.
+ * a value (ADR-0027). The nested `realNetWorth` reads as its compact JSON.
  */
 export const projectionHint: RenderHint = {
 	tables: "tables",
@@ -26,7 +25,6 @@ export const projectionHint: RenderHint = {
 			column("expense", "right"),
 			column("contributions", "right"),
 			column("unfundedContributions", "right"),
-			column("levy", "right"),
 			column("interest", "right"),
 			column("unmet", "right"),
 			column("partial"),

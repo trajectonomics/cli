@@ -1,49 +1,11 @@
 import { describe, expect, it } from "bun:test"
 import simPackage from "@trajectonomics/sim/package.json"
-import {
-	AS_OF,
-	baseFlags,
-	errorOf,
-	fi,
-	HORIZON,
-	projectionHome,
-	resultOf,
-} from "./projection/testing"
-import { capture } from "./test-support"
+import type { FiView } from "./projection/fi-view"
+import { AS_OF, baseFlags, errorOf, fi, HORIZON, projectionHome } from "./projection/testing"
+import { type Captured, capture } from "./test-support"
 
-type FiBody = {
-	asOf: string
-	horizon: string
-	currency: string
-	engine: { package: string; version: string }
-	tax: string
-	notes: string[]
-	method: string
-	definition: { method: string; definitionVersion: number }
-	fi:
-		| {
-				reachable: true
-				fiDate: string
-				reference: Record<string, unknown> & {
-					label: string
-					multiplier: number
-					annualExpenses: string
-					threshold: string
-					met: boolean
-				}
-		  }
-		| { reachable: false; binding: "noCandidateMonth" }
-		| {
-				reachable: false
-				binding: string
-				bestCase:
-					| { month: string; runsOut: { date: string; unmet: string } }
-					| { month: string; bufferBreach: Record<string, string> }
-		  }
-}
-
-function bodyOf(res: { out: string }): FiBody {
-	return JSON.parse(res.out) as FiBody
+function bodyOf(res: Captured): FiView {
+	return JSON.parse(res.out) as FiView
 }
 
 describe("fi", () => {
@@ -124,13 +86,7 @@ describe("fi", () => {
 
 	it("echoes the Scenario, the Overrides and the tax status like projection run", async () => {
 		const home = await projectionHome()
-		const res = await fi(home, [...baseFlags(), "--set", "flows.rent.amount=3000000"])
-		const body = resultOf(res) as unknown as {
-			scenario: { name: string; contentHash: string; effectiveContentHash: string }
-			overrides: unknown[]
-			tax: string
-			notes: string[]
-		}
+		const body = bodyOf(await fi(home, [...baseFlags(), "--set", "flows.rent.amount=3000000"]))
 		expect(body.scenario.name).toBe("base")
 		expect(body.scenario.effectiveContentHash).not.toBe(body.scenario.contentHash)
 		expect(body.overrides).toEqual([{ path: "flows.rent.amount", value: 3000000 }])

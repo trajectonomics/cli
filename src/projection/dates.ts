@@ -1,14 +1,18 @@
-import type { ProjectionRow, RunsOut } from "@trajectonomics/sim"
+import type { RunsOut } from "@trajectonomics/sim"
 
-/** A date's year, month and day, in UTC, so no result depends on the host's zone. */
+const ISO = /^(\d{4})-(\d{2})-(\d{2})$/
+
+/**
+ * A date's year, month and day, checked as a real calendar date in UTC, so no result depends on
+ * the host's zone. The callers pass dates the Ledger or the engine already validated.
+ */
 function parts(date: string): [number, number, number] {
-	const [year, month, day] = date.split("-").map(Number)
+	const match = ISO.exec(date)
+	const [year, month, day] = match === null ? [] : match.slice(1).map(Number)
 	if (year === undefined || month === undefined || day === undefined) {
 		throw new Error(`"${date}" is not a YYYY-MM-DD date`)
 	}
-	if (![year, month, day].every((part) => Number.isSafeInteger(part))) {
-		throw new Error(`"${date}" is not a YYYY-MM-DD date`)
-	}
+	if (iso(year, month, day) !== date) throw new Error(`"${date}" is not a real calendar date`)
 	return [year, month, day]
 }
 
@@ -50,17 +54,17 @@ export function yearsBetween(from: string, to: string): number {
  * The row a birthday reads: the last monthly row on or before it, or nothing when the birthday
  * lies before the Projection's first row, past its last, or strictly after a run-out (ADR-0030).
  */
-export function rowAt(
-	rows: readonly ProjectionRow[],
+export function rowAt<Row extends { date: string }>(
+	rows: readonly Row[],
 	birthday: string,
-	runsOut: RunsOut | undefined,
-): ProjectionRow | undefined {
+	runsOut: Pick<RunsOut, "date"> | undefined,
+): Row | undefined {
 	const first = rows[0]
 	const last = rows.at(-1)
 	if (first === undefined || last === undefined) return undefined
 	if (birthday < first.date || birthday > last.date) return undefined
 	if (runsOut !== undefined && birthday > runsOut.date) return undefined
-	let found: ProjectionRow | undefined
+	let found: Row | undefined
 	for (const row of rows) {
 		if (row.date <= birthday) found = row
 	}

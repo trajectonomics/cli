@@ -1,4 +1,6 @@
 import type { AnnualRollup, ProjectionRow, RunsOut } from "@trajectonomics/sim"
+import type { AppError } from "../errors"
+import { fail, isAppError } from "../errors"
 import { addDays } from "./dates"
 import { moneyOf } from "./money"
 import type { AnnualRow, MonthlyRow } from "./run-view"
@@ -19,10 +21,16 @@ export function realNetWorthOf(
 	rollup: AnnualRollup,
 	rows: readonly ProjectionRow[],
 	currency: string,
-): AnnualRow["realNetWorth"] {
+): AnnualRow["realNetWorth"] | AppError {
 	const onDay = rows.find((row) => row.date === rollup.to)
 	const found = onDay ?? rows.find((row) => row.date === addDays(rollup.to, 1))
-	if (found === undefined) return null
+	if (found === undefined) {
+		// The decided guard for an engine change (OD6): stop rather than print a figure that is not
+		// net worth at the roll-up's end.
+		return fail("internal", {
+			message: `The roll-up ending ${rollup.to} has no monthly row on that day or the next.`,
+		})
+	}
 	return { date: found.date, amount: moneyOf(currency)(found.realNetWorth) }
 }
 
@@ -31,9 +39,11 @@ export function annualRow(
 	rollup: AnnualRollup,
 	rows: readonly ProjectionRow[],
 	currency: string,
-): AnnualRow {
+): AnnualRow | AppError {
 	const money = moneyOf(currency)
-	const row: AnnualRow = {
+	const realNetWorth = realNetWorthOf(rollup, rows, currency)
+	if (isAppError(realNetWorth)) return realNetWorth
+	return {
 		index: rollup.index,
 		from: rollup.from,
 		to: rollup.to,
@@ -46,10 +56,8 @@ export function annualRow(
 		interest: money(rollup.interest),
 		unmet: money(rollup.unmet),
 		partial: rollup.partial,
-		realNetWorth: realNetWorthOf(rollup, rows, currency),
+		realNetWorth,
 	}
-	if (rollup.levy !== undefined) row.levy = money(rollup.levy)
-	return row
 }
 
 /** One monthly row: net worth and accessible net worth, nominal and real. */

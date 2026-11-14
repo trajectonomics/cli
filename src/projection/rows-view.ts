@@ -12,11 +12,10 @@ export type AnnualRow = {
 	expense: string
 	contributions: string
 	unfundedContributions: string
-	levy?: string | undefined
 	interest: string
 	unmet: string
 	partial: boolean
-	realNetWorth: { date: string; amount: string } | null
+	realNetWorth: { date: string; amount: string }
 }
 
 /** One monthly row of the Projection, nominal and real. */
@@ -38,9 +37,6 @@ export const annualRow: z.ZodType<AnnualRow> = z.strictObject({
 	expense: moneyField("Expense the roll-up landed"),
 	contributions: moneyField("Contributions the roll-up funded"),
 	unfundedContributions: moneyField("Contributions the roll-up could not fund"),
-	levy: moneyField(
-		"Levy prepayment plus settlements net of refunds; absent without a Levy",
-	).optional(),
 	interest: moneyField("Interest the roll-up accrued"),
 	unmet: moneyField("Spending the roll-up could not fund"),
 	partial: z
@@ -51,9 +47,8 @@ export const annualRow: z.ZodType<AnnualRow> = z.strictObject({
 			date: dateField("The monthly row these real terms are measured at"),
 			amount: moneyField("Net worth in the Projection's start-of-timeline terms"),
 		})
-		.nullable()
 		.describe(
-			"The engine's real net worth at the roll-up's end; null when no row is dated then or the next day.",
+			"The engine's real net worth at the roll-up's end, dated where the engine states it.",
 		),
 })
 

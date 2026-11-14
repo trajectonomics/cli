@@ -48,38 +48,55 @@ function bestCaseView(bestCase: FiBestCase, currency: string): BestCaseView {
 	}
 }
 
-/** The engine's survival answer in the CLI's money: reachable, no candidate month, or a binding. */
-export function fiAnswerOf(prepared: Prepared): FiAnswer | AppError {
+/** The engine's survival answer in the CLI's money, with its own definition echo (ADR-0008). */
+export type FiSolution = {
+	fi: FiAnswer
+	definition: { method: "survival"; definitionVersion: number }
+}
+
+export function fiAnswerOf(prepared: Prepared): FiSolution | AppError {
 	const result = financialIndependence(prepared.baseline, prepared.document, prepared.timeline, {
 		method: "survival",
 	})
 	if (!result.ok) return refusal(result.problems)
 	const answer = result.financialIndependence
+	const definition = {
+		method: answer.definition.method,
+		definitionVersion: answer.definition.definitionVersion,
+	}
 	if (answer.reachable) {
 		return {
-			reachable: true,
-			fiDate: answer.month,
-			reference: referenceView(answer.reference, prepared.currency),
+			fi: {
+				reachable: true,
+				fiDate: answer.month,
+				reference: referenceView(answer.reference, prepared.currency),
+			},
+			definition,
 		}
 	}
-	if (answer.binding === "noCandidateMonth") return { reachable: false, binding: answer.binding }
+	if (answer.binding === "noCandidateMonth") {
+		return { fi: { reachable: false, binding: answer.binding }, definition }
+	}
 	return {
-		reachable: false,
-		binding: answer.binding,
-		bestCase: bestCaseView(answer.bestCase, prepared.currency),
+		fi: {
+			reachable: false,
+			binding: answer.binding,
+			bestCase: bestCaseView(answer.bestCase, prepared.currency),
+		},
+		definition,
 	}
 }
 
 /** `traj fi`: the survival answer with its definition echoed (ADR-0008). */
 export function independenceOf(prepared: Prepared): FiView | AppError {
-	const fi = fiAnswerOf(prepared)
-	if (isAppError(fi)) return fi
+	const solution = fiAnswerOf(prepared)
+	if (isAppError(solution)) return solution
 	return {
 		...echoOf(prepared),
 		horizon: prepared.timeline.horizon,
 		currency: prepared.currency,
-		method: "survival",
-		definition: { method: "survival", definitionVersion: 1 },
-		fi,
+		method: solution.definition.method,
+		definition: solution.definition,
+		fi: solution.fi,
 	}
 }

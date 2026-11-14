@@ -1,24 +1,10 @@
 import { describe, expect, it } from "bun:test"
+import type { CompareView } from "./projection/compare-view"
 import { AS_OF, projection, projectionHome } from "./projection/testing"
+import type { Captured } from "./test-support"
 
-type Figure = { age: number; nominal: string | null; real: string | null }
-
-type RunOutSide = {
-	fi: { reachable: boolean }
-	runOut: { date: string; unmet: string } | null
-	netWorth: {
-		final: { date: string; nominal: string; real: string }
-		atAges: Figure[]
-	}
-}
-
-type RunOutBody = {
-	sides: { a: RunOutSide; b: RunOutSide }
-	deltas: { fiMonths: number | null; runOutYears: number | null; atAges: Figure[] }
-}
-
-function bodyOf(res: { out: string }): RunOutBody {
-	return JSON.parse(res.out) as RunOutBody
+function bodyOf(res: Captured): CompareView {
+	return JSON.parse(res.out) as CompareView
 }
 
 describe("projection compare figures", () => {
