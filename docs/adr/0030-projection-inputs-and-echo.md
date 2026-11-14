@@ -4,6 +4,8 @@
 
 Every result carries `asOf`, `engine` (package and version), `scenario` (id, name, `contentHash` and the `effectiveContentHash` after Overrides), the applied `overrides` in command-line order and `tax`, so a result can be reproduced and an agent can tell what it was computed from (ADR-0007). `tax` is a closed enum, `applied | not_applied`; it is `not_applied` until a tax core is wired in, and the human format says so. Keys are camelCase, as in `baseline show`.
 
+A Projection's rows are a table-shaped result: `projection run` carries them as table entries (`annual`, and `monthly` with `--monthly`) and declares ADR-0027's hint, so a person reads a table and the note under it. The echo's other fields stay in `--json`, which is the contract; the note is the one sentence a person must read.
+
 FI is the `survival` method with the engine's defaults: no retirement spending override and no minimum buffer (ADR-0008). The 25× figure is a labelled reference and never changes the FI date. Unreachable FI reports the engine's binding and, except for `noCandidateMonth`, its best case.
 
 An engine problem is `projection_refused` at exit 3 with the engine's codes and paths in `details`, one code with one class (ADR-0013). A Timeline problem is `invalid_input` at the flag that caused it.

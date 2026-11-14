@@ -21,6 +21,11 @@ export type RenderHint = {
 	rows: string
 	/** One table's columns, keyed by the entry's `name`. */
 	columns: Readonly<Record<string, readonly ColumnHint[]>>
+	/**
+	 * A result field holding plain sentences, printed after the tables. It is for a fact a person
+	 * must read (such as a status only the JSON would otherwise show), never for a layout choice.
+	 */
+	note?: string
 }
 
 type Cells = readonly (readonly string[])[]
@@ -91,7 +96,16 @@ export function renderTableResult(data: unknown, hint: RenderHint): string | nul
 		if (block === null) return null
 		blocks.push(block)
 	}
+	blocks.push(...noteLines(data, hint))
 	return blocks.join("\n\n")
+}
+
+/** The hint's note field, one sentence per line; a result without one prints nothing extra. */
+function noteLines(data: Record<string, unknown>, hint: RenderHint): string[] {
+	if (hint.note === undefined) return []
+	const lines = data[hint.note]
+	if (!Array.isArray(lines)) return []
+	return lines.filter((line): line is string => typeof line === "string")
 }
 
 function blockOf(entry: Record<string, unknown>, hint: RenderHint): string | null {

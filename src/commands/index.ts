@@ -4,9 +4,11 @@ import { account } from "./account"
 import { balance } from "./balance"
 import { baseline } from "./baseline"
 import { exportCommand } from "./export"
+import { fi } from "./fi"
 import { help } from "./help"
 import { init } from "./init"
 import { inspect } from "./inspect"
+import { projection } from "./projection"
 import { report } from "./report"
 import { scenario } from "./scenario"
 import { schema } from "./schema"
@@ -22,9 +24,11 @@ export const root: Group = defineGroup({
 		balance,
 		baseline,
 		exportCommand,
+		fi,
 		help,
 		init,
 		inspect,
+		projection,
 		report,
 		scenario,
 		schema,

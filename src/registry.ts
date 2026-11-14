@@ -22,6 +22,7 @@ export type ErrorCode =
 	| "migration_failed"
 	| "output_exists"
 	| "export_failed"
+	| "projection_refused"
 	| "SINGLE_POSTING"
 	| "INVALID_AMOUNT"
 	| "ZERO_AMOUNT_POSTING"
@@ -67,6 +68,10 @@ export const registry: Record<ErrorCode, ErrorSpec> = {
 	migration_failed: { exit: 1, message: "The database could not be migrated." },
 	output_exists: { exit: 5, message: "The output path already exists." },
 	export_failed: { exit: 1, message: "The export could not be written." },
+	projection_refused: {
+		exit: 3,
+		message: "The projection engine refused the Baseline, the Scenario or the Timeline.",
+	},
 	SINGLE_POSTING: { exit: 3, message: "A transaction needs at least two postings." },
 	INVALID_AMOUNT: { exit: 3, message: "The amount is not a safe integer of minor units." },
 	ZERO_AMOUNT_POSTING: { exit: 3, message: "A posting amount cannot be zero." },

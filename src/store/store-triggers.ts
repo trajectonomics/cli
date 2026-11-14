@@ -23,6 +23,8 @@ export type StoreRaised = Exclude<
 	// Raised by the export command, which is the only writer outside the data directory.
 	| "output_exists"
 	| "export_failed"
+	// Raised by the projection commands, from the engine's own problems.
+	| "projection_refused"
 >
 
 function fixture() {

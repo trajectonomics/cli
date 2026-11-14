@@ -5,6 +5,7 @@ import { join } from "node:path"
 import { z } from "zod"
 import { defineCommand, defineGroup } from "./command"
 import { type ErrorCode, isAppError, registry } from "./errors"
+import { FIXTURE_AS_OF, fixtureHome } from "./ledger-fixture"
 import { type StoreRaised, storeTriggers, type Trigger } from "./store/store-triggers"
 import { SCENARIO_DOCUMENT, tempHome } from "./store/testing"
 import { type Captured, capture } from "./test-support"
@@ -58,6 +59,29 @@ describe("contract", () => {
 			return capture(argv, { TRAJ_HOME: home })
 		},
 		not_found: () => capture(["account", "show", "Nope", "--json"], { TRAJ_HOME: tempHome() }),
+		projection_refused: async () => {
+			const home = fixtureHome()
+			await capture(
+				["scenario", "apply", "base", "--file", "-", "--json"],
+				{ TRAJ_HOME: home },
+				undefined,
+				JSON.stringify(SCENARIO_DOCUMENT),
+			)
+			return capture(
+				[
+					"projection",
+					"run",
+					"--scenario",
+					"base",
+					"--as-of",
+					FIXTURE_AS_OF,
+					"--horizon",
+					"2027-03-30",
+					"--json",
+				],
+				{ TRAJ_HOME: home },
+			)
+		},
 		output_exists: async () => {
 			const out = join(mkdtempSync(join(tmpdir(), "traj-test-")), "out")
 			mkdirSync(out)
