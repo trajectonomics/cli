@@ -5,19 +5,23 @@ import { ROOT } from "./launcher-test-support"
 
 const readme = readFileSync(join(ROOT, "README.md"), "utf8")
 
-// The first screen is everything above the Development heading; the page most visitors read.
+// The first screen is everything above the Development heading, the part most visitors read.
+// The file wraps its prose, so the test reads the slice with whitespace collapsed: a visitor
+// sees the same words however the lines are wrapped.
 const SPLIT = "\n## Development\n"
-const [firstScreen = "", development = ""] = readme.split(SPLIT)
-const lowerFirstScreen = firstScreen.toLowerCase()
+const [beforeDevelopment = "", development = ""] = readme.split(SPLIT)
+const firstScreen = beforeDevelopment.replace(/\s+/g, " ")
 
-const installCommands = [
-	"curl -fsSL https://github.com/trajectonomics/cli/releases/latest/download/install.sh | sh",
-	"irm https://github.com/trajectonomics/cli/releases/latest/download/install.ps1 | iex",
-	"npx @trajectonomics/cli@latest --version",
-	"bunx @trajectonomics/cli@latest --version",
-]
-
+const scriptInstall =
+	"curl -fsSL https://github.com/trajectonomics/cli/releases/latest/download/install.sh | sh"
+const windowsInstall =
+	"irm https://github.com/trajectonomics/cli/releases/latest/download/install.ps1 | iex"
+const npmInstall = "npx @trajectonomics/cli@latest --version"
+const bunxInstall = "bunx @trajectonomics/cli@latest --version"
 const skillCommand = "npx skills add trajectonomics/internal-skills --skill traj -y"
+const installCommands = [scriptInstall, windowsInstall, npmInstall, bunxInstall]
+
+const at = (needle: string) => firstScreen.indexOf(needle)
 
 describe("the README first screen", () => {
 	it("ends at the Development heading", () => {
@@ -38,15 +42,18 @@ describe("the README first screen", () => {
 	})
 
 	it("adds the outsider skill step after the install commands and before the channels", () => {
-		const at = firstScreen.indexOf(skillCommand)
-		expect(at).toBeGreaterThan(firstScreen.indexOf("bunx @trajectonomics/cli@latest --version"))
-		expect(at).toBeLessThan(firstScreen.indexOf("Which channel"))
-		expect(at).toBeLessThan(firstScreen.indexOf("Uninstall"))
+		for (const anchor of [bunxInstall, "Which channel", "Uninstall"]) {
+			expect(at(anchor)).toBeGreaterThan(-1)
+		}
+		expect(at(skillCommand)).toBeGreaterThan(at(bunxInstall))
+		expect(at(skillCommand)).toBeLessThan(at("Which channel"))
+		expect(at(skillCommand)).toBeLessThan(at("Uninstall"))
 	})
 
 	it("says the skill step needs Node, which the install scripts do not", () => {
-		expect(firstScreen).toMatch(/needs Node/)
-		expect(firstScreen).toMatch(/install scripts do not/)
+		const step = firstScreen.slice(at(skillCommand), at("Which channel"))
+		expect(step).toMatch(/needs Node/)
+		expect(step).toMatch(/install scripts do not/)
 	})
 
 	it("leaves the Bun-only sentence to Development", () => {
@@ -55,10 +62,10 @@ describe("the README first screen", () => {
 	})
 
 	it("claims no tax meaning, offers no Homebrew, and links no site yet", () => {
-		expect(lowerFirstScreen).not.toContain("tax")
-		expect(lowerFirstScreen).not.toContain("thailand")
-		expect(lowerFirstScreen).not.toContain("financial independence")
-		expect(lowerFirstScreen).not.toContain("homebrew")
+		expect(firstScreen).not.toMatch(/\btax/i)
+		expect(firstScreen).not.toMatch(/thailand/i)
+		expect(firstScreen).not.toMatch(/financial independence/i)
+		expect(firstScreen).not.toMatch(/homebrew/i)
 		expect(firstScreen).not.toContain("trajectonomics.com")
 	})
 })
