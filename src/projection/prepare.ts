@@ -1,4 +1,4 @@
-import type { Baseline, Timeline } from "@trajectonomics/sim"
+import type { Baseline, Scenario, Timeline } from "@trajectonomics/sim"
 import { BASELINE_CURRENCY } from "../baseline/kind"
 import { type AppError, isAppError } from "../errors"
 import type { ScenarioDocument } from "../scenario/document"
@@ -13,8 +13,11 @@ import type { ScenarioEcho } from "./view"
 
 /** What every projection leaf resolves before it runs the engine. */
 export type Prepared = {
-	/** The stored document after the applied Overrides, exactly as the engine will read it. */
-	document: ScenarioDocument
+	/**
+	 * The stored document after the applied Overrides, as the engine's own type. The CLI keeps a
+	 * Scenario as JSON and never models it (ADR-0024); the engine validates it again on the way in.
+	 */
+	document: Scenario
 	overrides: AppliedOverride[]
 	scenario: ScenarioEcho
 	currency: string
@@ -72,7 +75,8 @@ export function prepareProjection(input: PrepareInput): Prepared | AppError {
 	const effective = guard(() => contentHash(canonicalJson(applied.document)))
 	if (isAppError(effective)) return effective
 	return {
-		document: applied.document,
+		// The one place the stored JSON becomes the engine's type; `check()` reads it again.
+		document: applied.document as unknown as Scenario,
 		overrides: applied.overrides,
 		scenario: {
 			id: row.id,

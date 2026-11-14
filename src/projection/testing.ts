@@ -34,6 +34,34 @@ export function drainedScenario(at: string): Scenario {
 	}
 }
 
+/**
+ * The same plan with one Levy over salary: 3% is taken at source and settled. Its period began
+ * before the fixture's As-of, so a carry-in says what it had already taken (ADR-0024).
+ */
+export function leviedScenario(): Scenario {
+	return {
+		...SIM_SCENARIO,
+		flows: SIM_SCENARIO.flows.map((flow) =>
+			flow.id === "salary" && flow.kind === "income"
+				? { ...flow, label: "salary", prepayments: [{ levy: "national", bps: 300 }] }
+				: flow,
+		),
+		levies: [
+			{
+				id: "national",
+				period: { month: 1, day: 1 },
+				settlement: { month: 2, day: 15 },
+				measures: [
+					{ id: "gross", op: "tally", label: "salary", basis: "gross" },
+					{ id: "due", op: "scale", of: "gross", num: 3, den: 100, rounding: "halfUp" },
+				],
+				due: "due",
+				carryIn: [{ periodStart: "2026-01-01", tallies: [], prepaid: 0 }],
+			},
+		],
+	}
+}
+
 /** A plan whose expenses outrun its assets: FI is out of reach, with a binding and a best case. */
 export const UNREACHABLE_SCENARIO: Scenario = {
 	...SIM_SCENARIO,
@@ -51,6 +79,7 @@ export async function projectionHome(): Promise<string> {
 		["usd", { ...PROJECTION_SCENARIO, currency: "USD" }],
 		["drained-2027", drainedScenario("2027-06-30")],
 		["drained-2029", drainedScenario("2029-06-30")],
+		["levied", leviedScenario()],
 	] as const) {
 		const applied = await applyScenario(home, name, scenario)
 		if (applied.code !== 0) throw new Error(applied.err)

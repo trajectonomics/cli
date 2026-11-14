@@ -1,39 +1,43 @@
 import type { ColumnHint, RenderHint } from "../table"
 
-/** Money reads right-aligned; a date reads left. */
-const money = (key: string, label: string): ColumnHint => ({ key, label, align: "right" })
+/** One column of a table-shaped result, headed exactly as its row key is spelled. */
+const column = (key: string, align?: ColumnHint["align"]): ColumnHint =>
+	align === undefined ? { key, label: key } : { key, label: key, align }
 
 /**
  * `projection run`'s human view: the annual roll-up, the monthly rows when asked, and the notes
  * under them. Only the human Format reads it; `--json` keeps the output schema as the contract.
- * A row without a value (the `levy` of a Scenario with no Levy) reads as an empty cell. The
- * annual roll-up's nested `realNetWorth` stays in JSON: a table cell cannot show its date, and
- * the monthly rows carry the real figures when `--monthly` asks for them.
+ *
+ * Every field of a row is a column, headed by its own key, so the table neither drops nor renames
+ * a value (ADR-0027). A row without one (`levy`, for a Scenario with no Levy) reads as an empty
+ * cell, and the nested `realNetWorth` reads as its compact JSON.
  */
 export const projectionHint: RenderHint = {
 	tables: "tables",
 	rows: "rows",
 	columns: {
 		annual: [
-			{ key: "from", label: "from" },
-			{ key: "to", label: "to" },
-			money("openingNetWorth", "opening"),
-			money("closingNetWorth", "closing"),
-			money("income", "income"),
-			money("expense", "expense"),
-			money("contributions", "contributions"),
-			money("unfundedContributions", "unfunded"),
-			money("levy", "levy"),
-			money("interest", "interest"),
-			money("unmet", "unmet"),
-			{ key: "partial", label: "partial" },
+			column("index", "right"),
+			column("from"),
+			column("to"),
+			column("openingNetWorth", "right"),
+			column("closingNetWorth", "right"),
+			column("income", "right"),
+			column("expense", "right"),
+			column("contributions", "right"),
+			column("unfundedContributions", "right"),
+			column("levy", "right"),
+			column("interest", "right"),
+			column("unmet", "right"),
+			column("partial"),
+			column("realNetWorth"),
 		],
 		monthly: [
-			{ key: "date", label: "date" },
-			money("netWorth", "net worth"),
-			money("realNetWorth", "real"),
-			money("accessibleNetWorth", "accessible"),
-			money("realAccessibleNetWorth", "real accessible"),
+			column("date"),
+			column("netWorth", "right"),
+			column("realNetWorth", "right"),
+			column("accessibleNetWorth", "right"),
+			column("realAccessibleNetWorth", "right"),
 		],
 	},
 	note: "notes",

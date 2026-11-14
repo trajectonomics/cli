@@ -136,6 +136,23 @@ describe("projection run", () => {
 		expect(humanOnce.out).toContain("No tax is applied")
 	})
 
+	it("carries a Levy's net figure on the roll-up and in the human table", async () => {
+		const home = await projectionHome()
+		const body = runBody(await projection(home, ["run", ...baseFlags("levied"), "--monthly"]))
+		const row = tableOf(body, "annual").rows[0]
+		// 3% of the salary the year lands, less nothing refunded: the engine's own net levy figure.
+		expect(row?.levy).toBe("28800.00")
+		expect(row?.closingNetWorth).toBe("1586723.96")
+		const human = await capture(["projection", "run", ...baseFlags("levied")], { TRAJ_HOME: home })
+		expect(human.code).toBe(0)
+		expect(human.out).toContain("levy")
+		expect(human.out).toContain("28800.00")
+		// A Scenario with no Levy keeps the same columns and reads an empty cell.
+		const plain = await capture(["projection", "run", ...baseFlags()], { TRAJ_HOME: home })
+		expect(plain.out).toContain("levy")
+		expect(plain.out).toContain("closingNetWorth")
+	})
+
 	it("applies --set transiently and echoes it with the effective hash", async () => {
 		const home = await projectionHome()
 		const plain = runBody(await projection(home, ["run", ...baseFlags()]))

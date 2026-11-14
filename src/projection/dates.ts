@@ -6,6 +6,9 @@ function parts(date: string): [number, number, number] {
 	if (year === undefined || month === undefined || day === undefined) {
 		throw new Error(`"${date}" is not a YYYY-MM-DD date`)
 	}
+	if (![year, month, day].every((part) => Number.isSafeInteger(part))) {
+		throw new Error(`"${date}" is not a YYYY-MM-DD date`)
+	}
 	return [year, month, day]
 }
 

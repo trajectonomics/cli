@@ -12,6 +12,7 @@ export type AnnualRowBody = {
 	expense: string
 	contributions: string
 	unfundedContributions: string
+	levy?: string | undefined
 	interest: string
 	unmet: string
 	partial: boolean

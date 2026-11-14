@@ -1,13 +1,13 @@
 import type { AnnualRollup, ProjectionRow, RunsOut } from "@trajectonomics/sim"
-import { formatMinorUnits } from "../store"
 import { addDays } from "./dates"
+import { moneyOf } from "./money"
 import type { AnnualRow, MonthlyRow } from "./run-view"
 import type { RunsOutView } from "./view"
 
 /** The engine's run-out in the CLI's money (ADR-0009). */
 export function runsOutView(runsOut: RunsOut | undefined, currency: string): RunsOutView | null {
 	if (runsOut === undefined) return null
-	return { date: runsOut.date, unmet: formatMinorUnits(runsOut.unmet, currency) }
+	return { date: runsOut.date, unmet: moneyOf(currency)(runsOut.unmet) }
 }
 
 /**
@@ -23,7 +23,7 @@ export function realNetWorthOf(
 	const onDay = rows.find((row) => row.date === rollup.to)
 	const found = onDay ?? rows.find((row) => row.date === addDays(rollup.to, 1))
 	if (found === undefined) return null
-	return { date: found.date, amount: formatMinorUnits(found.realNetWorth, currency) }
+	return { date: found.date, amount: moneyOf(currency)(found.realNetWorth) }
 }
 
 /** One roll-up row, money at the currency's own scale, real figure from the engine's own row. */
@@ -32,7 +32,7 @@ export function annualRow(
 	rows: readonly ProjectionRow[],
 	currency: string,
 ): AnnualRow {
-	const money = (minor: number) => formatMinorUnits(minor, currency)
+	const money = moneyOf(currency)
 	const row: AnnualRow = {
 		index: rollup.index,
 		from: rollup.from,
@@ -54,7 +54,7 @@ export function annualRow(
 
 /** One monthly row: net worth and accessible net worth, nominal and real. */
 export function monthlyRow(row: ProjectionRow, currency: string): MonthlyRow {
-	const money = (minor: number) => formatMinorUnits(minor, currency)
+	const money = moneyOf(currency)
 	return {
 		date: row.date,
 		netWorth: money(row.netWorth),

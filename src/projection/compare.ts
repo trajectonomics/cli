@@ -1,12 +1,13 @@
-import { project, type Scenario } from "@trajectonomics/sim"
+import { project } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
 import { fail, isAppError } from "../errors"
-import { deltasOf, moneyOf, type SideData, sideView } from "./compare-figures"
+import { deltasOf, type SideData, sideView } from "./compare-figures"
 import type { CompareView } from "./compare-view"
 import { birthdayAt, rowAt } from "./dates"
 import { NO_TAX, TAX } from "./echo"
 import { refusal, SIM_PACKAGE, SIM_VERSION } from "./engine"
 import { fiAnswerOf } from "./fi"
+import { moneyOf } from "./money"
 import type { Prepared } from "./prepare"
 
 /** The two sides of a compare: `A`, or the base of a what-if, and `B`, or the what-if. */
@@ -25,13 +26,7 @@ type Birthday = { age: number; birthday: string }
 function dataOf(prepared: Prepared, birthdays: readonly Birthday[]): SideData | AppError {
 	const fi = fiAnswerOf(prepared)
 	if (isAppError(fi)) return fi
-	// The CLI never models a Scenario (ADR-0024): the stored document is the engine's own, and the
-	// engine validates it again on the way in.
-	const result = project(
-		prepared.baseline,
-		prepared.document as unknown as Scenario,
-		prepared.timeline,
-	)
+	const result = project(prepared.baseline, prepared.document, prepared.timeline)
 	if (!result.ok) return refusal(result.problems)
 	const { rows, runsOut } = result.projection
 	const final = rows.at(-1)

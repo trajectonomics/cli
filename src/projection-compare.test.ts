@@ -190,6 +190,17 @@ describe("projection compare", () => {
 		expect(bodyOf(once).notes[0]).toContain("No tax is applied")
 	})
 
+	it("gives identical bytes in the human format too", async () => {
+		const home = await projectionHome()
+		const flags = ["projection", "compare", "base", "unreachable", ...dateFlags()]
+		const once = await capture(flags, { TRAJ_HOME: home })
+		const twice = await capture(flags, { TRAJ_HOME: home })
+		expect(once.code).toBe(0)
+		expect(twice.out).toBe(once.out)
+		expect(once.out).toContain("deltas:")
+		expect(once.out).toContain("No tax is applied")
+	})
+
 	it("describes its input and result in `traj schema`", async () => {
 		const res = await capture(["schema", "projection", "compare", "--json"])
 		expect(res.code).toBe(0)

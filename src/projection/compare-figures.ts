@@ -1,5 +1,4 @@
 import type { ProjectionRow, RunsOut } from "@trajectonomics/sim"
-import { formatMinorUnits } from "../store"
 import type { CompareSide } from "./compare-side"
 import type { CompareDeltas } from "./compare-view"
 import { monthsBetween, yearsBetween } from "./dates"
@@ -67,9 +66,4 @@ export function deltasOf(
 			}
 		}),
 	}
-}
-
-/** The currency's money formatter, so every figure of one result renders the same way. */
-export function moneyOf(currency: string): (minor: number) => string {
-	return (minor: number) => formatMinorUnits(minor, currency)
 }

@@ -1,4 +1,4 @@
-import { project, type Scenario } from "@trajectonomics/sim"
+import { project } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
 import { echoOf } from "./echo"
 import { refusal } from "./engine"
@@ -12,7 +12,7 @@ import type { ProjectionRunView, ProjectionTable } from "./run-view"
  */
 export function projectionOf(prepared: Prepared, monthly: boolean): ProjectionRunView | AppError {
 	const { timeline, baseline, currency } = prepared
-	const result = project(baseline, prepared.document as unknown as Scenario, timeline)
+	const result = project(baseline, prepared.document, timeline)
 	if (!result.ok) return refusal(result.problems)
 	const { projection } = result
 	const tables: ProjectionTable[] = [

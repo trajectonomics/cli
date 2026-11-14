@@ -2,18 +2,17 @@ import {
 	type FiBestCase,
 	financialIndependence,
 	type RuleOfThumbReference,
-	type Scenario,
 } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
-import { formatMinorUnits } from "../store"
 import { echoOf } from "./echo"
 import { refusal } from "./engine"
 import type { BestCaseView, FiAnswer, FiView, RuleOfThumbView } from "./fi-view"
+import { moneyOf } from "./money"
 import type { Prepared } from "./prepare"
 
 function referenceView(reference: RuleOfThumbReference, currency: string): RuleOfThumbView {
-	const money = (minor: number) => formatMinorUnits(minor, currency)
+	const money = moneyOf(currency)
 	return {
 		label: reference.label,
 		date: reference.date,
@@ -32,33 +31,28 @@ function referenceView(reference: RuleOfThumbReference, currency: string): RuleO
 }
 
 function bestCaseView(bestCase: FiBestCase, currency: string): BestCaseView {
+	const money = moneyOf(currency)
 	if ("runsOut" in bestCase) {
 		return {
 			month: bestCase.month,
-			runsOut: {
-				date: bestCase.runsOut.date,
-				unmet: formatMinorUnits(bestCase.runsOut.unmet, currency),
-			},
+			runsOut: { date: bestCase.runsOut.date, unmet: money(bestCase.runsOut.unmet) },
 		}
 	}
 	return {
 		month: bestCase.month,
 		bufferBreach: {
 			date: bestCase.bufferBreach.date,
-			required: formatMinorUnits(bestCase.bufferBreach.required, currency),
-			accessible: formatMinorUnits(bestCase.bufferBreach.accessible, currency),
+			required: money(bestCase.bufferBreach.required),
+			accessible: money(bestCase.bufferBreach.accessible),
 		},
 	}
 }
 
 /** The engine's survival answer in the CLI's money: reachable, no candidate month, or a binding. */
 export function fiAnswerOf(prepared: Prepared): FiAnswer | AppError {
-	const result = financialIndependence(
-		prepared.baseline,
-		prepared.document as unknown as Scenario,
-		prepared.timeline,
-		{ method: "survival" },
-	)
+	const result = financialIndependence(prepared.baseline, prepared.document, prepared.timeline, {
+		method: "survival",
+	})
 	if (!result.ok) return refusal(result.problems)
 	const answer = result.financialIndependence
 	if (answer.reachable) {
