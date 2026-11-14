@@ -1,34 +1,46 @@
 import type { ProjectionRow, RunsOut } from "@trajectonomics/sim"
 
+/** A date's year, month and day, in UTC, so no result depends on the host's zone. */
+function parts(date: string): [number, number, number] {
+	const [year, month, day] = date.split("-").map(Number)
+	if (year === undefined || month === undefined || day === undefined) {
+		throw new Error(`"${date}" is not a YYYY-MM-DD date`)
+	}
+	return [year, month, day]
+}
+
+/** One ISO date from UTC parts. */
+function iso(year: number, month: number, day: number): string {
+	return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10)
+}
+
+/** `2026-03-30` → `2026-03-31`. */
+export function addDays(date: string, days: number): string {
+	const [year, month, day] = parts(date)
+	return iso(year, month, day + days)
+}
+
 /**
  * The birthday at `age`: the birth date's own month and day, clamped to the month's last day when
  * that day does not exist (29 February becomes 28 February in a common year).
  */
 export function birthdayAt(birthDate: string, age: number): string {
-	const [year, month, day] = birthDate.split("-").map(Number)
-	if (year === undefined || month === undefined || day === undefined) {
-		throw new Error(`"${birthDate}" is not a YYYY-MM-DD date`)
-	}
+	const [year, month, day] = parts(birthDate)
 	const target = year + age
 	const lastDay = new Date(Date.UTC(target, month, 0)).getUTCDate()
-	return new Date(Date.UTC(target, month - 1, Math.min(day, lastDay))).toISOString().slice(0, 10)
+	return iso(target, month, Math.min(day, lastDay))
 }
 
 /** Whole calendar months from `from` to `to`, the sign of `to - from`. */
 export function monthsBetween(from: string, to: string): number {
-	const [fromYear, fromMonth] = from.split("-").map(Number)
-	const [toYear, toMonth] = to.split("-").map(Number)
-	if (fromYear === undefined || fromMonth === undefined) throw new Error(`"${from}" is not a date`)
-	if (toYear === undefined || toMonth === undefined) throw new Error(`"${to}" is not a date`)
+	const [fromYear, fromMonth] = parts(from)
+	const [toYear, toMonth] = parts(to)
 	return (toYear - fromYear) * 12 + (toMonth - fromMonth)
 }
 
 /** Calendar years from `from` to `to`, the sign of `to - from`. */
 export function yearsBetween(from: string, to: string): number {
-	const [fromYear] = from.split("-").map(Number)
-	const [toYear] = to.split("-").map(Number)
-	if (fromYear === undefined || toYear === undefined) throw new Error(`"${from}" is not a date`)
-	return toYear - fromYear
+	return parts(to)[0] - parts(from)[0]
 }
 
 /**

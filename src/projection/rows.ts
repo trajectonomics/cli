@@ -1,16 +1,8 @@
 import type { AnnualRollup, ProjectionRow, RunsOut } from "@trajectonomics/sim"
 import { formatMinorUnits } from "../store"
+import { addDays } from "./dates"
 import type { AnnualRow, MonthlyRow } from "./run-view"
 import type { RunsOutView } from "./view"
-
-/** `2026-03-30` → `2026-03-31`, in UTC, so the result never depends on the host's zone. */
-export function addDays(date: string, days: number): string {
-	const [year, month, day] = date.split("-").map(Number)
-	if (year === undefined || month === undefined || day === undefined) {
-		throw new Error(`"${date}" is not a YYYY-MM-DD date`)
-	}
-	return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
-}
 
 /** The engine's run-out in the CLI's money (ADR-0009). */
 export function runsOutView(runsOut: RunsOut | undefined, currency: string): RunsOutView | null {

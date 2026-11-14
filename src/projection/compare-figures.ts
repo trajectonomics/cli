@@ -1,7 +1,8 @@
 import type { ProjectionRow, RunsOut } from "@trajectonomics/sim"
 import { formatMinorUnits } from "../store"
-import { monthsBetween, yearsBetween } from "./compare-dates"
-import type { CompareDeltas, CompareSide } from "./compare-view"
+import type { CompareSide } from "./compare-side"
+import type { CompareDeltas } from "./compare-view"
+import { monthsBetween, yearsBetween } from "./dates"
 import type { FiAnswer } from "./fi-view"
 import type { Prepared } from "./prepare"
 

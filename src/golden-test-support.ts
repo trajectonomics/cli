@@ -17,7 +17,10 @@ export function goldenJson(value: unknown): string {
  * writes nothing, so a diff is the only thing an ordinary test run can produce.
  */
 export async function recordGoldenIn(base: URL, name: string, value: unknown): Promise<void> {
-	if (process.env["TRAJ_UPDATE_GOLDEN"] === "1") {
-		await Bun.write(new URL(name, base), goldenJson(value))
-	}
+	await recordGoldenTextIn(base, name, goldenJson(value))
+}
+
+/** The same switch for a golden that is a command's own bytes, not a JSON structure. */
+export async function recordGoldenTextIn(base: URL, name: string, text: string): Promise<void> {
+	if (process.env["TRAJ_UPDATE_GOLDEN"] === "1") await Bun.write(new URL(name, base), text)
 }

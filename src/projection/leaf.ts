@@ -1,3 +1,5 @@
+import type { Baseline } from "@trajectonomics/sim"
+import { baselineOf } from "../baseline/mapping"
 import type { Context, Result } from "../command"
 import { ok } from "../command"
 import { checkedAsOf } from "../date"
@@ -36,10 +38,19 @@ export function withProjection<T>(
 	return withStore(ctx, (store) => {
 		const ledger = store.ledger()
 		if (isAppError(ledger)) return ledger
+		// Mapped on first use, so a compare runs the mapping once and an unknown Scenario never does.
+		let mapped: Baseline | AppError | undefined
+		const baseline = (): Baseline | AppError => {
+			if (mapped === undefined) {
+				const mapping = baselineOf(ledger, input.asOf)
+				mapped = isAppError(mapping) ? mapping : mapping.document
+			}
+			return mapped
+		}
 		const prepare: Prepare = (request) =>
 			prepareProjection({
 				store,
-				ledger,
+				baseline,
 				scenario: request.scenario,
 				scenarioPath: request.scenarioPath,
 				asOf: input.asOf,

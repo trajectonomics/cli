@@ -1,9 +1,9 @@
 import { project, type Scenario } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
 import { fail, isAppError } from "../errors"
-import { birthdayAt, rowAt } from "./compare-dates"
 import { deltasOf, moneyOf, type SideData, sideView } from "./compare-figures"
 import type { CompareView } from "./compare-view"
+import { birthdayAt, rowAt } from "./dates"
 import { NO_TAX, TAX } from "./echo"
 import { refusal, SIM_PACKAGE, SIM_VERSION } from "./engine"
 import { fiAnswerOf } from "./fi"
@@ -19,11 +19,10 @@ export type CompareInput = {
 	ages: readonly number[]
 }
 
-function dataOf(
-	prepared: Prepared,
-	ages: readonly number[],
-	birthDate: string | null,
-): SideData | AppError {
+/** One `--age` and the birthday it reads, resolved before either side is projected. */
+type Birthday = { age: number; birthday: string }
+
+function dataOf(prepared: Prepared, birthdays: readonly Birthday[]): SideData | AppError {
 	const fi = fiAnswerOf(prepared)
 	if (isAppError(fi)) return fi
 	// The CLI never models a Scenario (ADR-0024): the stored document is the engine's own, and the
@@ -44,10 +43,9 @@ function dataOf(
 		fi,
 		runsOut,
 		final,
-		// The leaf refuses --age without --birth-date, so a null here with ages is a bug.
-		atAges: ages.map((age) => ({
+		atAges: birthdays.map(({ age, birthday }) => ({
 			age,
-			row: rowAt(rows, birthdayAt(birthDate ?? "", age), runsOut),
+			row: rowAt(rows, birthday, runsOut),
 		})),
 	}
 }
@@ -57,10 +55,15 @@ function dataOf(
  * that cannot be stated is null rather than a guess (ADR-0030).
  */
 export function compareOf(input: CompareInput): CompareView | AppError {
-	const { a, b } = input
-	const dataA = dataOf(a, input.ages, input.birthDate)
+	const { a, b, birthDate } = input
+	// The leaf refuses --age without --birth-date, so this pairing is always one it allowed.
+	const birthdays =
+		birthDate === null
+			? []
+			: input.ages.map((age) => ({ age, birthday: birthdayAt(birthDate, age) }))
+	const dataA = dataOf(a, birthdays)
 	if (isAppError(dataA)) return dataA
-	const dataB = dataOf(b, input.ages, input.birthDate)
+	const dataB = dataOf(b, birthdays)
 	if (isAppError(dataB)) return dataB
 	const money = moneyOf(a.currency)
 	return {

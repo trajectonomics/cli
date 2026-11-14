@@ -1,41 +1,47 @@
 import { describe, expect, it } from "bun:test"
 import simPackage from "@trajectonomics/sim/package.json"
-import { goldenTextIn, recordGoldenIn } from "./golden-test-support"
+import { goldenTextIn, recordGoldenTextIn } from "./golden-test-support"
 import { AS_OF, baseFlags, HORIZON, projection, projectionHome } from "./projection/testing"
-import { type RunBody, runBody, tableOf } from "./projection-run-support"
-import { capture } from "./test-support"
+import { runBody, tableOf } from "./projection-run-support"
+import { type Captured, capture } from "./test-support"
 
 const GOLDENS = new URL("./projection/fixtures/", import.meta.url)
+
+/** The command's own bytes, with the Scenario's minted id replaced by a stable token. */
+function goldenText(res: Captured): string {
+	const id = runBody(res).scenario.id
+	return `${res.out.replace(`"${id}"`, '"the-scenario-id"')}\n`
+}
 
 /** The engine version is checked first, so a bump fails before any byte comparison. */
 async function expectGoldenEngineVersion(): Promise<void> {
 	let text: string
 	try {
-		text = await goldenTextIn(GOLDENS, "run.json")
+		text = await goldenTextIn(GOLDENS, "run.output")
 	} catch {
-		// No golden yet: the test that records it creates one.
-		return
-	}
-	if (runBody({ out: text, code: 0, err: "" }).engine.version !== simPackage.version) {
+		if (process.env["TRAJ_UPDATE_GOLDEN"] === "1") return
 		throw new Error(
-			`The golden was produced with @trajectonomics/sim ${JSON.parse(text).engine.version}, but ${simPackage.version} is installed. Re-baseline it deliberately: TRAJ_UPDATE_GOLDEN=1 bun test src/projection-run.test.ts`,
+			"The projection golden is missing. Record it deliberately: TRAJ_UPDATE_GOLDEN=1 bun test src/projection-run.test.ts",
+		)
+	}
+	const { engine } = JSON.parse(text) as { engine: { version: string } }
+	if (engine.version !== simPackage.version) {
+		throw new Error(
+			`The golden was produced with @trajectonomics/sim ${engine.version}, but ${simPackage.version} is installed. Re-baseline it deliberately: TRAJ_UPDATE_GOLDEN=1 bun test src/projection-run.test.ts`,
 		)
 	}
 }
 
 describe("projection run", () => {
-	it("matches the committed golden, value for value", async () => {
+	it("matches the committed golden, byte for byte", async () => {
 		await expectGoldenEngineVersion()
 		const home = await projectionHome()
 		const res = await projection(home, ["run", ...baseFlags()])
 		expect(res.code).toBe(0)
 		expect(res.err).toBe("")
-		const body = runBody(res)
-		// The Scenario's id is minted when the row is written, so the golden records a token.
-		const stable: RunBody = { ...body, scenario: { ...body.scenario, id: "the-scenario-id" } }
-		await recordGoldenIn(GOLDENS, "run.json", stable)
-		// Compared as values, not bytes: the repository's formatter owns the golden's layout.
-		expect(JSON.parse(await goldenTextIn(GOLDENS, "run.json"))).toEqual(stable)
+		const text = goldenText(res)
+		await recordGoldenTextIn(GOLDENS, "run.output", text)
+		expect(await goldenTextIn(GOLDENS, "run.output")).toBe(text)
 	})
 
 	it("echoes the As-of, the engine, the Scenario and the tax status (ADR-0030)", async () => {
@@ -112,7 +118,7 @@ describe("projection run", () => {
 			rows.find((row) => row.date === "2027-03-31")?.realNetWorth as string,
 		)
 		// The roll-up's own closing figure is nominal, and never the real one.
-		expect(annual.rows[0]?.closingNetWorth).not.toBe(annual.rows[0]?.realNetWorth)
+		expect(annual.rows[0]?.closingNetWorth).not.toBe(realFigure.amount)
 	})
 
 	it("gives identical bytes twice, in JSON and in the human format", async () => {

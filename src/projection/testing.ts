@@ -16,6 +16,24 @@ export const HORIZON: string = SIM_TIMELINE.horizon
  */
 export const PROJECTION_SCENARIO: Scenario = SIM_SCENARIO
 
+/** A plan that runs out at a stated month: one `once` expense larger than the whole portfolio. */
+export function drainedScenario(at: string): Scenario {
+	return {
+		...SIM_SCENARIO,
+		flows: [
+			...SIM_SCENARIO.flows,
+			{
+				id: "buy",
+				kind: "expense",
+				amount: 500_000_000,
+				frequency: "once",
+				start: at,
+				growth: { bps: 0 },
+			},
+		],
+	}
+}
+
 /** A plan whose expenses outrun its assets: FI is out of reach, with a binding and a best case. */
 export const UNREACHABLE_SCENARIO: Scenario = {
 	...SIM_SCENARIO,
@@ -31,6 +49,8 @@ export async function projectionHome(): Promise<string> {
 		["base", PROJECTION_SCENARIO],
 		["unreachable", UNREACHABLE_SCENARIO],
 		["usd", { ...PROJECTION_SCENARIO, currency: "USD" }],
+		["drained-2027", drainedScenario("2027-06-30")],
+		["drained-2029", drainedScenario("2029-06-30")],
 	] as const) {
 		const applied = await applyScenario(home, name, scenario)
 		if (applied.code !== 0) throw new Error(applied.err)

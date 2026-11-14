@@ -74,7 +74,7 @@ describe("projection compare", () => {
 		expect(body.deltas.netWorth.nominal).toMatch(/^-?[0-9]+\.[0-9]{2}$/)
 	})
 
-	it("delta fiMonths counts whole calendar months and runOutYears whole years", async () => {
+	it("delta fiMonths counts whole calendar months between two FI dates", async () => {
 		const home = await projectionHome()
 		const body = bodyOf(await projection(home, ["compare", "base", "unreachable", ...dateFlags()]))
 		const reachable = body.sides.a.fi.fiDate

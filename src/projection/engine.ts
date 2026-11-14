@@ -32,11 +32,19 @@ function timelineFailure(problems: readonly ProjectionProblem[]): AppError | nul
 	const timeline = problems.find((problem) => "path" in problem && problem.path[0] === "timeline")
 	if (timeline === undefined || !("path" in timeline)) return null
 	const last = timeline.path.at(-1)
-	const path = last === "start" ? "asOf" : last === "horizon" ? "horizon" : "timeline"
+	if (last === "start" || last === "horizon") {
+		const flag = last === "start" ? "as-of" : "horizon"
+		return fail("invalid_input", {
+			path: last === "start" ? "asOf" : "horizon",
+			message: `--${flag}: ${timeline.code}`,
+			hint: "The Timeline starts at --as-of and ends at --horizon.",
+			details: { code: timeline.code },
+		})
+	}
 	return fail("invalid_input", {
-		path,
-		message: `--${path === "asOf" ? "as-of" : "horizon"}: ${timeline.code}`,
-		hint: "The Timeline starts at --as-of and ends at --horizon.",
+		path: `timeline.${String(last ?? "")}`,
+		message: `timeline: ${timeline.code}`,
+		hint: "The CLI builds the Timeline from --as-of and --horizon.",
 		details: { code: timeline.code },
 	})
 }

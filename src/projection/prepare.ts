@@ -1,11 +1,11 @@
 import type { Baseline, Timeline } from "@trajectonomics/sim"
-import { baselineOf } from "../baseline/mapping"
-import { type AppError, fail, isAppError } from "../errors"
+import { BASELINE_CURRENCY } from "../baseline/kind"
+import { type AppError, isAppError } from "../errors"
 import type { ScenarioDocument } from "../scenario/document"
 import { scenarioNotFound } from "../scenario/errors"
 import { applyScenarioSets } from "../scenario/set-apply"
 import type { AppliedOverride } from "../scenario/set-error"
-import type { Ledger, Store } from "../store"
+import type { Store } from "../store"
 import { contentHash, supportedCurrency } from "../store"
 import { canonicalJson } from "../store/canonical"
 import { guard } from "../store/guard"
@@ -25,7 +25,11 @@ export type Prepared = {
 /** The caller's side of one prepared Projection: which Scenario, from where, under which Sets. */
 export type PrepareInput = {
 	store: Store
-	ledger: Ledger
+	/**
+	 * The Ledger's Baseline at `asOf`, mapped on first use. A compare maps it once for both sides,
+	 * and a leaf that names a Scenario the store does not hold never maps it at all.
+	 */
+	baseline: () => Baseline | AppError
 	/** The Scenario's name or id, as the caller typed it. */
 	scenario: string
 	/** The input field the name came from, so a miss names the flag or the positional. */
@@ -36,22 +40,14 @@ export type PrepareInput = {
 }
 
 /**
- * A Scenario whose currency is not THB cannot be projected against a THB Baseline (ADR-0005).
- * A document that is not v1 THB stops here rather than at the engine, because the currency is
- * the one field the Baseline cannot answer.
+ * A Scenario whose currency is not THB cannot be projected against a THB Baseline (ADR-0005), so
+ * it is refused here rather than after the engine runs. A currency that is not a string at all is
+ * the engine's own `WRONG_TYPE`, not the CLI's: the document is passed through untouched.
  */
-function currencyOf(document: ScenarioDocument): string | AppError {
+function thbOnly(document: ScenarioDocument): AppError | null {
 	const currency = document["currency"]
-	if (typeof currency !== "string") {
-		return fail("projection_refused", {
-			path: "scenario.currency",
-			message: "scenario.currency: WRONG_TYPE",
-			details: [{ code: "WRONG_TYPE", path: "scenario.currency" }],
-		})
-	}
-	const unsupported = supportedCurrency(currency, "scenario.currency")
-	if (unsupported !== null) return unsupported
-	return currency
+	if (typeof currency !== "string") return null
+	return supportedCurrency(currency, "scenario.currency")
 }
 
 /**
@@ -66,10 +62,10 @@ export function prepareProjection(input: PrepareInput): Prepared | AppError {
 	if (row === null) return scenarioNotFound(input.scenario, input.scenarioPath)
 	const applied = applyScenarioSets(JSON.parse(row.document) as ScenarioDocument, input.sets)
 	if (isAppError(applied)) return applied
-	const currency = currencyOf(applied.document)
-	if (isAppError(currency)) return currency
-	const mapping = baselineOf(input.ledger, input.asOf)
-	if (isAppError(mapping)) return mapping
+	const unsupported = thbOnly(applied.document)
+	if (unsupported !== null) return unsupported
+	const mapped = input.baseline()
+	if (isAppError(mapped)) return mapped
 	// The effective hash is the stored hash function applied to the document after the Overrides.
 	// Canonicalising cannot fail on a stored document plus JSON values, but `guard` makes a bug in
 	// that assumption an envelope rather than a throw.
@@ -84,8 +80,8 @@ export function prepareProjection(input: PrepareInput): Prepared | AppError {
 			contentHash: row.contentHash,
 			effectiveContentHash: effective,
 		},
-		currency,
-		baseline: mapping.document,
+		currency: BASELINE_CURRENCY,
+		baseline: mapped,
 		timeline: { start: input.asOf, horizon: input.horizon, resolution: "month" },
 	}
 }
