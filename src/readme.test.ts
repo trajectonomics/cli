@@ -6,26 +6,34 @@ import { ROOT } from "./launcher-test-support"
 const readme = readFileSync(join(ROOT, "README.md"), "utf8")
 
 // The first screen is everything above the Development heading, the part most visitors read.
-// The file wraps its prose, so the test reads the slice with whitespace collapsed: a visitor
-// sees the same words however the lines are wrapped.
-const SPLIT = "\n## Development\n"
-const [beforeDevelopment = "", development = ""] = readme.split(SPLIT)
-const firstScreen = beforeDevelopment.replace(/\s+/g, " ")
+// Prose wraps and uses inline code, so words are matched with whitespace collapsed and backticks
+// removed: a visitor sees the same words however the page is wrapped or marked up. Commands are
+// matched against the raw slice, where a broken or wrapped shell line must fail.
+const DEVELOPMENT_HEADING = "\n## Development\n"
+const [beforeDevelopment = "", development = ""] = readme.split(DEVELOPMENT_HEADING)
+const firstScreen = beforeDevelopment.replaceAll("`", "").replace(/\s+/g, " ")
 
-const scriptInstall =
+const SCRIPT_INSTALL =
 	"curl -fsSL https://github.com/trajectonomics/cli/releases/latest/download/install.sh | sh"
-const windowsInstall =
+const WINDOWS_INSTALL =
 	"irm https://github.com/trajectonomics/cli/releases/latest/download/install.ps1 | iex"
-const npmInstall = "npx @trajectonomics/cli@latest --version"
-const bunxInstall = "bunx @trajectonomics/cli@latest --version"
-const skillCommand = "npx skills add trajectonomics/internal-skills --skill traj -y"
-const installCommands = [scriptInstall, windowsInstall, npmInstall, bunxInstall]
+const NPM_INSTALL = "npx @trajectonomics/cli@latest --version"
+const BUNX_INSTALL = "bunx @trajectonomics/cli@latest --version"
+const SKILL_COMMAND = "npx skills add trajectonomics/internal-skills --skill traj -y"
+const INSTALL_COMMANDS = [SCRIPT_INSTALL, WINDOWS_INSTALL, NPM_INSTALL, BUNX_INSTALL]
 
-const at = (needle: string) => firstScreen.indexOf(needle)
+// The unscoped npm package `traj` belongs to someone else: npx/bunx must never take it bare.
+const UNSCOPED_TRAJ = /\b(?:npx|bunx)\s+(?:-\S+\s+)*traj\b/
+
+const at = (needle: string) => beforeDevelopment.indexOf(needle)
+const visibleAt = (needle: string | RegExp) =>
+	typeof needle === "string" ? firstScreen.indexOf(needle) : firstScreen.search(needle)
+const CHANNELS = /which channel/i
+const UNINSTALL = /uninstall/i
 
 describe("the README first screen", () => {
 	it("ends at the Development heading", () => {
-		expect(readme).toContain(SPLIT)
+		expect(readme).toContain(DEVELOPMENT_HEADING)
 	})
 
 	it("says what traj is, who operates it, and that it never calls a model", () => {
@@ -36,22 +44,28 @@ describe("the README first screen", () => {
 	})
 
 	it("keeps the published install commands character for character", () => {
-		for (const command of installCommands) {
-			expect(firstScreen).toContain(command)
+		for (const command of INSTALL_COMMANDS) {
+			expect(at(command)).toBeGreaterThan(-1)
 		}
 	})
 
 	it("adds the outsider skill step after the install commands and before the channels", () => {
-		for (const anchor of [bunxInstall, "Which channel", "Uninstall"]) {
-			expect(at(anchor)).toBeGreaterThan(-1)
+		const channels = visibleAt(CHANNELS)
+		const uninstall = visibleAt(UNINSTALL)
+		for (const anchor of [at(BUNX_INSTALL), visibleAt(SKILL_COMMAND), channels, uninstall]) {
+			expect(anchor).toBeGreaterThan(-1)
 		}
-		expect(at(skillCommand)).toBeGreaterThan(at(bunxInstall))
-		expect(at(skillCommand)).toBeLessThan(at("Which channel"))
-		expect(at(skillCommand)).toBeLessThan(at("Uninstall"))
+		expect(visibleAt(SKILL_COMMAND)).toBeGreaterThan(at(BUNX_INSTALL))
+		expect(visibleAt(SKILL_COMMAND)).toBeLessThan(channels)
+		expect(visibleAt(SKILL_COMMAND)).toBeLessThan(uninstall)
 	})
 
 	it("says the skill step needs Node, which the install scripts do not", () => {
-		const step = firstScreen.slice(at(skillCommand), at("Which channel"))
+		const channels = visibleAt(CHANNELS)
+		const skill = visibleAt(SKILL_COMMAND)
+		expect(skill).toBeGreaterThan(-1)
+		expect(channels).toBeGreaterThan(skill)
+		const step = firstScreen.slice(skill, channels)
 		expect(step).toMatch(/needs Node/)
 		expect(step).toMatch(/install scripts do not/)
 	})
@@ -65,14 +79,13 @@ describe("the README first screen", () => {
 		expect(firstScreen).not.toMatch(/\btax/i)
 		expect(firstScreen).not.toMatch(/thailand/i)
 		expect(firstScreen).not.toMatch(/financial independence/i)
-		expect(firstScreen).not.toMatch(/homebrew/i)
+		expect(firstScreen).not.toMatch(/\b(?:homebrew|brew)\b/i)
 		expect(firstScreen).not.toContain("trajectonomics.com")
 	})
 })
 
 describe("the README anywhere", () => {
 	it("never sends a reader to the unscoped package", () => {
-		expect(readme).not.toContain("npx traj")
-		expect(readme).not.toContain("bunx traj")
+		expect(readme).not.toMatch(UNSCOPED_TRAJ)
 	})
 })
