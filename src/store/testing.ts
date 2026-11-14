@@ -34,11 +34,11 @@ export function must<T>(outcome: T): Exclude<T, AppError> {
 }
 
 /**
- * One valid Scenario v1 document, shared by every test that stores a Scenario: an asset, a
+ * One valid Scenario v4 document, shared by every test that stores a Scenario: an asset, a
  * liability, two incomes and a routed surplus. Tests spread it and change one field.
  */
 export const SCENARIO_DOCUMENT = {
-	schemaVersion: 1,
+	schemaVersion: 4,
 	currency: "THB",
 	economy: { inflation: 0 },
 	accounts: [
@@ -65,5 +65,5 @@ export const SCENARIO_DOCUMENT = {
 			growth: "inflation",
 		},
 	],
-	cashflow: { surplus: [{ account: "cash" }], withdraw: ["cash"] },
+	cashflow: { surplus: [{ account: "cash" }], contribute: [], withdraw: ["cash"] },
 } as const

@@ -1,32 +1,44 @@
 {
-	"simVersion": "0.1.0",
+	"simVersion": "0.2.0-alpha.17",
 	"rows": [
 		{
 			"date": "2026-03-31",
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52854950
+					"amount": 52854950,
+					"capitalised": 52854950,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 49990001
+					"amount": 49990001,
+					"capitalised": 49990001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 10000000
+					"amount": 10000000,
+					"capitalised": 10000000,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20000000
+					"amount": 20000000,
+					"capitalised": 20000000,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2000000
+					"amount": 2000000,
+					"capitalised": 2000000,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 95344951,
@@ -34,27 +46,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52854950
+					"amount": 52854950,
+					"capitalised": 52854950,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 49990001
+					"amount": 49990001,
+					"capitalised": 49990001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 10000000
+					"amount": 10000000,
+					"capitalised": 10000000,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20000000
+					"amount": 20000000,
+					"capitalised": 20000000,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2000000
+					"amount": 2000000,
+					"capitalised": 2000000,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 95344951,
@@ -65,27 +89,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52898194
+					"amount": 52898194,
+					"capitalised": 52898194,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 54490001
+					"amount": 54490001,
+					"capitalised": 54490001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 11044066
+					"amount": 11044066,
+					"capitalised": 11044066,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20096014
+					"amount": 20096014,
+					"capitalised": 20096014,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2004865
+					"amount": 2004865,
+					"capitalised": 2004865,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 100841112,
@@ -93,27 +129,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52790944
+					"amount": 52790944,
+					"capitalised": 52790944,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 54379524
+					"amount": 54379524,
+					"capitalised": 54379524,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 11021674
+					"amount": 11021674,
+					"capitalised": 11021674,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20055270
+					"amount": 20055270,
+					"capitalised": 20055270,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2000800
+					"amount": 2000800,
+					"capitalised": 2000800,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 498986
+					"amount": 498986,
+					"capitalised": 498986,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 100636658,
@@ -124,27 +172,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52942917
+					"amount": 52942917,
+					"capitalised": 52942917,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 58990001
+					"amount": 58990001,
+					"capitalised": 58990001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 12093944
+					"amount": 12093944,
+					"capitalised": 12093944,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20195713
+					"amount": 20195713,
+					"capitalised": 20195713,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2009904
+					"amount": 2009904,
+					"capitalised": 2009904,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 106341053,
@@ -152,27 +212,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52724887
+					"amount": 52724887,
+					"capitalised": 52724887,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 58747068
+					"amount": 58747068,
+					"capitalised": 58747068,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 12044139
+					"amount": 12044139,
+					"capitalised": 12044139,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20112543
+					"amount": 20112543,
+					"capitalised": 20112543,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2001627
+					"amount": 2001627,
+					"capitalised": 2001627,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 497941
+					"amount": 497941,
+					"capitalised": 497941,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 105903119,
@@ -183,27 +255,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52986234
+					"amount": 52986234,
+					"capitalised": 52986234,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 63490001
+					"amount": 63490001,
+					"capitalised": 63490001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 13146424
+					"amount": 13146424,
+					"capitalised": 13146424,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20292667
+					"amount": 20292667,
+					"capitalised": 20292667,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2014793
+					"amount": 2014793,
+					"capitalised": 2014793,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 111844785,
@@ -211,27 +295,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52661040
+					"amount": 52661040,
+					"capitalised": 52661040,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 63100342
+					"amount": 63100342,
+					"capitalised": 63100342,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 13065740
+					"amount": 13065740,
+					"capitalised": 13065740,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20168124
+					"amount": 20168124,
+					"capitalised": 20168124,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2002428
+					"amount": 2002428,
+					"capitalised": 2002428,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 496931
+					"amount": 496931,
+					"capitalised": 496931,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 111158357,
@@ -242,27 +338,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 53031031
+					"amount": 53031031,
+					"capitalised": 53031031,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 67990001
+					"amount": 67990001,
+					"capitalised": 67990001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 14205032
+					"amount": 14205032,
+					"capitalised": 14205032,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20393342
+					"amount": 20393342,
+					"capitalised": 20393342,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2019858
+					"amount": 2019858,
+					"capitalised": 2019858,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 117352580,
@@ -270,27 +378,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52595145
+					"amount": 52595145,
+					"capitalised": 52595145,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 67431160
+					"amount": 67431160,
+					"capitalised": 67431160,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 14088274
+					"amount": 14088274,
+					"capitalised": 14088274,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20225720
+					"amount": 20225720,
+					"capitalised": 20225720,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2003256
+					"amount": 2003256,
+					"capitalised": 2003256,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 495890
+					"amount": 495890,
+					"capitalised": 495890,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 116388005,
@@ -301,27 +421,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 53075866
+					"amount": 53075866,
+					"capitalised": 53075866,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 72490001
+					"amount": 72490001,
+					"capitalised": 72490001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 15268036
+					"amount": 15268036,
+					"capitalised": 15268036,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20494516
+					"amount": 20494516,
+					"capitalised": 20494516,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2024935
+					"amount": 2024935,
+					"capitalised": 2024935,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 122864322,
@@ -329,27 +461,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52529332
+					"amount": 52529332,
+					"capitalised": 52529332,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 71743556
+					"amount": 71743556,
+					"capitalised": 71743556,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 15110818
+					"amount": 15110818,
+					"capitalised": 15110818,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20283479
+					"amount": 20283479,
+					"capitalised": 20283479,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2004084
+					"amount": 2004084,
+					"capitalised": 2004084,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 494851
+					"amount": 494851,
+					"capitalised": 494851,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 121599162,
@@ -360,27 +504,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 53119291
+					"amount": 53119291,
+					"capitalised": 53119291,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 76990001
+					"amount": 76990001,
+					"capitalised": 76990001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 16333270
+					"amount": 16333270,
+					"capitalised": 16333270,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20592904
+					"amount": 20592904,
+					"capitalised": 20592904,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2029861
+					"amount": 2029861,
+					"capitalised": 2029861,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 128379519,
@@ -388,27 +544,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52465721
+					"amount": 52465721,
+					"capitalised": 52465721,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 76042730
+					"amount": 76042730,
+					"capitalised": 76042730,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 16132308
+					"amount": 16132308,
+					"capitalised": 16132308,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20339533
+					"amount": 20339533,
+					"capitalised": 20339533,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2004886
+					"amount": 2004886,
+					"capitalised": 2004886,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 493848
+					"amount": 493848,
+					"capitalised": 493848,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 126799960,
@@ -419,27 +587,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 53164201
+					"amount": 53164201,
+					"capitalised": 53164201,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 81490001
+					"amount": 81490001,
+					"capitalised": 81490001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 17405110
+					"amount": 17405110,
+					"capitalised": 17405110,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20695068
+					"amount": 20695068,
+					"capitalised": 20695068,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2034963
+					"amount": 2034963,
+					"capitalised": 2034963,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 133899207,
@@ -447,27 +627,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52400071
+					"amount": 52400071,
+					"capitalised": 52400071,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 80318744
+					"amount": 80318744,
+					"capitalised": 80318744,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 17154946
+					"amount": 17154946,
+					"capitalised": 17154946,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20397617
+					"amount": 20397617,
+					"capitalised": 20397617,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2005714
+					"amount": 2005714,
+					"capitalised": 2005714,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 492813
+					"amount": 492813,
+					"capitalised": 492813,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 131974671,
@@ -478,27 +670,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 53207699
+					"amount": 53207699,
+					"capitalised": 53207699,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 85990001
+					"amount": 85990001,
+					"capitalised": 85990001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 18478932
+					"amount": 18478932,
+					"capitalised": 18478932,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20794419
+					"amount": 20794419,
+					"capitalised": 20794419,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2039913
+					"amount": 2039913,
+					"capitalised": 2039913,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 139422126,
@@ -506,27 +710,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52336617
+					"amount": 52336617,
+					"capitalised": 52336617,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 84582229
+					"amount": 84582229,
+					"capitalised": 84582229,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 18176407
+					"amount": 18176407,
+					"capitalised": 18176407,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20453986
+					"amount": 20453986,
+					"capitalised": 20453986,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2006517
+					"amount": 2006517,
+					"capitalised": 2006517,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 491814
+					"amount": 491814,
+					"capitalised": 491814,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 137139598,
@@ -537,27 +753,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 53252683
+					"amount": 53252683,
+					"capitalised": 53252683,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 90490001
+					"amount": 90490001,
+					"capitalised": 90490001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 19559682
+					"amount": 19559682,
+					"capitalised": 19559682,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20897583
+					"amount": 20897583,
+					"capitalised": 20897583,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2045040
+					"amount": 2045040,
+					"capitalised": 2045040,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 144949823,
@@ -565,27 +793,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52271128
+					"amount": 52271128,
+					"capitalised": 52271128,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 88822086
+					"amount": 88822086,
+					"capitalised": 88822086,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 19199157
+					"amount": 19199157,
+					"capitalised": 19199157,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20512398
+					"amount": 20512398,
+					"capitalised": 20512398,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2007346
+					"amount": 2007346,
+					"capitalised": 2007346,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 490784
+					"amount": 490784,
+					"capitalised": 490784,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 142278103,
@@ -596,27 +836,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 53297706
+					"amount": 53297706,
+					"capitalised": 53297706,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 94990001
+					"amount": 94990001,
+					"capitalised": 94990001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 20644920
+					"amount": 20644920,
+					"capitalised": 20644920,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 21001259
+					"amount": 21001259,
+					"capitalised": 21001259,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2050181
+					"amount": 2050181,
+					"capitalised": 2050181,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 150481549,
@@ -624,27 +876,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52205721
+					"amount": 52205721,
+					"capitalised": 52205721,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 93043807
+					"amount": 93043807,
+					"capitalised": 93043807,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 20221939
+					"amount": 20221939,
+					"capitalised": 20221939,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20570977
+					"amount": 20570977,
+					"capitalised": 20570977,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2008176
+					"amount": 2008176,
+					"capitalised": 2008176,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 489756
+					"amount": 489756,
+					"capitalised": 489756,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 147398422,
@@ -655,27 +919,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 53338404
+					"amount": 53338404,
+					"capitalised": 53338404,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 99490001
+					"amount": 99490001,
+					"capitalised": 99490001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 21725951
+					"amount": 21725951,
+					"capitalised": 21725951,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 21095343
+					"amount": 21095343,
+					"capitalised": 21095343,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2054835
+					"amount": 2054835,
+					"capitalised": 2054835,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 156013848,
@@ -683,27 +959,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52146714
+					"amount": 52146714,
+					"capitalised": 52146714,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 97267189
+					"amount": 97267189,
+					"capitalised": 97267189,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 21240548
+					"amount": 21240548,
+					"capitalised": 21240548,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20624029
+					"amount": 20624029,
+					"capitalised": 20624029,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2008926
+					"amount": 2008926,
+					"capitalised": 2008926,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 488829
+					"amount": 488829,
+					"capitalised": 488829,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 152528177,
@@ -714,27 +1002,39 @@
 			"balances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 53382044
+					"amount": 53382044,
+					"capitalised": 53382044,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 103990001
+					"amount": 103990001,
+					"capitalised": 103990001,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 22817134
+					"amount": 22817134,
+					"capitalised": 22817134,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 21196616
+					"amount": 21196616,
+					"capitalised": 21196616,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2059833
+					"amount": 2059833,
+					"capitalised": 2059833,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 500000
+					"amount": 500000,
+					"capitalised": 500000,
+					"accruedInterest": 0
 				}
 			],
 			"netWorth": 161552396,
@@ -742,27 +1042,39 @@
 			"realBalances": [
 				{
 					"account": "0194a000-0001-7000-8000-000000000001",
-					"amount": 52083566
+					"amount": 52083566,
+					"capitalised": 52083566,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0002-7000-8000-000000000002",
-					"amount": 101460523
+					"amount": 101460523,
+					"capitalised": 101460523,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0004-7000-8000-000000000004",
-					"amount": 22262125
+					"amount": 22262125,
+					"capitalised": 22262125,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0005-7000-8000-000000000005",
-					"amount": 20681024
+					"amount": 20681024,
+					"capitalised": 20681024,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0006-7000-8000-000000000006",
-					"amount": 2009729
+					"amount": 2009729,
+					"capitalised": 2009729,
+					"accruedInterest": 0
 				},
 				{
 					"account": "0194a000-0008-7000-8000-000000000008",
-					"amount": 487838
+					"amount": 487838,
+					"capitalised": 487838,
+					"accruedInterest": 0
 				}
 			],
 			"realNetWorth": 157622757,
@@ -779,6 +1091,7 @@
 			"income": 96000000,
 			"expense": 30000000,
 			"contributions": 12000000,
+			"unfundedContributions": 0,
 			"interest": 207445,
 			"unmet": 0,
 			"partial": false
