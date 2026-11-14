@@ -52,10 +52,13 @@ describe("the README first screen", () => {
 	it("adds the outsider skill step after the install commands and before the channels", () => {
 		const channels = visibleAt(CHANNELS)
 		const uninstall = visibleAt(UNINSTALL)
-		for (const anchor of [at(BUNX_INSTALL), visibleAt(SKILL_COMMAND), channels, uninstall]) {
-			expect(anchor).toBeGreaterThan(-1)
+		// Each command is one line of the raw slice, so a broken or wrapped shell line fails here.
+		for (const command of [...INSTALL_COMMANDS, SKILL_COMMAND]) {
+			expect(at(command)).toBeGreaterThan(-1)
 		}
-		expect(visibleAt(SKILL_COMMAND)).toBeGreaterThan(at(BUNX_INSTALL))
+		expect(channels).toBeGreaterThan(-1)
+		expect(uninstall).toBeGreaterThan(-1)
+		expect(at(SKILL_COMMAND)).toBeGreaterThan(at(BUNX_INSTALL))
 		expect(visibleAt(SKILL_COMMAND)).toBeLessThan(channels)
 		expect(visibleAt(SKILL_COMMAND)).toBeLessThan(uninstall)
 	})
