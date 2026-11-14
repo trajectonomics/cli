@@ -3,6 +3,9 @@
 `traj` is a free and open source command line for personal money. An AI agent operates it.
 The command line never calls a model, so every result is repeatable.
 
+The landing page is [trajectonomics.com](https://trajectonomics.com/) and the docs are at
+[trajectonomics.com/docs](https://trajectonomics.com/docs/).
+
 ## Install
 
 Linux and macOS, one line (verifies the release checksum, installs `traj` to `~/.local/bin`,

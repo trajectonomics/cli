@@ -78,12 +78,25 @@ describe("the README first screen", () => {
 		expect(development).toContain("The sources are Bun-only; a released binary needs nothing.")
 	})
 
-	it("claims no tax meaning, offers no Homebrew, and links no site yet", () => {
+	it("claims no tax meaning and offers no Homebrew", () => {
 		expect(firstScreen).not.toMatch(/\btax/i)
 		expect(firstScreen).not.toMatch(/thailand/i)
 		expect(firstScreen).not.toMatch(/financial independence/i)
 		expect(firstScreen).not.toMatch(/\b(?:homebrew|brew)\b/i)
-		expect(firstScreen).not.toContain("trajectonomics.com")
+	})
+
+	it("links the landing page and the docs page, and no other site host", () => {
+		// A trajectonomics.com link is allowed only for the landing page and the docs page.
+		const siteUrls = ["https://trajectonomics.com/", "https://trajectonomics.com/docs/"]
+		const linked = beforeDevelopment.match(/https?:\/\/trajectonomics\.com[^\s)\]]*/g) ?? []
+		expect(linked.length).toBeGreaterThan(0)
+		for (const url of linked) {
+			expect(siteUrls).toContain(url)
+		}
+		for (const url of siteUrls) {
+			expect(linked).toContain(url)
+		}
+		expect(firstScreen).not.toMatch(/workers\.dev/i)
 	})
 })
 
