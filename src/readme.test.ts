@@ -94,7 +94,7 @@ describe("the README first screen", () => {
 			expect(siteUrls).toContain(url)
 		}
 		for (const url of siteUrls) {
-			expect(beforeDevelopment).toContain(url)
+			expect(linked).toContain(url)
 		}
 		expect(firstScreen).not.toMatch(/workers\.dev/i)
 	})
