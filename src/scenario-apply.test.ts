@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import simPackage from "@trajectonomics/sim/package.json"
 import {
 	applyScenario,
 	documentFile,
@@ -165,7 +166,7 @@ describe("scenario apply", () => {
 		}
 		expect(document.flag).toBe("file")
 		expect(document.schema.required).toEqual(["schemaVersion"])
-		expect(document.schema.description).toContain("@trajectonomics/sim@0.1.0")
+		expect(document.schema.description).toContain(`@trajectonomics/sim@${simPackage.version}`)
 		expect(document.schema.description).toContain("check()")
 		expect(described.errorCodes).toContain("invalid_input")
 		expect(described.errorCodes).toContain("database_busy")

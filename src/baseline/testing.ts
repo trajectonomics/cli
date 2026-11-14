@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite"
 import { join } from "node:path"
 import type { Baseline } from "@trajectonomics/sim"
+import { goldenJson, goldenTextIn, recordGoldenIn } from "../golden-test-support"
 import { FIXTURE_ACCOUNTS, FIXTURE_AS_OF, FIXTURE_ROWS } from "../ledger-fixture"
 import { posting, transaction } from "../ledger-fixture/rows"
 import type { PostingRow, RestoreRows, TxRow } from "../store"
@@ -90,22 +91,15 @@ const GOLDENS = new URL("./fixtures/", import.meta.url)
 
 /** A committed golden's exact bytes, so a test compares text rather than re-deriving a shape. */
 export function goldenText(name: string): Promise<string> {
-	return Bun.file(new URL(name, GOLDENS)).text()
+	return goldenTextIn(GOLDENS, name)
 }
 
 /** The one serialization this module's goldens use: tab indents and one trailing newline. */
-export function goldenJson(value: unknown): string {
-	return `${JSON.stringify(value, null, "\t")}\n`
-}
+export { goldenJson }
 
-/**
- * Rewrites a golden when `TRAJ_UPDATE_GOLDEN=1` asks for a deliberate re-baseline; otherwise it
- * writes nothing, so a diff is the only thing an ordinary test run can produce.
- */
-export async function recordGolden(name: string, value: unknown): Promise<void> {
-	if (process.env["TRAJ_UPDATE_GOLDEN"] === "1") {
-		await Bun.write(new URL(name, GOLDENS), goldenJson(value))
-	}
+/** Rewrites a golden when `TRAJ_UPDATE_GOLDEN=1` asks for a deliberate re-baseline. */
+export function recordGolden(name: string, value: unknown): Promise<void> {
+	return recordGoldenIn(GOLDENS, name, value)
 }
 
 function minor(amount: string, currency: string): number {

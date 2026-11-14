@@ -7,7 +7,7 @@
       "devDependencies": {
         "@biomejs/biome": "2.6.3",
         "@trajectonomics/ledger": "0.1.0-alpha.0",
-        "@trajectonomics/sim": "0.1.0",
+        "@trajectonomics/sim": "0.2.0-alpha.17",
         "@trajectonomics/tooling": "1.1.0",
         "@types/bun": "^1.4.4",
         "typescript": "^7.0.2",
@@ -40,7 +40,7 @@
 
     "@trajectonomics/ledger": ["@trajectonomics/ledger@0.1.0-alpha.0", "", {}, "sha512-v6a+UStSjDBoomBcrCNt7BJTcnwm/GFjQhQ+ZkBh3GopnVuehifnpWhUoTh/NCG1xD7OimD8E/W4HsWMF7krJg=="],
 
-    "@trajectonomics/sim": ["@trajectonomics/sim@0.1.0", "", { "peerDependencies": { "@trajectonomics/tax": ">=0.0.0" }, "optionalPeers": ["@trajectonomics/tax"] }, "sha512-Ntb0P5dk+J9QLO0SZDfENfup9vOTNGxyH/2mmHx7YyxS8MZvc76X3FVi33fqcmqo8T3P1Ipn68ys6/YO1FKuig=="],
+    "@trajectonomics/sim": ["@trajectonomics/sim@0.2.0-alpha.17", "", { "peerDependencies": { "@trajectonomics/tax": ">=0.0.0" }, "optionalPeers": ["@trajectonomics/tax"] }, "sha512-7BMXRPp617L9xlDKGIqnLtWSxCoikZhZ0/ID2DeoRIOtVeFGHTJFNThhUftlE7YUgr1kK0QkWrNKXLxNAhee8w=="],
 
     "@trajectonomics/tooling": ["@trajectonomics/tooling@1.1.0", "", {}, "sha512-AqKQYsyPN+EosNtxLUaKipA+ocXl2tEWizJ0eXOtSn+C4Lge82ZXCKDbyPYwdsjMiLknnFWfwGeyhKYPTTAl7g=="],
 

@@ -13,7 +13,7 @@ import { FIXTURE_ACCOUNTS, FIXTURE_AS_OF } from "../ledger-fixture"
  * runs cash short, so `unmet` stays zero and no withdrawal can mask a shift.
  */
 export const SIM_SCENARIO: Scenario = {
-	schemaVersion: 1,
+	schemaVersion: 4,
 	currency: "THB",
 	economy: { inflation: 250 },
 	accounts: [
@@ -52,7 +52,11 @@ export const SIM_SCENARIO: Scenario = {
 			growth: { bps: 0 },
 		},
 	],
-	cashflow: { surplus: [{ account: FIXTURE_ACCOUNTS.cash }], withdraw: [FIXTURE_ACCOUNTS.cash] },
+	cashflow: {
+		surplus: [{ account: FIXTURE_ACCOUNTS.cash }],
+		contribute: [FIXTURE_ACCOUNTS.investment],
+		withdraw: [FIXTURE_ACCOUNTS.cash],
+	},
 }
 
 /** One year stated from the fixture's As-of, so the first row is dated it and the rollup is full. */

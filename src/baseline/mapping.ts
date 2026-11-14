@@ -1,11 +1,11 @@
 import type { BalanceRow, ISODate } from "@trajectonomics/ledger"
 import { balances, LedgerValidationError } from "@trajectonomics/ledger"
 import type { Baseline } from "@trajectonomics/sim"
+import { checkedAsOf } from "../date"
 import type { AppError } from "../errors"
 import { fail, isAppError } from "../errors"
 import type { AccountRow, Ledger } from "../store"
 import { formatMinorUnits, ledgerFailure, supportedCurrency } from "../store"
-import { checkedAsOf } from "./as-of"
 import { CROSSING, type SimKind } from "./kind"
 
 /** One Balance as the engine holds it: the Account, the kind it implies, and engine units. */

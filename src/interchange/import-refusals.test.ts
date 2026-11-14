@@ -50,6 +50,18 @@ describe("importJsonl refusals", () => {
 		expect(body).toMatchObject({ code: "invalid_input", details: { rows: 1 } })
 	})
 
+	it("refuses a v1 Scenario document at its line, which the pinned engine no longer accepts", async () => {
+		const golden = await goldenJsonl()
+		const text = edit(golden, '"schemaVersion":4}', '"schemaVersion":1}')
+		expect(refused(text)).toMatchObject({
+			code: "invalid_input",
+			exitCode: 2,
+			path: "line.22.document.schemaVersion",
+			message: "line.22.document.schemaVersion: UNSUPPORTED_SCHEMA_VERSION",
+			details: [{ path: "line.22.document.schemaVersion", code: "UNSUPPORTED_SCHEMA_VERSION" }],
+		})
+	})
+
 	it("refuses a record that does not match the declared fields", async () => {
 		const golden = await goldenJsonl()
 		const cases: [string, string, string, string][] = [

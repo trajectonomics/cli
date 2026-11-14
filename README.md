@@ -62,6 +62,18 @@ From a checkout, run the CLI with `bun run dev -- …`. The npm launcher refuses
 `0.0.0` a checkout carries, because that version is never a release; set
 `TRAJ_BINARY_PATH` to run a binary you built with `bun run build`.
 
+## Reading the future
+
+Three read-only commands run a stored Scenario over the Baseline the ledger
+states at a date: `traj projection run` rolls net worth up year by year,
+nominal and real (monthly rows with `--monthly`); `traj projection compare`
+puts two Scenarios side by side, or one against a `--set` what-if, with the
+deltas in FI date, net worth at the ages you name and run-out year; and
+`traj fi` reports the survival FI date beside the 25× rule of thumb as a
+labelled reference. Every result states its As-of, the engine version, the
+Scenario's hashes, the Overrides it applied, and that tax is not applied yet.
+`traj schema <command>` describes each one.
+
 ## Docs
 
 - [`GLOSSARY.md`](GLOSSARY.md): the project's vocabulary.
