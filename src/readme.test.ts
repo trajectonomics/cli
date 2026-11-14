@@ -86,15 +86,14 @@ describe("the README first screen", () => {
 	})
 
 	it("links the landing page and the docs page, and no other site host", () => {
-		// Both URLs resolved and returned a successful page on the day this ticket landed,
-		// so both are linked; a trajectonomics.com link is allowed only for these two URLs.
-		const SITE_URLS = ["https://trajectonomics.com/", "https://trajectonomics.com/docs/"]
+		// A trajectonomics.com link is allowed only for the landing page and the docs page.
+		const siteUrls = ["https://trajectonomics.com/", "https://trajectonomics.com/docs/"]
 		const linked = beforeDevelopment.match(/https?:\/\/trajectonomics\.com[^\s)\]]*/g) ?? []
 		expect(linked.length).toBeGreaterThan(0)
 		for (const url of linked) {
-			expect(SITE_URLS).toContain(url)
+			expect(siteUrls).toContain(url)
 		}
-		for (const url of SITE_URLS) {
+		for (const url of siteUrls) {
 			expect(beforeDevelopment).toContain(url)
 		}
 		expect(firstScreen).not.toMatch(/workers\.dev/i)
