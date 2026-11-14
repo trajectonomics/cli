@@ -19,7 +19,7 @@ The one connector between the ledger and the simulation: it turns balances at an
 _Avoid_: Adapter, bridge, sync
 
 **Scenario**:
-A named set of assumptions about the future: economy, accounts, streams, events, cash flow rules, and the FI goal.
+A named set of assumptions about the future: economy, accounts, streams, events and cash flow rules. FI settings and the horizon are not part of it; a command takes them (ADR-0030).
 _Avoid_: Forecast, model
 
 **Projection**:
@@ -141,11 +141,11 @@ Financial independence: the point from which the portfolio and passive streams c
 _Avoid_: FIRE
 
 **Survival**:
-The FI method that finds the earliest month at which, if earned income stopped, the projection never runs out of money before the horizon.
+The FI method that finds the earliest month at which, if earned income stopped, the projection never runs out of money before the horizon date.
 _Avoid_: Safe withdrawal, 25× rule
 
 **Horizon**:
-The age at which a projection ends.
+The date at which a projection ends, given by `--horizon`. An age is derived from it only when a birth date is also given.
 _Avoid_: End date, lifespan
 
 ### Packages
