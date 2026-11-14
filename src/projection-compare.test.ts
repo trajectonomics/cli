@@ -155,6 +155,26 @@ describe("projection compare", () => {
 		expect(errorOf(badBirth)).toMatchObject({ code: "INVALID_DATE", path: "birthDate" })
 	})
 
+	it("accepts a birth date before 0100, which the Ledger's date parser allows", async () => {
+		const home = await projectionHome()
+		const body = bodyOf(
+			await projection(home, [
+				"compare",
+				"base",
+				...dateFlags(),
+				"--set",
+				"flows.rent.amount=3000000",
+				"--birth-date",
+				"0050-06-15",
+				"--age",
+				"1",
+			]),
+		)
+		expect(body.birthDate).toBe("0050-06-15")
+		// 0051-06-15 is long before the Projection starts, so the figure has no meaning.
+		expect(body.sides.a.netWorth.atAges).toEqual([{ age: 1, nominal: null, real: null }])
+	})
+
 	it("names the side it could not find", async () => {
 		const home = await projectionHome()
 		const res = await projection(home, ["compare", "base", "nope", ...dateFlags()])

@@ -46,7 +46,7 @@ function timelineFailure(problems: readonly ProjectionProblem[]): AppError | nul
 		path: `timeline.${String(last ?? "")}`,
 		message: `timeline: ${timeline.code}`,
 		hint: "The CLI builds the Timeline from --as-of and --horizon.",
-		details: { code: timeline.code },
+		details: problems.map(detailOf),
 	})
 }
 

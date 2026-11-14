@@ -16,9 +16,23 @@ function parts(date: string): [number, number, number] {
 	return [year, month, day]
 }
 
-/** One ISO date from UTC parts. */
+/** A UTC instant, with the year set literally: `Date.UTC` would remap years 0..99 to 1900..1999. */
+function utc(year: number, month: number, day: number): Date {
+	const at = new Date(0)
+	at.setUTCFullYear(year, month, day)
+	return at
+}
+
+/** One ISO date from UTC parts; a year outside `YYYY` is refused rather than misprinted. */
 function iso(year: number, month: number, day: number): string {
-	return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10)
+	if (year < 0 || year > 9999) throw new Error(`the year ${year} is outside a YYYY-MM-DD date`)
+	const text = utc(year, month - 1, day).toISOString()
+	return text.slice(0, 10)
+}
+
+/** The last day of a one-based month, in the proleptic Gregorian calendar. */
+function lastDayOf(year: number, month: number): number {
+	return utc(year, month, 0).getUTCDate()
 }
 
 /** `2026-03-30` → `2026-03-31`. */
@@ -34,8 +48,7 @@ export function addDays(date: string, days: number): string {
 export function birthdayAt(birthDate: string, age: number): string {
 	const [year, month, day] = parts(birthDate)
 	const target = year + age
-	const lastDay = new Date(Date.UTC(target, month, 0)).getUTCDate()
-	return iso(target, month, Math.min(day, lastDay))
+	return iso(target, month, Math.min(day, lastDayOf(target, month)))
 }
 
 /** Whole calendar months from `from` to `to`, the sign of `to - from`. */

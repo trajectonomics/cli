@@ -15,6 +15,13 @@ describe("projection date arithmetic", () => {
 		expect(birthdayAt("1985-06-15", 45)).toBe("2030-06-15")
 	})
 
+	it("keeps a year below 0100 literal, which Date.UTC would remap to the 1900s", () => {
+		expect(addDays("0050-12-31", 1)).toBe("0051-01-01")
+		expect(birthdayAt("0050-06-15", 0)).toBe("0050-06-15")
+		expect(birthdayAt("0000-02-29", 0)).toBe("0000-02-29")
+		expect(() => birthdayAt("0050-06-15", 9950)).toThrow("outside a YYYY-MM-DD date")
+	})
+
 	it("counts whole calendar months and years, with the sign of the difference", () => {
 		expect(monthsBetween("2026-04-01", "2027-06-01")).toBe(14)
 		expect(monthsBetween("2027-06-01", "2026-04-01")).toBe(-14)

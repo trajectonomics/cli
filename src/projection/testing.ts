@@ -1,5 +1,6 @@
 import type { Scenario } from "@trajectonomics/sim"
 import { SIM_SCENARIO, SIM_TIMELINE } from "../baseline/fixture"
+import type { ErrorBody } from "../errors"
 import { fixtureHome } from "../ledger-fixture"
 import { applyScenario } from "../scenario-test-support"
 import { type Captured, capture } from "../test-support"
@@ -112,22 +113,7 @@ export function dateFlags(): string[] {
 	return ["--as-of", AS_OF, "--horizon", HORIZON]
 }
 
-/** The parsed success result. */
-export function resultOf(res: Captured): Record<string, unknown> {
-	return JSON.parse(res.out) as Record<string, unknown>
-}
-
-/** The error envelope's `error` object. */
-export type ErrorBody = {
-	code: string
-	exitCode: number
-	message: string
-	path?: string
-	hint?: string
-	details?: unknown
-}
-
-/** The parsed error envelope's `error` object. */
+/** The parsed error envelope's `error` object, as the error module defines it. */
 export function errorOf(res: Captured): ErrorBody {
 	return (JSON.parse(res.err) as { error: ErrorBody }).error
 }
