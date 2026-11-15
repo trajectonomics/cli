@@ -30,6 +30,7 @@ describe("schema", () => {
 			"scenario list",
 			"scenario rm",
 			"scenario show",
+			"scenario tax",
 			"schema",
 			"tx add",
 			"tx amend",

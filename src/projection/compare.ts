@@ -4,11 +4,30 @@ import { fail, isAppError } from "../errors"
 import { deltasOf, type SideData, sideView } from "./compare-figures"
 import type { CompareView } from "./compare-view"
 import { birthdayAt, rowAt } from "./dates"
-import { NO_TAX, TAX } from "./echo"
 import { refusal, SIM_PACKAGE, SIM_VERSION } from "./engine"
 import { fiAnswerOf } from "./fi"
+import { NO_TAX } from "./levies"
 import { moneyOf } from "./money"
 import type { Prepared } from "./prepare"
+import type { TaxStatus } from "./view"
+
+/**
+ * The tax a compare reports: both sides taxed is `applied`, neither is `not_applied`, and one is
+ * `mixed` — a Delta between a taxed and an untaxed Scenario is mostly the tax, and the note says so.
+ */
+function taxOf(input: CompareInput): { tax: TaxStatus; notes: string[] } {
+	const applied = input.a.tax === "applied"
+	const alsoApplied = input.b.tax === "applied"
+	if (applied && alsoApplied) return { tax: "applied", notes: input.a.notes }
+	if (!applied && !alsoApplied) return { tax: "not_applied", notes: [NO_TAX] }
+	return {
+		tax: "mixed",
+		notes: [
+			`Only ${applied ? "A" : "B"} is taxed, so the Deltas between the two sides include the tax.`,
+			...(applied ? input.a.notes : input.b.notes),
+		],
+	}
+}
 
 /** The two sides of a compare: `A`, or the base of a what-if, and `B`, or the what-if. */
 export type CompareInput = {
@@ -69,7 +88,6 @@ export function compareOf(input: CompareInput): CompareView | AppError {
 		birthDate: input.birthDate,
 		sides: { a: sideView(dataA, money), b: sideView(dataB, money) },
 		deltas: deltasOf(dataA, dataB, money),
-		tax: TAX,
-		notes: [NO_TAX],
+		...taxOf(input),
 	}
 }

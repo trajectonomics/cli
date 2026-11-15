@@ -130,6 +130,7 @@ describe("schema addresses commands by path", () => {
 			"scenario list",
 			"scenario rm",
 			"scenario show",
+			"scenario tax",
 			"schema",
 			"tx add",
 			"tx amend",

@@ -74,8 +74,14 @@ puts two Scenarios side by side, or one against a `--set` what-if, with the
 deltas in FI date, net worth at the ages you name and run-out year; and
 `traj fi` reports the survival FI date beside the 25× rule of thumb as a
 labelled reference. Every result states its As-of, the engine version, the
-Scenario's hashes, the Overrides it applied, and that tax is not applied yet.
+Scenario's hashes, the Overrides it applied, and its tax status.
 `traj schema <command>` describes each one.
+
+Tax is the Scenario's. `traj scenario tax <name> --tax th-2026` writes Thailand's
+2026 personal income tax into it, and `--label salary=income.section40_1` says
+which Section 40 class each income Flow belongs to, because a Levy tallies
+labels and never guesses them; `--none` takes both out again. A Scenario
+without the Levy is projected pre-tax, and every result says which it is.
 
 ## Docs
 

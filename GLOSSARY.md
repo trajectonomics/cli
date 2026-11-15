@@ -148,6 +148,24 @@ _Avoid_: Safe withdrawal, 25× rule
 The date at which a projection ends, given by `--horizon`. An age is derived from it only when a birth date is also given.
 _Avoid_: End date, lifespan
 
+### Tax
+
+**Tax Levy**:
+The scenario's own rule set for one jurisdiction's income tax: its period, its settlement date and the graph of measures that owes the tax. A result reports tax as applied only when the scenario holds this Levy.
+_Avoid_: Tax rate, tax setting, tax flag
+
+**Tax status**:
+Whether a result's figures include income tax: `applied`, `not_applied`, or `mixed` for a compare whose two sides disagree.
+_Avoid_: Taxed, pre-tax, after-tax (as a status)
+
+**Carry-in**:
+What a Levy's period had already tallied before the as-of, and what had already been prepaid. It is a property of the projection, not of the scenario, because the same scenario projected from two dates needs two answers.
+_Avoid_: Opening balance, prior year
+
+**Tax label**:
+The Section 40 income class, or the retirement allowance, an income or contribution Flow is tallied under. A Flow with no label is not tax-free income; it is income no Levy is told about.
+_Avoid_: Category, tag, tax code
+
 ### Packages
 
 **Core**:
@@ -157,6 +175,10 @@ _Avoid_: Library, plugin
 **Simulation core**:
 The core that projects the future from a baseline and a scenario. Package `@trajectonomics/sim`, repo `trajectonomics/sim-core`.
 _Avoid_: Sim, simulator
+
+**Tax core**:
+The core that computes statutory income tax for a jurisdiction and emits it as a Levy the simulation core charges. Package `@trajectonomics/tax`, repo `trajectonomics/tax-core`.
+_Avoid_: Tax engine, tax calculator
 
 ### Contract
 
@@ -195,6 +217,10 @@ _Avoid_: Snapshot, backup
 **Result**:
 What a command returns when it succeeds, shaped by that command's output schema.
 _Avoid_: Output, response, payload
+
+**Echo**:
+The block every result carries stating what it was computed from: the as-of, the engine and its version, the scenario with its hashes, the applied overrides, the tax status, and the sentences a person must read before the figures.
+_Avoid_: Metadata, header, provenance block
 
 **Data directory**:
 The single directory holding all state, `~/.traj` unless `TRAJ_HOME` says otherwise.

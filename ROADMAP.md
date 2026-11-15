@@ -4,7 +4,7 @@ Phases are ordered, not dated. Decisions behind them are in [`docs/adr/`](docs/a
 
 ## Phase 1: record, project, answer
 
-`init`, accounts, `tx add/void/amend`, balances, reports, `inspect`/`export`, `schema`, scenarios, deterministic projection, `fi`, and Thai tax via tax-core.
+`init`, accounts, `tx add/void/amend`, balances, reports, `inspect`/`export`, `schema`, scenarios, deterministic projection, `fi`, and Thai tax via tax-core — done, except an allowance optimizer and a stored taxpayer profile, which are Phase 3.
 
 ## Phase 2: richer input
 
