@@ -9,7 +9,8 @@ import type { Store } from "../store"
 import { contentHash, supportedCurrency } from "../store"
 import { canonicalJson } from "../store/canonical"
 import { guard } from "../store/guard"
-import type { ScenarioEcho } from "./view"
+import { NO_TAX, taxNotes, withCarryIn } from "./levies"
+import type { ScenarioEcho, TaxStatus } from "./view"
 
 /** What every projection leaf resolves before it runs the engine. */
 export type Prepared = {
@@ -23,6 +24,10 @@ export type Prepared = {
 	currency: string
 	baseline: Baseline
 	timeline: Timeline
+	/** `applied` when the Scenario carries this build's tax Levy, else `not_applied` (ADR-0032). */
+	tax: TaxStatus
+	/** The sentences the human format prints about the tax (ADR-0027, ADR-0032). */
+	notes: string[]
 }
 
 /** The caller's side of one prepared Projection: which Scenario, from where, under which Sets. */
@@ -74,9 +79,13 @@ export function prepareProjection(input: PrepareInput): Prepared | AppError {
 	// that assumption an envelope rather than a throw.
 	const effective = guard(() => contentHash(canonicalJson(applied.document)))
 	if (isAppError(effective)) return effective
+	// A Levy's Carry-in is the projection's, not the plan's: it says what a period had tallied
+	// before the As-of, so it is written here rather than stored (ADR-0032).
+	const stored = applied.document as unknown as Scenario
+	const notes = taxNotes(applied.document, input.asOf)
 	return {
 		// The one place the stored JSON becomes the engine's type; `check()` reads it again.
-		document: applied.document as unknown as Scenario,
+		document: withCarryIn(stored, input.asOf),
 		overrides: applied.overrides,
 		scenario: {
 			id: row.id,
@@ -87,5 +96,7 @@ export function prepareProjection(input: PrepareInput): Prepared | AppError {
 		currency: BASELINE_CURRENCY,
 		baseline: mapped,
 		timeline: { start: input.asOf, horizon: input.horizon, resolution: "month" },
+		tax: notes[0] === NO_TAX ? "not_applied" : "applied",
+		notes,
 	}
 }

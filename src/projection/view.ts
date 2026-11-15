@@ -1,10 +1,13 @@
 import { z } from "zod"
 import { dateField, moneyField } from "./money"
 
-/** `tax` is a closed enum so a later tax core adds a value rather than a flag (ADR-0030). */
-export type TaxStatus = "applied" | "not_applied"
+/**
+ * `tax` is a closed enum so a later tax core adds a value rather than a flag (ADR-0030). `mixed` is
+ * a compare whose two sides disagree, which one root value could otherwise only misreport.
+ */
+export type TaxStatus = "applied" | "not_applied" | "mixed"
 
-export const TAX_VALUES: readonly [TaxStatus, ...TaxStatus[]] = ["applied", "not_applied"]
+export const TAX_VALUES: readonly [TaxStatus, ...TaxStatus[]] = ["applied", "mixed", "not_applied"]
 
 /** The engine a Projection ran on: its package and the exact version (ADR-0030). */
 export type EngineEcho = { package: string; version: string }
@@ -70,7 +73,9 @@ export const overridesField: z.ZodType<OverrideEcho[]> = z
 /** The tax status is a closed enum, so a tax core adds a value rather than a flag. */
 export const taxField: z.ZodType<TaxStatus> = z
 	.enum(TAX_VALUES)
-	.describe("The tax status of every figure; `not_applied` until a tax core is wired in.")
+	.describe(
+		"The tax status of the figures: `applied` when the Scenario carries the tax Levy, `not_applied` otherwise, and `mixed` for a compare whose two sides disagree.",
+	)
 
 /** Plain sentences a person should read; only the human Format prints them. */
 export const notesField: z.ZodType<string[]> = z

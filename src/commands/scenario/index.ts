@@ -6,9 +6,10 @@ import { fork } from "./fork"
 import { list } from "./list"
 import { rm } from "./rm"
 import { show } from "./show"
+import { tax } from "./tax"
 
 export const scenario: Group = defineGroup({
 	name: "scenario",
 	summary: "Manage Scenarios, the named what-ifs",
-	children: [apply, diff, fork, list, rm, show],
+	children: [apply, diff, fork, list, rm, show, tax],
 })
