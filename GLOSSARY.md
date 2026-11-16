@@ -241,5 +241,5 @@ A way a user obtains the `traj` binary: a GitHub Release, the npm package, or th
 _Avoid_: distribution method, delivery
 
 **Release marker**:
-A line in a document or a help page naming the release that ships what the text describes, so a reader of an older release is not sent to a command it cannot run (ADR-0033).
+A line in a document or a help page naming the release that ships what the text describes, so a reader of an older release is not sent to a command it cannot run (ADR-0034).
 _Avoid_: version note, TODO, roadmap marker
