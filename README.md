@@ -98,7 +98,9 @@ examples, the error codes it raises, and a `run` that returns `ok(data)` or
 `fail(code)`. Register it in `src/commands/index.ts`, inside a `defineGroup` if
 it is nested. Fields of the input schema that are not positionals become flags
 automatically (`fromDate` is `--from-date`). A new failure is a new entry in the
-registry in `src/errors.ts` with its exit class. Commands never format output or
+registry in `src/registry.ts` with its exit class. An input-validation sentence
+comes from the shared table beside it, so a new command needs no wording of its
+own. Commands never format output or
 exit; `traj help <path>` and `traj schema <path>` are generated from the same
 schemas that validate them. Test through `run(argv, io, env)`, which needs no
 process. See ADR 0015.
