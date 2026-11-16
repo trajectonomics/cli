@@ -112,7 +112,7 @@ describe("tx amend document", () => {
 		const { original } = await lunch(traj)
 		const res = await cli(home, "{")(["tx", "amend", original.id, "--postings", "-", "--json"])
 		expect(res.code).toBe(2)
-		expect(errorOf(res)).toMatchObject({ code: "invalid_input", path: "postings" })
+		expect(errorOf(res)).toMatchObject({ code: "invalid_input", path: "--postings" })
 		const listed = JSON.parse((await traj(["tx", "list", "--json"])).out)
 		expect(listed.transactions).toHaveLength(1)
 	})

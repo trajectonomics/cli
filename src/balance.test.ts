@@ -99,7 +99,7 @@ describe("balance", () => {
 		const res = await cli(tempHome())(["balance", "--json"])
 		expect(res.code).toBe(2)
 		const { error } = JSON.parse(res.err)
-		expect(error).toMatchObject({ code: "invalid_input", exitCode: 2, path: "asOf" })
+		expect(error).toMatchObject({ code: "invalid_input", exitCode: 2, path: "--as-of" })
 	})
 
 	it("rejects a bad date as INVALID_DATE at asOf", async () => {

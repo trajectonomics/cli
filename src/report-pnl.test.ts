@@ -114,7 +114,7 @@ describe("report pnl", () => {
 	it("rejects an empty --project as invalid_input at project", async () => {
 		const res = await pnl(fixtureHome(), "--until", FIXTURE_AS_OF, "--project", "")
 		expect(res.code).toBe(2)
-		expect(JSON.parse(res.err).error).toMatchObject({ code: "invalid_input", path: "project" })
+		expect(JSON.parse(res.err).error).toMatchObject({ code: "invalid_input", path: "--project" })
 	})
 
 	it("rejects --from and --to, which name accounts, not dates", async () => {

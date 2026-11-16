@@ -36,7 +36,7 @@ describe("tx import --template", () => {
 		expect(errorOf(withFile)).toMatchObject({ code: "invalid_input", path: "file" })
 		const withDryRun = await traj(["tx", "import", "--template", "--dry-run", "--json"])
 		expect(withDryRun.code).toBe(2)
-		expect(errorOf(withDryRun)).toMatchObject({ code: "invalid_input", path: "dryRun" })
+		expect(errorOf(withDryRun)).toMatchObject({ code: "invalid_input", path: "--dry-run" })
 		const neither = await traj(["tx", "import", "--json"])
 		expect(neither.code).toBe(2)
 		expect(errorOf(neither)).toMatchObject({ code: "invalid_input", path: "file" })

@@ -84,7 +84,7 @@ describe("export's refusals", () => {
 		expect(res.out).toBe("")
 		expect(JSON.parse(res.err).error).toMatchObject({
 			code: "invalid_input",
-			path: "out",
+			path: "--out",
 		})
 	})
 
@@ -126,7 +126,7 @@ describe("export's refusals", () => {
 		expect(res.code).toBe(2)
 		expect(JSON.parse(res.err).error).toMatchObject({
 			code: "invalid_input",
-			path: "format",
+			path: "--format",
 		})
 	})
 })

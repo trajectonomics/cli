@@ -78,9 +78,9 @@ describe("scenario apply --template", () => {
 	it("refuses a form that does not take --template, at the field to drop", async () => {
 		const home = scenarioHome()
 		const cases: [string[], string, string][] = [
-			[["--template", "--dry-run"], "dryRun", "dryRun: --template takes no --dry-run"],
-			[["base", "--template"], "name", "name: --template takes no name"],
-			[["base", "--template", "--dry-run"], "dryRun", "dryRun: --template takes no --dry-run"],
+			[["--template", "--dry-run"], "--dry-run", "--template takes no --dry-run"],
+			[["base", "--template"], "name", "--template takes no name"],
+			[["base", "--template", "--dry-run"], "--dry-run", "--template takes no --dry-run"],
 		]
 		for (const [argv, path, message] of cases) {
 			const res = await capture(["scenario", "apply", ...argv, "--json"], { TRAJ_HOME: home })
@@ -106,7 +106,7 @@ describe("scenario apply --template", () => {
 		expect(res.code).toBe(2)
 		expect(errorOf(res)).toMatchObject({
 			code: "invalid_input",
-			path: "file",
+			path: "--file",
 			message: "--file cannot be combined with --template",
 		})
 	})
@@ -130,7 +130,7 @@ describe("scenario apply --template", () => {
 		expect(JSON.parse(err.join("\n")).error).toMatchObject({
 			code: "invalid_input",
 			path: "name",
-			message: "name: name the Scenario to apply the document to",
+			message: "Name the Scenario to apply the document to",
 		})
 		expect(read).toBe(false)
 	})

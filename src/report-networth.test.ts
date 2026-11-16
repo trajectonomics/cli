@@ -62,7 +62,7 @@ describe("report networth", () => {
 		expect(JSON.parse(res.err).error).toMatchObject({
 			code: "invalid_input",
 			exitCode: 2,
-			path: "asOf",
+			path: "--as-of",
 		})
 	})
 

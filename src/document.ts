@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs"
 import { z } from "zod"
 import type { DocumentSpec, RequiredDocumentField } from "./command"
+import { documentFailure } from "./document-issues"
 import { type AppError, fail } from "./errors"
 
 /** Fields that only the flag form uses: everything not the document flag or an allowed field. */
@@ -84,29 +85,6 @@ export function parseDocument(spec: DocumentSpec, text: string, path: string): u
 	} catch {
 		return fail("invalid_input", { path, message: `${path}: the document is not valid JSON` })
 	}
-	const result = spec.schema.safeParse(value)
-	if (result.success) return result.data
-	const parsed = result.error.issues.map((issue) => {
-		const params = "params" in issue ? issue.params : undefined
-		const record = typeof params === "object" && params !== null ? params : {}
-		const code = record["code"]
-		const hint = record["hint"]
-		return {
-			detail: {
-				path: ["document", ...issue.path].filter((part) => part !== "").join("."),
-				message: issue.message,
-				...(typeof code === "string" ? { code } : {}),
-			},
-			hint: typeof hint === "string" ? hint : undefined,
-		}
-	})
-	const issues = parsed.map((issue) => issue.detail)
-	const first = issues[0]
-	const hint = parsed[0]?.hint
-	return fail("invalid_input", {
-		message: first === undefined ? `${path}: the document is invalid` : first.message,
-		...(first === undefined ? {} : { path: first.path }),
-		...(hint === undefined ? {} : { hint }),
-		details: issues,
-	})
+	const result = spec.schema.safeParse(value, { reportInput: true })
+	return result.success ? result.data : documentFailure(result.error)
 }

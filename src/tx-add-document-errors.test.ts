@@ -87,7 +87,7 @@ describe("tx add document errors", () => {
 		const bad = await cli(home, "{")(["tx", "add", "--postings", "-", "--json"])
 		expect(errorOf(bad).message).toContain("not valid JSON")
 		const missing = await traj(["tx", "add", "--postings", "/nope/doc.json", "--json"])
-		expect(errorOf(missing).message).toContain("cannot read")
+		expect(errorOf(missing).message).toContain("Cannot read")
 		for (const res of [empty, bad, missing]) {
 			expect(res.code).toBe(2)
 			expect(errorOf(res).code).toBe("invalid_input")

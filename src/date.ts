@@ -5,7 +5,8 @@ import { ledgerFailure } from "./store"
 
 /**
  * A date taken from the caller, checked before anything is read, so a bad date wins over a
- * corrupt stored Transaction and the path names the flag that carried it (ADR-0029).
+ * corrupt stored Transaction. Its `path` is the schema field the caller passed, not the flag:
+ * ADR-0013's input-path rule binds `invalid_input`, and `INVALID_DATE` follows in a later change.
  */
 export function checkedDate(value: string, path: string): ISODate | AppError {
 	try {

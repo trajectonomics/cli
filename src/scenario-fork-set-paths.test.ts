@@ -65,7 +65,7 @@ describe("scenario fork --set paths", () => {
 		for (const set of ['flows.salary.id="bonus"', 'flows.salary.id="other"']) {
 			const res = await scenario(home, ["fork", "base", "early", "--set", set])
 			expect(res.code).toBe(2)
-			expect(errorOf(res)).toMatchObject({ path: "set", details: { segment: "salary" } })
+			expect(errorOf(res)).toMatchObject({ path: "--set", details: { segment: "salary" } })
 		}
 		const names = summariesOf(resultOf(await scenario(home, ["list"]))).map(
 			(summary) => summary.name,
@@ -84,7 +84,7 @@ describe("scenario fork --set paths", () => {
 			salarySet({ id: "other", amount: 1 }),
 		])
 		expect(changed.code).toBe(2)
-		expect(errorOf(changed)).toMatchObject({ path: "set", details: { segment: "salary" } })
+		expect(errorOf(changed)).toMatchObject({ path: "--set", details: { segment: "salary" } })
 		const kept = await scenario(home, ["fork", "base", "kept", "--set", salarySet({ amount: 1 })])
 		expect(kept.code).toBe(0)
 	})
@@ -118,7 +118,7 @@ describe("scenario fork --set paths", () => {
 		expect(res.code).toBe(2)
 		expect(errorOf(res)).toMatchObject({
 			code: "invalid_input",
-			path: "set",
+			path: "--set",
 			details: {
 				index: 0,
 				path: "schemaVersion",
@@ -141,7 +141,7 @@ describe("scenario fork --set paths", () => {
 		expect(res.code).toBe(2)
 		expect(errorOf(res)).toMatchObject({
 			code: "invalid_input",
-			path: "set",
+			path: "--set",
 			details: {
 				index: 0,
 				path: "flows.salary",

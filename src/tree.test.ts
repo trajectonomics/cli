@@ -137,7 +137,7 @@ describe("flags derived from the input schema", () => {
 		expect(res.code).toBe(2)
 		const { error } = JSON.parse(res.err)
 		expect(error.code).toBe("invalid_input")
-		expect(error.path).toBe("times")
+		expect(error.path).toBe("--times")
 	})
 
 	it("reports a flag missing its value as invalid_input", async () => {
