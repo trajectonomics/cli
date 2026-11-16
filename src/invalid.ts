@@ -67,7 +67,10 @@ export function inputFailure(
 	commandPath: readonly string[],
 	error: z.ZodError,
 ): AppError {
-	return issueFailure(inputRows(leaf, error), inputHint(commandPath))
+	const rows = inputRows(leaf, error)
+	// An input-schema issue always names a flag or a positional, so the hint follows the path.
+	const named = rows[0]?.path !== undefined
+	return issueFailure(rows, named ? inputHint(commandPath) : undefined)
 }
 
 type InputOf = { field: string; spelling: string }
