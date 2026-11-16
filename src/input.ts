@@ -1,6 +1,12 @@
 import type { z } from "zod"
 import type { Leaf } from "./command"
-import { exclusiveFields, parseDocument, readDocument, selectionSchema } from "./document"
+import {
+	exclusiveFields,
+	missingFieldError,
+	parseDocument,
+	readDocument,
+	selectionSchema,
+} from "./document"
 import { type AppError, fail, isAppError, registry } from "./errors"
 import { isVariadic, toKebab } from "./flags"
 import type { Parsed } from "./parse"
@@ -77,6 +83,8 @@ async function documentForm(
 	}
 	const selection = selectionSchema(leaf.input, spec).safeParse(fields)
 	if (!selection.success) return invalid(selection.error)
+	const missing = (spec.required ?? []).find((entry) => selection.data[entry.field] === undefined)
+	if (missing !== undefined) return missingFieldError(missing)
 	const text = await readDocument(ref, spec.flag, stdin)
 	if (isAppError(text)) return text
 	const document = parseDocument(spec, text, spec.flag)

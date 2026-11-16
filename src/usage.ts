@@ -57,12 +57,18 @@ function documentUsage(leaf: Leaf, path: readonly string[]): string | undefined 
 	if (document === undefined) return undefined
 	const flag = leaf.flags.find((spec) => spec.field === document.flag)
 	if (flag === undefined) return undefined
+	const required = new Set((document.required ?? []).map((entry) => entry.field))
 	const allowed = (document.allowed ?? []).flatMap((field) => {
 		const spec = leaf.flags.find((candidate) => candidate.field === field)
-		return spec === undefined ? [] : [`[${flagLabel(spec)}]`]
+		if (spec === undefined) return []
+		const label = flagLabel(spec)
+		return [required.has(field) ? label : `[${label}]`]
 	})
 	const file = flagLabel(flag).replace("<string>", "<file|->")
-	const words = leaf.positionals.map((name) => positionalLabel(leaf, name))
+	// A field the document form requires stays `<name>` even though the flag form made it optional.
+	const words = leaf.positionals.map((name) =>
+		required.has(name) ? `<${name}>` : positionalLabel(leaf, name),
+	)
 	return `Usage: traj ${[...path, ...words, file, ...allowed].join(" ")}`
 }
 

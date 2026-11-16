@@ -24,6 +24,10 @@ const document = z
 	.strictObject({
 		flag: z.string().describe("The input field that names the document; `-` reads stdin."),
 		schema: jsonSchema.describe("JSON Schema of the document form's input."),
+		required: z
+			.array(z.string())
+			.optional()
+			.describe("The input fields the document form requires, checked before it is read."),
 	})
 	.describe("The alternate document form, beside the flag form.")
 
@@ -83,6 +87,9 @@ export const schema: Leaf = defineCommand({
 						document: {
 							flag: node.document.flag,
 							schema: z.toJSONSchema(node.document.schema, { io: "input" }),
+							...(node.document.required === undefined
+								? {}
+								: { required: node.document.required.map((entry) => entry.field) }),
 						},
 					}
 		return ok({

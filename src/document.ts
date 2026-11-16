@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs"
 import { z } from "zod"
-import type { DocumentSpec } from "./command"
+import type { DocumentSpec, RequiredDocumentField } from "./command"
 import { type AppError, fail } from "./errors"
 
 /** Fields that only the flag form uses: everything not the document flag or an allowed field. */
@@ -16,6 +16,35 @@ export function selectionSchema(input: z.ZodObject, spec: DocumentSpec): z.ZodOb
 		Object.entries(input.shape).filter(([field]) => keep.has(field)),
 	) as Record<string, z.ZodType>
 	return z.strictObject(shape)
+}
+
+/**
+ * The failure for a field the document form cannot work without, raised before the document is
+ * read. The field is a positional's declared name today, so the path is the field itself.
+ */
+export function missingFieldError(required: RequiredDocumentField): AppError {
+	return fail("invalid_input", {
+		path: required.field,
+		message: `${required.field}: ${required.sentence}`,
+	})
+}
+
+/** Fails at definition time if the document form names a field that is not an input field. */
+export function checkDocument(input: z.ZodObject, document: DocumentSpec | undefined): void {
+	if (document === undefined) return
+	if (!(document.flag in input.shape)) {
+		throw new Error(`Document flag "${document.flag}" is not a field of the input schema.`)
+	}
+	for (const field of document.allowed ?? []) {
+		if (!(field in input.shape)) {
+			throw new Error(`Document field "${field}" is not a field of the input schema.`)
+		}
+	}
+	for (const { field } of document.required ?? []) {
+		if (!(field in input.shape)) {
+			throw new Error(`Required document field "${field}" is not a field of the input schema.`)
+		}
+	}
 }
 
 /** A document field is `-` for stdin, otherwise a path resolved against the working directory. */
@@ -57,19 +86,27 @@ export function parseDocument(spec: DocumentSpec, text: string, path: string): u
 	}
 	const result = spec.schema.safeParse(value)
 	if (result.success) return result.data
-	const issues = result.error.issues.map((issue) => {
+	const parsed = result.error.issues.map((issue) => {
 		const params = "params" in issue ? issue.params : undefined
-		const code = typeof params === "object" && params !== null ? params["code"] : undefined
+		const record = typeof params === "object" && params !== null ? params : {}
+		const code = record["code"]
+		const hint = record["hint"]
 		return {
-			path: ["document", ...issue.path].filter((part) => part !== "").join("."),
-			message: issue.message,
-			...(typeof code === "string" ? { code } : {}),
+			detail: {
+				path: ["document", ...issue.path].filter((part) => part !== "").join("."),
+				message: issue.message,
+				...(typeof code === "string" ? { code } : {}),
+			},
+			hint: typeof hint === "string" ? hint : undefined,
 		}
 	})
+	const issues = parsed.map((issue) => issue.detail)
 	const first = issues[0]
+	const hint = parsed[0]?.hint
 	return fail("invalid_input", {
 		message: first === undefined ? `${path}: the document is invalid` : first.message,
 		...(first === undefined ? {} : { path: first.path }),
+		...(hint === undefined ? {} : { hint }),
 		details: issues,
 	})
 }

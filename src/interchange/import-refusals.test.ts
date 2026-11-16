@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { acceptedScenarioSchemaVersion } from "../scenario/document"
 import { mustOpen, tempHome } from "../store/testing"
 import { edit, goldenJsonl, refused } from "./testing"
 
@@ -53,12 +54,15 @@ describe("importJsonl refusals", () => {
 	it("refuses a v1 Scenario document at its line, which the pinned engine no longer accepts", async () => {
 		const golden = await goldenJsonl()
 		const text = edit(golden, '"schemaVersion":4}', '"schemaVersion":1}')
+		const accepted = acceptedScenarioSchemaVersion()
+		const path = "line.22.document.schemaVersion"
 		expect(refused(text)).toMatchObject({
 			code: "invalid_input",
 			exitCode: 2,
-			path: "line.22.document.schemaVersion",
-			message: "line.22.document.schemaVersion: UNSUPPORTED_SCHEMA_VERSION",
-			details: [{ path: "line.22.document.schemaVersion", code: "UNSUPPORTED_SCHEMA_VERSION" }],
+			path,
+			message: `${path}: UNSUPPORTED_SCHEMA_VERSION (the accepted version is ${accepted})`,
+			hint: 'Run "traj schema scenario apply" to see the document schema.',
+			details: [{ path, code: "UNSUPPORTED_SCHEMA_VERSION" }],
 		})
 	})
 
