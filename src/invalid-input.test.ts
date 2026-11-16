@@ -33,14 +33,17 @@ const SUCCEEDING = new Set([
 /** `tx import` raises its own CLI sentence, not a schema reason. */
 const IMPORT_SENTENCE = "Name a CSV file, - for stdin, or --template"
 
+/** True when a path is the caller's input: a flag, a declared positional or a document path. */
+function isKnownPath(leaf: Leaf, input: string): boolean {
+	return input.startsWith("--") || input.startsWith("document") || leaf.positionals.includes(input)
+}
+
 function checkPath(name: string, error: ErrorBody, leaf: Leaf): void {
 	const input = error.path ?? ""
-	const positional = leaf.positionals.includes(input)
-	const flag = input.startsWith("--")
-	const document = input.startsWith("document")
-	expect({ name, known: flag || positional || document }).toEqual({ name, known: true })
+	const named = input.startsWith("--") || leaf.positionals.includes(input)
+	expect({ name, known: isKnownPath(leaf, input) }).toEqual({ name, known: true })
 	const present = error.hint !== undefined
-	expect({ name, hint: flag || positional ? present : !present }).toEqual({ name, hint: true })
+	expect({ name, hint: named ? present : !present }).toEqual({ name, hint: true })
 }
 
 function checkSentence(name: string, message: string): void {
@@ -53,9 +56,7 @@ function checkRows(name: string, leaf: Leaf, details: unknown): void {
 	for (const row of rowsOf(details)) {
 		expect(row.message ?? "").not.toMatch(PROSE)
 		const input = row.path ?? ""
-		const known =
-			input.startsWith("--") || input.startsWith("document") || leaf.positionals.includes(input)
-		expect({ name, row: known }).toEqual({ name, row: true })
+		expect({ name, row: isKnownPath(leaf, input) }).toEqual({ name, row: true })
 	}
 }
 

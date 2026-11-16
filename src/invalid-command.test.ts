@@ -161,3 +161,45 @@ describe("a path that is not this leaf's input stays as the store wrote it", () 
 		expect(error.hint).toBeUndefined()
 	})
 })
+
+describe("array details follow the envelope, object details do not", () => {
+	it("rewrites a row that names an input and keeps a core row's code", async () => {
+		const probe = defineCommand({
+			name: "rows",
+			summary: "Return issue-shaped details",
+			positionals: [],
+			input: z.strictObject({ word: z.string().optional() }),
+			output: z.null(),
+			examples: [],
+			errorCodes: [],
+			run: () =>
+				fail("invalid_input", {
+					path: "word",
+					message: "word: bad value",
+					details: [
+						{ path: "word", message: "word: bad value" },
+						{
+							path: "document.flows.0.nope",
+							message: "document.flows.0.nope: UNKNOWN_KEY",
+							code: "UNKNOWN_KEY",
+						},
+					],
+				}),
+		})
+		const root = defineGroup({ name: "traj", summary: "probe tree", children: [probe] })
+		const error = errorOf(await capture(["rows", "--json"], {}, root))
+		expect(error).toMatchObject({
+			path: "--word",
+			message: "Bad value",
+			hint: hint("rows"),
+			details: [
+				{ path: "--word", message: "Bad value" },
+				{
+					path: "document.flows.0.nope",
+					message: "document.flows.0.nope: UNKNOWN_KEY",
+					code: "UNKNOWN_KEY",
+				},
+			],
+		})
+	})
+})

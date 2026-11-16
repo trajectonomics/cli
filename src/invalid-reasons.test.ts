@@ -5,7 +5,7 @@ import { SENTENCES } from "./sentences"
 import { capture, errorOf } from "./test-support"
 import { tempHome } from "./tx-test-support"
 
-const lintLeaf = (name: string, input: z.ZodObject, positionals: readonly string[] = []) =>
+const probeLeaf = (name: string, input: z.ZodObject, positionals: readonly string[] = []) =>
 	defineCommand({
 		name,
 		summary: `Lint ${name}`,
@@ -17,72 +17,72 @@ const lintLeaf = (name: string, input: z.ZodObject, positionals: readonly string
 		run: (parsed) => ok(parsed),
 	})
 
-const lint = defineGroup({
-	name: "lint",
+const probe = defineGroup({
+	name: "probe",
 	summary: "Validation fixture",
 	children: [
-		lintLeaf("required", z.strictObject({ title: z.string() })),
-		lintLeaf("positional", z.strictObject({ word: z.string() }), ["word"]),
-		lintLeaf("empty", z.strictObject({ word: z.string().min(1) })),
-		lintLeaf("number", z.strictObject({ n: z.number() })),
-		lintLeaf("whole", z.strictObject({ n: z.number().int() })),
-		lintLeaf("range", z.strictObject({ n: z.number().min(2) })),
-		lintLeaf("too-big", z.strictObject({ word: z.string().max(2) })),
-		lintLeaf("choice", z.strictObject({ kind: z.enum(["a", "b"]) })),
+		probeLeaf("required", z.strictObject({ title: z.string() })),
+		probeLeaf("positional", z.strictObject({ word: z.string() }), ["word"]),
+		probeLeaf("empty", z.strictObject({ word: z.string().min(1) })),
+		probeLeaf("number", z.strictObject({ n: z.number() })),
+		probeLeaf("whole", z.strictObject({ n: z.number().int() })),
+		probeLeaf("range", z.strictObject({ n: z.number().min(2) })),
+		probeLeaf("too-big", z.strictObject({ word: z.string().max(2) })),
+		probeLeaf("choice", z.strictObject({ kind: z.enum(["a", "b"]) })),
 	],
 })
 
-const lintRoot = defineGroup({ name: "traj", summary: "fixture", children: [lint] })
-const runLint = (argv: string[]) => capture(["lint", ...argv, "--json"], {}, lintRoot)
+const probeRoot = defineGroup({ name: "traj", summary: "fixture", children: [probe] })
+const runProbe = (argv: string[]) => capture(["probe", ...argv, "--json"], {}, probeRoot)
 
 describe("one case per validation reason", () => {
 	it("names a missing flag as a flag, with the generic help hint", async () => {
-		const error = errorOf(await runLint(["required"]))
+		const error = errorOf(await runProbe(["required"]))
 		expect(error).toMatchObject({
 			path: "--title",
 			message: SENTENCES.requiredFlag,
-			hint: 'Run "traj help lint required" to see its flags.',
+			hint: 'Run "traj help probe required" to see its flags.',
 			details: [{ path: "--title", message: SENTENCES.requiredFlag }],
 		})
 	})
 
 	it("names a missing positional as an argument", async () => {
-		const error = errorOf(await runLint(["positional"]))
+		const error = errorOf(await runProbe(["positional"]))
 		expect(error).toMatchObject({ path: "word", message: SENTENCES.requiredArgument })
 	})
 
 	it("gives an empty value its own sentence", async () => {
-		const error = errorOf(await runLint(["empty", "--word", ""]))
+		const error = errorOf(await runProbe(["empty", "--word", ""]))
 		expect(error).toMatchObject({ path: "--word", message: SENTENCES.empty })
 	})
 
 	it("gives a non-numeric number the number sentence", async () => {
-		const error = errorOf(await runLint(["number", "--n", "abc"]))
+		const error = errorOf(await runProbe(["number", "--n", "abc"]))
 		expect(error).toMatchObject({ path: "--n", message: SENTENCES.number })
 	})
 
 	it("gives a non-integral number the whole-number sentence", async () => {
-		const error = errorOf(await runLint(["whole", "--n", "1.5"]))
+		const error = errorOf(await runProbe(["whole", "--n", "1.5"]))
 		expect(error).toMatchObject({ path: "--n", message: SENTENCES.wholeNumber })
 	})
 
 	it("gives a value below its minimum the range sentence", async () => {
-		const error = errorOf(await runLint(["range", "--n", "1"]))
+		const error = errorOf(await runProbe(["range", "--n", "1"]))
 		expect(error).toMatchObject({ path: "--n", message: SENTENCES.range })
 	})
 
 	it("gives an over-long string the range sentence", async () => {
-		const error = errorOf(await runLint(["too-big", "--word", "abc"]))
+		const error = errorOf(await runProbe(["too-big", "--word", "abc"]))
 		expect(error).toMatchObject({ path: "--word", message: SENTENCES.range })
 	})
 
 	it("gives a value off the list the choice sentence", async () => {
-		const error = errorOf(await runLint(["choice", "--kind", "c"]))
+		const error = errorOf(await runProbe(["choice", "--kind", "c"]))
 		expect(error).toMatchObject({ path: "--kind", message: SENTENCES.choice })
 	})
 
 	it("gives a missing required enum the required-flag sentence, not a choice", async () => {
-		const error = errorOf(await runLint(["choice"]))
+		const error = errorOf(await runProbe(["choice"]))
 		expect(error).toMatchObject({ path: "--kind", message: SENTENCES.requiredFlag })
 	})
 
