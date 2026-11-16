@@ -1,4 +1,5 @@
 import type { z } from "zod"
+import { checkDocument } from "./document"
 import type { AppError, ErrorCode } from "./errors"
 import { checkPositionals, deriveFlags, type FlagSpec } from "./flags"
 import type { RenderHint } from "./table"
@@ -22,15 +23,21 @@ export type Context = {
 	stdin: () => Promise<string>
 }
 
+/** A field the document form cannot work without, and the sentence naming what is missing. It is
+ * checked before the document is read, and the usage line marks it required (ADR-0020). */
+export type RequiredDocumentField = { field: string; sentence: string }
+
 /**
  * A leaf's second input form: a JSON document named by `flag` (a path, or `-` for stdin). The
  * document schema is a shape of its own; `allowed` names the flags that may accompany it, and
- * every other input field is exclusive to the flag form (ADR-0020).
+ * every other input field is exclusive to the flag form (ADR-0020). `required` names the input
+ * fields the document form needs, in the order a caller fixes them.
  */
 export type DocumentSpec<D extends z.ZodType = z.ZodType> = {
 	flag: string
 	schema: D
 	allowed?: readonly string[]
+	required?: readonly RequiredDocumentField[]
 }
 
 type Outcome<T> = Result<T> | AppError | Promise<Result<T> | AppError>
@@ -112,19 +119,6 @@ export function defineCommand<
 					(command.run as unknown as (input: unknown, ctx: Context) => Outcome<unknown>)(input, ctx)
 			: (command.run as unknown as Leaf["run"])
 	return { kind: "leaf", ...command, run, flags } as unknown as Leaf
-}
-
-/** Fails at definition time if the document form names a field that is not a flag. */
-function checkDocument(input: z.ZodObject, document: DocumentSpec | undefined): void {
-	if (document === undefined) return
-	if (!(document.flag in input.shape)) {
-		throw new Error(`Document flag "${document.flag}" is not a field of the input schema.`)
-	}
-	for (const field of document.allowed ?? []) {
-		if (!(field in input.shape)) {
-			throw new Error(`Document field "${field}" is not a field of the input schema.`)
-		}
-	}
 }
 
 export function defineGroup(group: Omit<Group, "kind">): Group {

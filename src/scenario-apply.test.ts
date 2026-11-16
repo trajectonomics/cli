@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import simPackage from "@trajectonomics/sim/package.json"
+import { acceptedScenarioSchemaVersion } from "./scenario/document"
 import {
 	applyScenario,
 	documentFile,
@@ -14,6 +15,7 @@ import { capture } from "./test-support"
 
 const DOC = SCENARIO_DOCUMENT
 const SALARY = DOC.flows[0]
+const TEMPLATE_HINT = 'Run "traj scenario apply --template" to print a document to start from.'
 
 describe("scenario apply", () => {
 	it("creates a Scenario from a file and reports the written row", async () => {
@@ -120,10 +122,15 @@ describe("scenario apply", () => {
 		])
 	})
 
-	it("requires --file before any document is read", async () => {
-		const res = await scenario(scenarioHome(), ["apply", "base"])
+	it("names --template when no document is given", async () => {
+		const res = await scenario(scenarioHome(), ["apply"])
 		expect(res.code).toBe(2)
-		expect(errorOf(res)).toMatchObject({ code: "invalid_input", path: "file" })
+		expect(errorOf(res)).toMatchObject({
+			code: "invalid_input",
+			path: "file",
+			message: "file: name a JSON document, - for stdin, or --template",
+			hint: TEMPLATE_HINT,
+		})
 	})
 
 	it("refuses a name shaped like a UUID", async () => {
@@ -153,19 +160,29 @@ describe("scenario apply", () => {
 		expect(shown.version).toBe(1)
 		expect(shown.document).toMatchObject({ economy: { inflation: 0 } })
 	})
-
 	it("is listed by the schema with sim-core's document shape", async () => {
 		const home = scenarioHome()
 		const listing = resultOf(await scenario(home, ["list"]))
 		expect(listing).toEqual({ scenarios: [] })
 		const described = resultOf(await capture(["schema", "scenario", "apply", "--json"]))
 		expect(described.name).toBe("scenario apply")
+		expect(described.positionals).toEqual(["name"])
+		expect(described.input.required).toBeUndefined()
 		const document = described.document as {
 			flag: string
-			schema: { required: string[]; description: string }
+			required: string[]
+			schema: {
+				required: string[]
+				description: string
+				properties: { schemaVersion: unknown }
+			}
 		}
 		expect(document.flag).toBe("file")
+		expect(document.required).toEqual(["name"])
 		expect(document.schema.required).toEqual(["schemaVersion"])
+		expect(document.schema.properties.schemaVersion).toEqual({
+			const: acceptedScenarioSchemaVersion(),
+		})
 		expect(document.schema.description).toContain(`@trajectonomics/sim@${simPackage.version}`)
 		expect(document.schema.description).toContain("check()")
 		expect(described.errorCodes).toContain("invalid_input")

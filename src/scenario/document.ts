@@ -21,6 +21,46 @@ export type ScenarioProblem = {
 const NEUTRAL_BASELINE = { schemaVersion: 1, balances: [] } as const
 
 /**
+ * How many `schemaVersion`s the scan tries. `sim-core`'s version is a small positive integer that
+ * only increases, so the scan finds it early; a pin that accepts none inside the bound makes the
+ * template fail as `internal`, and the validity test reports it first (ADR-0033).
+ */
+const SCHEMA_VERSION_BOUND = 64
+
+/** The one hint an unsupported version carries: the channel that prints the document's shape. */
+const SCHEMA_HINT = 'Run "traj schema scenario apply" to see the document schema.'
+
+let memoizedVersion: { readonly value: number | undefined } | undefined
+
+/**
+ * The `schemaVersion` the pinned `sim-core` accepts, asked of the core itself (ADR-0024,
+ * ADR-0033). It walks the bounded range ascending and keeps the highest version with no
+ * `UNSUPPORTED_SCHEMA_VERSION` at `scenario.schemaVersion`, because a literal would go stale the
+ * way the pin's 1 -> 4 move already did. Memoized: importing the command tree may ask for it.
+ */
+export function acceptedScenarioSchemaVersion(): number | undefined {
+	memoizedVersion ??= { value: findAcceptedVersion() }
+	return memoizedVersion.value
+}
+
+function findAcceptedVersion(): number | undefined {
+	let found: number | undefined
+	for (let version = 1; version <= SCHEMA_VERSION_BOUND; version += 1) {
+		if (!rejectsVersion(version)) found = version
+	}
+	return found
+}
+
+function rejectsVersion(version: number): boolean {
+	return check(NEUTRAL_BASELINE, { schemaVersion: version }, null).some(
+		(problem) =>
+			problem.code === "UNSUPPORTED_SCHEMA_VERSION" &&
+			problem.path[0] === "scenario" &&
+			problem.path[1] === "schemaVersion",
+	)
+}
+
+/**
  * `MISSING_CARRY_IN` depends on the Timeline's start, so it is a `projection run` failure (#11).
  * Passing `null` for the Timeline already stops `sim-core`'s Timeline checks; dropping the code as
  * well guards against a later `sim-core` that reports it another way.
@@ -39,10 +79,28 @@ export function documentPath(base: string, segments: readonly (string | number)[
 	return [base, ...segments].join(".")
 }
 
+/** One refusal's envelope fields, built once so the command, the Store and a restore agree. */
+type Refusal = { path: string; message: string; code: string; hint?: string }
+
+function refusalOf(problem: ScenarioProblem, base: string): Refusal {
+	const path = documentPath(base, problem.segments)
+	const unsupported = problem.code === "UNSUPPORTED_SCHEMA_VERSION"
+	const accepted = unsupported ? acceptedScenarioSchemaVersion() : undefined
+	const suffix = accepted === undefined ? "" : ` (the accepted version is ${accepted})`
+	const refusal: Refusal = {
+		path,
+		message: `${path}: ${problem.code}${suffix}`,
+		code: problem.code,
+	}
+	// Only an unsupported version has a fix a caller cannot guess; every other code keeps no hint.
+	if (unsupported) refusal.hint = SCHEMA_HINT
+	return refusal
+}
+
 function detailsOf(problems: readonly ScenarioProblem[], base: string) {
 	return problems.map((problem) => {
-		const path = documentPath(base, problem.segments)
-		return { path, message: `${path}: ${problem.code}`, code: problem.code }
+		const { path, message, code } = refusalOf(problem, base)
+		return { path, message, code }
 	})
 }
 
@@ -51,12 +109,19 @@ export function scenarioDocumentError(value: unknown, base = "document"): AppErr
 	const problems = scenarioProblems(value)
 	const first = problems[0]
 	if (first === undefined) return null
-	const path = documentPath(base, first.segments)
+	const refusal = refusalOf(first, base)
 	return fail("invalid_input", {
-		path,
-		message: `${path}: ${first.code}`,
+		path: refusal.path,
+		message: refusal.message,
+		...(refusal.hint === undefined ? {} : { hint: refusal.hint }),
 		details: detailsOf(problems, base),
 	})
+}
+
+/** The JSON Schema of `schemaVersion`: the one accepted version, when the pin names one. */
+function schemaVersionSchema(): Record<string, unknown> {
+	const version = acceptedScenarioSchemaVersion()
+	return version === undefined ? {} : { const: version }
 }
 
 /**
@@ -69,17 +134,21 @@ export const scenarioDocument: z.ZodType<unknown> = z
 	.unknown()
 	.superRefine((value, ctx) => {
 		for (const problem of scenarioProblems(value)) {
+			const refusal = refusalOf(problem, "document")
 			ctx.addIssue({
 				code: "custom",
-				message: `${documentPath("document", problem.segments)}: ${problem.code}`,
+				message: refusal.message,
 				path: [...problem.segments],
-				params: { code: problem.code },
+				params: {
+					code: problem.code,
+					...(refusal.hint === undefined ? {} : { hint: refusal.hint }),
+				},
 			})
 		}
 	})
 	.meta({
 		type: "object",
-		properties: { schemaVersion: {} },
+		properties: { schemaVersion: schemaVersionSchema() },
 		required: ["schemaVersion"],
 		description: `A Scenario document, validated by @trajectonomics/sim@${simVersion}'s check() with an empty Baseline and no Timeline.`,
 	})
