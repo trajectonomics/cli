@@ -13,3 +13,7 @@ A second leaf per document form was rejected: the available names all collide wi
 ## Consequences
 
 `Command` and `Leaf` gain an optional document schema; `traj schema <path>` gains a second input shape and usage a second form. Tests must inject stdin, as they already inject the environment and the clock. A `-` read from a terminal blocks until end-of-input, which is explicit rather than accidental; an empty document is `invalid_input`.
+
+## Addendum
+
+A failure inside the document names `document.` plus the path inside it (`document.postings.0.amount`), so it cannot be confused with the flag that named the file. The document flag itself is a flag like any other: an unreadable `--postings` or `--file` is `invalid_input` at `--postings` or `--file`. A Scenario document's issues keep `sim-core`'s codes and sentences (ADR-0024).

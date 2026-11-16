@@ -202,6 +202,10 @@ _Avoid_: Namespace, category
 A named option of a command, derived from a field of its input schema that is not a positional.
 _Avoid_: Option, switch
 
+**Input path**:
+The failure envelope's `path`, naming the caller's own input: a flag (`--as-of`), a positional's declared name (`file`), or a dotted path inside a JSON document (`document.postings.0.amount`). It is never a schema field name.
+_Avoid_: Field path, JSON path
+
 **Format**:
 How a command renders its result, `human` or `json`, chosen explicitly by flag or environment and never inferred from a terminal.
 _Avoid_: Mode, output type
