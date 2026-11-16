@@ -195,7 +195,7 @@ One runnable entry of the CLI, such as `tx add`, reached by a path of words. It 
 _Avoid_: Subcommand, action, verb
 
 **Group**:
-A command path prefix, such as `tx`, that only holds commands. A bare group prints its usage.
+A command path prefix, such as `tx`, that only holds commands, so a bare group names no command and is invalid input at exit 2.
 _Avoid_: Namespace, category
 
 **Flag**:
