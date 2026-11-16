@@ -38,16 +38,15 @@ function mentionProblem(
 	facts: ReleaseFacts,
 	all: readonly Section[],
 	known: ReadonlySet<string>,
-	found: { readonly mention: Mention; readonly line: number },
+	mention: Mention,
 ): Problem | undefined {
-	const { mention, line } = found
 	if (resolves(mention.words, known)) return undefined
 	const marker = markerAt(all, mention.offset)
 	if (marker !== undefined && newer(marker.version, facts.latestVersion)) return undefined
 	const release = facts.latestVersion === undefined ? "" : ` (${facts.latestVersion})`
 	return {
 		code: "unreleased_command",
-		line,
+		line: mention.line,
 		message: `\`traj ${mention.words.join(" ")}\` is not in the latest release${release} and is not inside a section marked "> **Ships in X.Y.Z.**". Mark the section with the release that ships it, or take the command out.`,
 	}
 }
@@ -56,8 +55,8 @@ function commandProblems(facts: ReleaseFacts, all: readonly Section[]): Problem[
 	const known = new Set(facts.known)
 	const problems: Problem[] = []
 	for (const span of codeSpans(facts.readme)) {
-		for (const found of mentionsIn(facts.readme, span)) {
-			const problem = mentionProblem(facts, all, known, found)
+		for (const mention of mentionsIn(facts.readme, span)) {
+			const problem = mentionProblem(facts, all, known, mention)
 			if (problem !== undefined) problems.push(problem)
 		}
 	}

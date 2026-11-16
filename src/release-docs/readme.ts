@@ -1,3 +1,5 @@
+import { VERSION } from "./version"
+
 /** A stretch of the README: a fenced block, an inline code span, or a `## ` section. */
 export type Span = { readonly start: number; readonly end: number }
 
@@ -7,11 +9,15 @@ export type Section = {
 	readonly marker?: { readonly version: string; readonly at: number }
 }
 
-/** A `traj <words>` mention: the command words that follow it, and where the line starts. */
-export type Mention = { readonly words: readonly string[]; readonly offset: number }
+/** A `traj <words>` mention: the command words that follow it, where it sits, and its line. */
+export type Mention = {
+	readonly words: readonly string[]
+	readonly offset: number
+	readonly line: number
+}
 
 /** The visible first line of a section's marker, as ADR-0034 writes it. */
-const MARKER = /^> \*\*Ships in (\d+\.\d+\.\d+)\.\*\*/m
+const MARKER = new RegExp(`^> \\*\\*Ships in (${VERSION})\\.\\*\\*`, "m")
 
 /** `traj` as a command word, not as the tail of a path such as `dist/traj` or `~/.traj/bin`. */
 const TRAJ = /(?<![\w./\\-])traj(?![\w-])/g
@@ -99,16 +105,16 @@ function commandWords(after: string): string[] {
 }
 
 /** The `traj <words>` mentions inside one span, with the command words that follow on its line. */
-export function mentionsIn(readme: string, span: Span): { mention: Mention; line: number }[] {
+export function mentionsIn(readme: string, span: Span): Mention[] {
 	const text = readme.slice(span.start, span.end)
-	const mentions: { mention: Mention; line: number }[] = []
+	const mentions: Mention[] = []
 	for (const match of text.matchAll(TRAJ)) {
 		if (match.index === undefined) continue
 		const at = span.start + match.index
 		const after = text.slice(match.index + match[0].length).split("\n")[0] ?? ""
 		const words = commandWords(after.trimStart())
 		if (words.length === 0) continue
-		mentions.push({ mention: { words, offset: at }, line: lineAt(readme, at) })
+		mentions.push({ words, offset: at, line: lineAt(readme, at) })
 	}
 	return mentions
 }
