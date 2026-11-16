@@ -21,7 +21,7 @@ const TEMPLATE_DOCUMENT = {
 			growth: "inflation",
 		},
 	],
-	cashflow: { surplus: [{ account: "cash" }], contribute: [], withdraw: ["cash"] },
+	cashflow: { surplus: [{ account: "cash" }], contribute: [], withdraw: [] },
 } as const
 
 /**

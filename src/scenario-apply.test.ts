@@ -1,4 +1,6 @@
 import { describe, expect, it } from "bun:test"
+import simPackage from "@trajectonomics/sim/package.json"
+import { acceptedScenarioSchemaVersion } from "./scenario/document"
 import {
 	applyScenario,
 	documentFile,
@@ -157,5 +159,33 @@ describe("scenario apply", () => {
 		const shown = rowOf(resultOf(await scenario(home, ["show", "base"])))
 		expect(shown.version).toBe(1)
 		expect(shown.document).toMatchObject({ economy: { inflation: 0 } })
+	})
+	it("is listed by the schema with sim-core's document shape", async () => {
+		const home = scenarioHome()
+		const listing = resultOf(await scenario(home, ["list"]))
+		expect(listing).toEqual({ scenarios: [] })
+		const described = resultOf(await capture(["schema", "scenario", "apply", "--json"]))
+		expect(described.name).toBe("scenario apply")
+		expect(described.positionals).toEqual(["name"])
+		expect(described.input.required).toBeUndefined()
+		const document = described.document as {
+			flag: string
+			required: string[]
+			schema: {
+				required: string[]
+				description: string
+				properties: { schemaVersion: unknown }
+			}
+		}
+		expect(document.flag).toBe("file")
+		expect(document.required).toEqual(["name"])
+		expect(document.schema.required).toEqual(["schemaVersion"])
+		expect(document.schema.properties.schemaVersion).toEqual({
+			const: acceptedScenarioSchemaVersion(),
+		})
+		expect(document.schema.description).toContain(`@trajectonomics/sim@${simPackage.version}`)
+		expect(document.schema.description).toContain("check()")
+		expect(described.errorCodes).toContain("invalid_input")
+		expect(described.errorCodes).toContain("database_busy")
 	})
 })

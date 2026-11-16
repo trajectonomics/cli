@@ -123,6 +123,44 @@ describe("the accepted Scenario schemaVersion", () => {
 		expect(acceptedScenarioSchemaVersion()).toBe(SCENARIO_DOCUMENT.schemaVersion)
 	})
 
+	it("prints the template's exact bytes, so a diff shows the wire contract", () => {
+		const accepted = acceptedScenarioSchemaVersion()
+		expect(scenarioTemplate()).toBe(`{
+  "schemaVersion": ${accepted},
+  "currency": "THB",
+  "economy": {
+    "inflation": 0
+  },
+  "accounts": [
+    {
+      "id": "cash",
+      "kind": "asset",
+      "rate": 0
+    }
+  ],
+  "flows": [
+    {
+      "id": "salary",
+      "kind": "income",
+      "earned": true,
+      "amount": 100000,
+      "frequency": "monthly",
+      "start": "2026-01-01",
+      "growth": "inflation"
+    }
+  ],
+  "cashflow": {
+    "surplus": [
+      {
+        "account": "cash"
+      }
+    ],
+    "contribute": [],
+    "withdraw": []
+  }
+}`)
+	})
+
 	it("stamps the template, which is a document the core accepts", () => {
 		const text = scenarioTemplate()
 		if (text === undefined) throw new Error("the pinned core accepted no version")
