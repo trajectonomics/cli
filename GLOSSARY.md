@@ -239,3 +239,7 @@ _Avoid_: build, artifact, deploy
 **Install channel**:
 A way a user obtains the `traj` binary: a GitHub Release, the npm package, or the install script. Homebrew would be a fourth.
 _Avoid_: distribution method, delivery
+
+**Release marker**:
+A line in a document or a help page naming the release that ships what the text describes, so a reader of an older release is not sent to a command it cannot run (ADR-0033).
+_Avoid_: version note, TODO, roadmap marker

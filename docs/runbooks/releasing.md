@@ -43,6 +43,13 @@ the channel smoke installs through `npx` and `bunx`.
 
 Never run a stable release from a branch other than `main`; the shared workflow refuses it.
 
+Before you dispatch a release that ships work this repository marked as unreleased, land the
+pull request that clears those markers: the `> **Ships in X.Y.Z.**` line in `README.md` and every
+help note that names the version you are cutting. A marker left in place is wrong for good in
+that release's help and in the README of its tag, and a published version number is spent
+(ADR-0023). The release-docs check fails a pull request that names an unreleased command without
+a marker, and its weekly run reports a marker that names an already-released version.
+
 ## What a green release means
 
 - npm serves `@trajectonomics/cli@X.Y.Z`.
