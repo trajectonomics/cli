@@ -83,16 +83,15 @@ describe("a core owns its own codes and sentences", () => {
 		const error = errorOf(res)
 		expect(error).toMatchObject({
 			path: "document.schemaVersion",
-			message: "document.schemaVersion: UNSUPPORTED_SCHEMA_VERSION",
 			details: [
 				{
 					path: "document.schemaVersion",
-					message: "document.schemaVersion: UNSUPPORTED_SCHEMA_VERSION",
 					code: "UNSUPPORTED_SCHEMA_VERSION",
 				},
 			],
 		})
-		expect(error.hint).toBeUndefined()
+		expect(error.message).toContain("document.schemaVersion: UNSUPPORTED_SCHEMA_VERSION")
+		expect(error.hint).toBe('Run "traj schema scenario apply" to see the document schema.')
 	})
 })
 

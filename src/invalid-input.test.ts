@@ -30,8 +30,11 @@ const SUCCEEDING = new Set([
 	"version",
 ])
 
-/** `tx import` raises its own CLI sentence, not a schema reason. */
-const IMPORT_SENTENCE = "Name a CSV file, - for stdin, or --template"
+/** A command may raise its own CLI sentence for a missing input, outside the table. */
+const OWN_SENTENCES: Record<string, string> = {
+	"scenario apply": "Name a JSON document, - for stdin, or --template",
+	"tx import": "Name a CSV file, - for stdin, or --template",
+}
 
 /** True when a path is the caller's input: a flag, a declared positional or a document path. */
 function isKnownPath(leaf: Leaf, input: string): boolean {
@@ -48,7 +51,8 @@ function checkPath(name: string, error: ErrorBody, leaf: Leaf): void {
 
 function checkSentence(name: string, message: string): void {
 	expect(message).not.toMatch(PROSE)
-	if (name === "tx import") expect(message).toBe(IMPORT_SENTENCE)
+	const own = OWN_SENTENCES[name]
+	if (own !== undefined) expect(message).toBe(own)
 	else expect({ name, table: SENTENCE_TEXT.includes(message) }).toEqual({ name, table: true })
 }
 
