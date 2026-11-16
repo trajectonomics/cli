@@ -4,21 +4,8 @@ import { defineCommand, defineGroup } from "./command"
 import { fail } from "./errors"
 import { applyScenario, scenarioHome } from "./scenario-test-support"
 import { SCENARIO_DOCUMENT } from "./store/testing"
-import { capture } from "./test-support"
+import { capture, errorOf } from "./test-support"
 import { cli, tempHome } from "./tx-test-support"
-
-type ErrorBody = {
-	code: string
-	exitCode: number
-	message: string
-	path?: string
-	hint?: string
-	details?: unknown
-}
-
-function errorOf(res: { err: string }): ErrorBody {
-	return JSON.parse(res.err).error
-}
 
 const hint = (path: string) => `Run "traj help ${path}" to see its flags.`
 

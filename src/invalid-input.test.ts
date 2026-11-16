@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import type { Leaf } from "./command"
 import { root } from "./commands"
 import { SENTENCES } from "./sentences"
-import { capture } from "./test-support"
+import { capture, type ErrorBody, errorOf } from "./test-support"
 import { leavesOf } from "./tree"
 import { tempHome } from "./tx-test-support"
 
@@ -10,19 +10,6 @@ import { tempHome } from "./tx-test-support"
 const PROSE = /Invalid input|Too small|Too big|Invalid option|Unrecognized key|expected .+ received/
 
 const SENTENCE_TEXT: readonly string[] = Object.values(SENTENCES)
-
-type ErrorBody = {
-	code: string
-	exitCode: number
-	message: string
-	path?: string
-	hint?: string
-	details?: unknown
-}
-
-function errorOf(res: { err: string }): ErrorBody {
-	return JSON.parse(res.err).error
-}
 
 function rowsOf(details: unknown): { path?: string; message?: string }[] {
 	if (!Array.isArray(details)) return []

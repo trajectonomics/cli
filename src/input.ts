@@ -62,18 +62,16 @@ async function documentForm(
 	if (spec === undefined) return undefined
 	const ref = fields[spec.flag]
 	if (ref === undefined) return undefined
+	const flag = `--${toKebab(spec.flag)}`
 	if (typeof ref !== "string") {
-		return fail("invalid_input", {
-			path: spec.flag,
-			message: `--${toKebab(spec.flag)} must be a path`,
-		})
+		return fail("invalid_input", { path: spec.flag, message: `${flag} must be a path` })
 	}
 	const mixed = exclusiveFields(leaf.input, spec).filter((field) => fields[field] !== undefined)
 	if (mixed.length > 0) {
 		const flags = mixed.map((field) => `--${toKebab(field)}`).join(", ")
 		return fail("invalid_input", {
 			path: spec.flag,
-			message: `--${toKebab(spec.flag)} cannot be combined with ${flags}`,
+			message: `${flag} cannot be combined with ${flags}`,
 		})
 	}
 	const selection = selectionSchema(leaf.input, spec).safeParse(fields, { reportInput: true })

@@ -20,7 +20,7 @@ export const SENTENCES = {
 } as const
 
 /** Which input a required sentence names: a flag, a positional argument, or a document field. */
-export type Reason = "flag" | "argument" | "document"
+export type InputKind = "flag" | "argument" | "document"
 
 type Issue = z.core.$ZodIssue
 
@@ -29,9 +29,9 @@ function receivedNothing(issue: Issue): boolean {
 	return "input" in issue && issue.input === undefined
 }
 
-function requiredSentence(reason: Reason): string {
-	if (reason === "flag") return SENTENCES.requiredFlag
-	return reason === "argument" ? SENTENCES.requiredArgument : SENTENCES.requiredField
+function requiredSentence(kind: InputKind): string {
+	if (kind === "flag") return SENTENCES.requiredFlag
+	return kind === "argument" ? SENTENCES.requiredArgument : SENTENCES.requiredField
 }
 
 function rangeSentence(issue: Issue): string {
@@ -59,9 +59,9 @@ function knownSentence(issue: Issue): string | undefined {
  * the sentence it was authored with, so a core's own words survive. Everything unmapped is the
  * registry's `The input is invalid.` outside a document, and the document's shape inside one.
  */
-export function sentenceOf(issue: Issue, reason: Reason): string {
+export function sentenceOf(issue: Issue, kind: InputKind): string {
 	if (issue.code === "custom") return issue.message
-	if (receivedNothing(issue)) return requiredSentence(reason)
+	if (receivedNothing(issue)) return requiredSentence(kind)
 	const known = knownSentence(issue)
-	return known ?? (reason === "document" ? SENTENCES.documentShape : registry.invalid_input.message)
+	return known ?? (kind === "document" ? SENTENCES.documentShape : registry.invalid_input.message)
 }

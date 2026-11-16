@@ -2,14 +2,8 @@ import { describe, expect, it } from "bun:test"
 import { z } from "zod"
 import { defineCommand, defineGroup, ok } from "./command"
 import { SENTENCES } from "./sentences"
-import { capture } from "./test-support"
+import { capture, errorOf } from "./test-support"
 import { tempHome } from "./tx-test-support"
-
-type ErrorBody = { code: string; message: string; path?: string; hint?: string; details?: unknown }
-
-function errorOf(res: { err: string }): ErrorBody {
-	return JSON.parse(res.err).error
-}
 
 const lintLeaf = (name: string, input: z.ZodObject, positionals: readonly string[] = []) =>
 	defineCommand({

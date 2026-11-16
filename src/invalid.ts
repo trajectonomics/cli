@@ -1,7 +1,7 @@
 import type { z } from "zod"
 import type { Leaf } from "./command"
 import { type AppError, fail, registry } from "./errors"
-import { type Reason, sentenceOf } from "./sentences"
+import { type InputKind, sentenceOf } from "./sentences"
 
 /** One `details` row: the input path and the CLI's sentence for the reason. */
 export type Row = { path?: string; message: string; code?: string }
@@ -20,7 +20,7 @@ export function inputHint(commandPath: readonly string[]): string {
  * The caller's spelling of one input field: a flag is `--kebab-case`, and a positional keeps its
  * declared name (`file`). The validator only ever sees the schema field (`asOf`, `file`).
  */
-export function inputSpelling(leaf: Leaf, field: string): string | undefined {
+function inputSpelling(leaf: Leaf, field: string): string | undefined {
 	if (leaf.positionals.includes(field)) return field
 	const flag = leaf.flags.find((spec) => spec.field === field)
 	return flag === undefined ? undefined : `--${flag.flag}`
@@ -37,15 +37,15 @@ function issueField(issue: z.core.$ZodIssue): string | undefined {
 }
 
 /** Rewrites the first path segment to the caller's spelling; a repeated flag drops its index. */
-export function inputRows(leaf: Leaf, error: z.ZodError): Row[] {
+function inputRows(leaf: Leaf, error: z.ZodError): Row[] {
 	return error.issues.map((issue) => {
 		const field = issueField(issue)
 		const path = field === undefined ? undefined : inputSpelling(leaf, field)
-		const reason: Reason =
+		const kind: InputKind =
 			field !== undefined && leaf.positionals.includes(field) ? "argument" : "flag"
 		return {
 			...(path === undefined ? {} : { path }),
-			message: sentenceOf(issue, reason),
+			message: sentenceOf(issue, kind),
 		}
 	})
 }
@@ -73,13 +73,13 @@ export function inputFailure(
 	return issueFailure(rows, named ? inputHint(commandPath) : undefined)
 }
 
-type InputOf = { field: string; spelling: string }
+type InputPath = { field: string; spelling: string }
 
 /**
  * The input field a command-raised path names, when it is exactly one field. A dotted path is a
  * document path and stays: `scenario.schemaVersion` must not become `--scenario.schemaVersion`.
  */
-function inputOf(leaf: Leaf, path: string | undefined): InputOf | undefined {
+function inputPathOf(leaf: Leaf, path: string | undefined): InputPath | undefined {
 	if (path === undefined || path === "" || path.includes(".")) return undefined
 	const spelling = inputSpelling(leaf, path)
 	return spelling === undefined ? undefined : { field: path, spelling }
@@ -99,7 +99,7 @@ function rewriteRow(leaf: Leaf, row: unknown): unknown {
 	const path = row["path"]
 	const message = row["message"]
 	if (typeof path !== "string" || typeof message !== "string") return row
-	const input = inputOf(leaf, path)
+	const input = inputPathOf(leaf, path)
 	if (input === undefined) return row
 	return { ...row, path: input.spelling, message: withoutPrefix(input.field, message) }
 }
@@ -118,7 +118,7 @@ export function dispatchFailure(
 ): AppError {
 	if (error.body.code !== "invalid_input") return error
 	const body = error.body
-	const input = inputOf(leaf, body.path)
+	const input = inputPathOf(leaf, body.path)
 	const hint = input === undefined ? body.hint : (body.hint ?? inputHint(commandPath))
 	const details = Array.isArray(body.details)
 		? body.details.map((row) => rewriteRow(leaf, row))

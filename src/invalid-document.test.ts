@@ -1,20 +1,12 @@
 import { describe, expect, it } from "bun:test"
-import { applyScenario, errorOf, scenarioHome } from "./scenario-test-support"
+import { applyScenario, scenarioHome } from "./scenario-test-support"
 import { SENTENCES } from "./sentences"
 import { SCENARIO_DOCUMENT } from "./store/testing"
-import { capture } from "./test-support"
+import { capture, type ErrorBody, errorOf } from "./test-support"
 import { accounts, cli, tempHome } from "./tx-test-support"
 
 const BANK = { account: "Bank", amount: "1.00", currency: "THB" }
 const SALARY = { account: "Salary", amount: "-1.00", currency: "THB" }
-
-type ErrorBody = {
-	code: string
-	message: string
-	path?: string
-	hint?: string
-	details?: unknown
-}
 
 async function documentOf(body: unknown): Promise<ErrorBody> {
 	const home = tempHome()
