@@ -4,6 +4,8 @@ Flags cannot express an n-posting transaction, and two of `tx add`'s three contr
 
 A document field given as `-` is read from stdin, otherwise from a path resolved against the working directory. Reading stdin is never inferred from a terminal: `-` is the only way to ask for it. The rule is stated once here because `scenario apply <name> --file -` needs it too.
 
+A leaf may also name the input fields its document form requires, beside `allowed`. Those fields are checked in the document form before the document is read, so a leaf whose flag form needs fewer of them — `scenario apply --template` takes no name (ADR-0033) — still fails on a missing positional without blocking on a terminal, and the document form's usage line labels them required although the schema makes them optional for the flag form.
+
 ## Considered options
 
 A second leaf per document form was rejected: the available names all collide with the glossary (`tx post` would mean Posting, `tx record` is a synonym of Add, `tx import` is #13), and `tx amend` would need yet another leaf for its replacement. Merging the two shapes into one optional-fields schema was rejected because it erases `required` from usage and the JSON Schema, which is the drift ADR-0015 exists to prevent. Detecting a piped stdin was rejected: ADR-0010 forbids inferring anything from a terminal.
