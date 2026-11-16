@@ -30,14 +30,22 @@ npx @trajectonomics/cli@latest --version
 bunx @trajectonomics/cli@latest --version
 ```
 
-Then give your agent the `traj` skill, so it can operate the command line:
+Then give your agent the setup skill:
+
+```bash
+npx skills add trajectonomics/skills --skill traj-onboarding -y
+```
+
+The setup skill asks about your situation and goal, then its second step installs the `traj`
+operating skill from `trajectonomics/internal-skills`.
 
 ```bash
 npx skills add trajectonomics/internal-skills --skill traj -y
 ```
 
-That adds only the `traj` skill, not the others in that repository. It uses `npx`, so it
-needs Node, which the npm channel already requires; the install scripts do not.
+That is the operating skill on its own, for an agent that is already set up. Both commands
+use `npx`, so they need Node, which the npm channel already requires; the install scripts
+do not.
 
 Which channel: all three end at the same compiled binary and the same version. Use the
 script for a machine that should keep `traj` on `PATH`, npm when you already have Node or
@@ -66,6 +74,10 @@ From a checkout, run the CLI with `bun run dev -- …`. The npm launcher refuses
 `TRAJ_BINARY_PATH` to run a binary you built with `bun run build`.
 
 ## Reading the future
+
+> **Ships in 0.2.0.**
+> The release you installed has no `projection`, `fi` or `scenario tax`: they are on `main`
+> and reach the install channels with `0.2.0`.
 
 Three read-only commands run a stored Scenario over the Baseline the ledger
 states at a date: `traj projection run` rolls net worth up year by year,

@@ -8,6 +8,7 @@ import { LEDGER_READ_CODES } from "../../store"
 export const show: Leaf = defineCommand({
 	name: "show",
 	summary: "Show the Baseline a Projection starts from at a date",
+	note: "Projection ships in 0.2.0.",
 	positionals: [],
 	input: z.strictObject({
 		asOf: z.string().describe("The date the Baseline is stated at, as YYYY-MM-DD."),

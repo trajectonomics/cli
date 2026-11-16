@@ -1,0 +1,60 @@
+name: Release docs
+
+# The README and the help notes name the release that ships what they describe (ADR-0034).
+# A pull request fails only on the drift it introduces; the weekly run adds the freshness rule,
+# so a marker is removed once its release has shipped instead of rotting. The check reads the
+# published release's own schema, so it is a workflow job and never part of `bun run check`,
+# which stays offline and deterministic (AGENTS.md rule 4).
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # Mondays, with the tooling drift job
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - name: Read the latest published release's own command list
+        # npm serves a version a minute or three before its release has assets (ADR-0023), so
+        # this waits for the release rather than failing a pull request on that window.
+        shell: bash
+        env:
+          PACKAGE: "@trajectonomics/cli"
+        run: |
+          set -euo pipefail
+          deadline=$((SECONDS + 600))
+          wait=5
+          while true; do
+            latest=$(npm view "$PACKAGE" dist-tags.latest || true)
+            if [ -n "$latest" ] && npx --yes "$PACKAGE@$latest" schema --json >released.json 2>npx.log; then
+              echo "RELEASE_DOCS_LATEST=$latest" >>"$GITHUB_ENV"
+              echo "the latest release is $latest"
+              exit 0
+            fi
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              cat npx.log || true
+              echo "::error::npm did not serve $PACKAGE within ten minutes."
+              exit 1
+            fi
+            echo "npm is not serving $PACKAGE yet; waiting ${wait}s."
+            sleep "$wait"
+            wait=$((wait * 2))
+            [ "$wait" -le 60 ] || wait=60
+          done
+      - name: Check the README and the help notes against that release
+        env:
+          RELEASE_DOCS_MODE: ${{ github.event_name == 'schedule' && 'freshness' || 'pull-request' }}
+        run: bun run src/release-docs-cli.ts

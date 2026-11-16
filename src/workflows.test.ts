@@ -5,7 +5,13 @@ import { ROOT } from "./launcher-test-support"
 
 const dir = join(ROOT, ".github/workflows")
 
-type Step = { name?: string; run?: string; uses?: string; with?: Record<string, unknown> }
+type Step = {
+	name?: string
+	run?: string
+	uses?: string
+	with?: Record<string, unknown>
+	env?: Record<string, unknown>
+}
 type Job = {
 	uses?: string
 	needs?: string | string[]
@@ -42,6 +48,7 @@ function stepIndex(job: Job, text: string): number {
 const RELEASE = load("release.yml")
 const BINARIES = load("binaries.yml")
 const INSTALLER = load("installer-smoke.yml")
+const RELEASE_DOCS = load("release-docs.yml")
 
 /** Every job whose steps compile the CLI, wherever it lives. */
 function compiling(workflow: Workflow): Job[] {
@@ -166,6 +173,38 @@ describe("binaries.yml, the assets job", () => {
 		const runners = (channel?.strategy?.matrix?.include ?? []).map((entry) => entry["runner"])
 		expect(runners).toHaveLength(5)
 		expect(runs(channel!).join("\n")).toContain("bunx")
+	})
+})
+
+describe("release-docs.yml, the check that keeps the docs honest", () => {
+	it("runs on a pull request, weekly, and by dispatch", () => {
+		expect(Object.keys(RELEASE_DOCS.on).sort()).toEqual([
+			"pull_request",
+			"schedule",
+			"workflow_dispatch",
+		])
+	})
+
+	it("reads the latest release's own schema, retrying through the npm-first window", () => {
+		const command = runs(RELEASE_DOCS.jobs["check"]!).join("\n")
+		expect(command).toContain("npm view")
+		expect(command).toContain('npx --yes "$PACKAGE@$latest" schema --json')
+		expect(command).toContain("SECONDS + 600")
+	})
+
+	it("adds the freshness rule on the schedule, and only there", () => {
+		const step = (RELEASE_DOCS.jobs["check"]?.steps ?? []).find((entry) =>
+			entry.run?.includes("release-docs-cli"),
+		)
+		expect(step?.env?.["RELEASE_DOCS_MODE"]).toContain("schedule")
+		expect(step?.env?.["RELEASE_DOCS_MODE"]).toContain("freshness")
+	})
+
+	it("stays out of bun run check, which never reaches the network", () => {
+		const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as {
+			scripts: Record<string, string>
+		}
+		expect(pkg.scripts["check"]).not.toContain("release-docs")
 	})
 })
 
