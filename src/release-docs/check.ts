@@ -8,23 +8,10 @@ import {
 	sections,
 } from "./readme"
 import type { HelpNote, Mode, Problem, ReleaseFacts } from "./types"
+import { newer, VERSION } from "./version"
 
 /** The form a help note names a release in, so the freshness rule can read it. */
-const NOTE_VERSION = /\bships in (\d+\.\d+\.\d+)\b/i
-
-function parts(version: string): number[] {
-	return version.split(".").map(Number)
-}
-
-/** Compares two `X.Y.Z` versions, negative when `a` comes first. */
-function compare(a: readonly number[], b: readonly number[]): number {
-	return (a[0] ?? 0) - (b[0] ?? 0) || (a[1] ?? 0) - (b[1] ?? 0) || (a[2] ?? 0) - (b[2] ?? 0)
-}
-
-/** True when `version` names a release after `latest`, and when there is no release to beat. */
-function newer(version: string, latest: string | undefined): boolean {
-	return latest === undefined || compare(parts(version), parts(latest)) > 0
-}
+const NOTE_VERSION = new RegExp(`\\bships in (${VERSION})\\b`, "i")
 
 /** True when some prefix of the words names a command the reader's release has. */
 function resolves(words: readonly string[], known: ReadonlySet<string>): boolean {
