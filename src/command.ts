@@ -59,6 +59,11 @@ export type Command<
 > = {
 	name: string
 	summary: string
+	/**
+	 * An optional sentence naming the release that ships what this page describes, printed under
+	 * the summary (ADR-0034). It is reader-facing prose, never a field of `traj schema`.
+	 */
+	note?: string
 	/** Input fields filled from positional words, in order. The last may be an array. */
 	positionals: readonly string[]
 	input: I
@@ -81,6 +86,7 @@ export type Leaf = {
 	kind: "leaf"
 	name: string
 	summary: string
+	note?: string
 	positionals: readonly string[]
 	input: z.ZodObject
 	document?: DocumentSpec
@@ -97,6 +103,8 @@ export type Group = {
 	kind: "group"
 	name: string
 	summary: string
+	/** The release note a shipped page carries (ADR-0034), rendered under the summary. */
+	note?: string
 	children: readonly Node[]
 }
 

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "bun:test"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
+import { root } from "./commands"
 import { ROOT } from "./launcher-test-support"
+import { checkReleaseDocs } from "./release-docs"
+import { leavesOf } from "./tree"
 
 const readme = readFileSync(join(ROOT, "README.md"), "utf8")
 
@@ -12,15 +15,22 @@ const readme = readFileSync(join(ROOT, "README.md"), "utf8")
 const DEVELOPMENT_HEADING = "\n## Development\n"
 const [beforeDevelopment = "", development = ""] = readme.split(DEVELOPMENT_HEADING)
 const firstScreen = beforeDevelopment.replaceAll("`", "").replace(/\s+/g, " ")
-
+const prose = (text: string) => text.replaceAll("`", "").replace(/\s+/g, " ").trim()
 const SCRIPT_INSTALL =
 	"curl -fsSL https://github.com/trajectonomics/cli/releases/latest/download/install.sh | sh"
 const WINDOWS_INSTALL =
 	"irm https://github.com/trajectonomics/cli/releases/latest/download/install.ps1 | iex"
 const NPM_INSTALL = "npx @trajectonomics/cli@latest --version"
 const BUNX_INSTALL = "bunx @trajectonomics/cli@latest --version"
-const SKILL_COMMAND = "npx skills add trajectonomics/internal-skills --skill traj -y"
+const SETUP_SKILL_COMMAND = "npx skills add trajectonomics/skills --skill traj-onboarding -y"
+const OPERATOR_SKILL_COMMAND = "npx skills add trajectonomics/internal-skills --skill traj -y"
 const INSTALL_COMMANDS = [SCRIPT_INSTALL, WINDOWS_INSTALL, NPM_INSTALL, BUNX_INSTALL]
+
+// The one visible line that says which release ships a section's commands (ADR-0034).
+const FUTURE_HEADING = "\n## Reading the future\n"
+const RELEASE_MARKER = "> **Ships in 0.2.0.**"
+const [, afterFuture = ""] = readme.split(FUTURE_HEADING)
+const futureSection = afterFuture.split("\n## ")[0] ?? ""
 
 // The unscoped npm package `traj` belongs to someone else: npx/bunx must never take it bare.
 const UNSCOPED_TRAJ = /\b(?:npx|bunx)\s+(?:-\S+\s+)*traj\b/
@@ -49,27 +59,43 @@ describe("the README first screen", () => {
 		}
 	})
 
-	it("adds the outsider skill step after the install commands and before the channels", () => {
+	it("names the setup skill first and the operator skill second, above the channels", () => {
 		const channels = visibleAt(CHANNELS)
 		const uninstall = visibleAt(UNINSTALL)
 		// Each command is one line of the raw slice, so a broken or wrapped shell line fails here.
-		for (const command of [...INSTALL_COMMANDS, SKILL_COMMAND]) {
+		for (const command of [...INSTALL_COMMANDS, SETUP_SKILL_COMMAND, OPERATOR_SKILL_COMMAND]) {
 			expect(at(command)).toBeGreaterThan(-1)
 		}
 		expect(channels).toBeGreaterThan(-1)
 		expect(uninstall).toBeGreaterThan(-1)
-		expect(at(SKILL_COMMAND)).toBeGreaterThan(at(BUNX_INSTALL))
-		expect(visibleAt(SKILL_COMMAND)).toBeLessThan(channels)
-		expect(visibleAt(SKILL_COMMAND)).toBeLessThan(uninstall)
+		expect(at(SETUP_SKILL_COMMAND)).toBeGreaterThan(at(BUNX_INSTALL))
+		expect(at(OPERATOR_SKILL_COMMAND)).toBeGreaterThan(at(SETUP_SKILL_COMMAND))
+		expect(visibleAt(SETUP_SKILL_COMMAND)).toBeLessThan(channels)
+		expect(visibleAt(OPERATOR_SKILL_COMMAND)).toBeLessThan(channels)
+		expect(visibleAt(OPERATOR_SKILL_COMMAND)).toBeLessThan(uninstall)
+	})
+
+	it("gives each skill command one sentence of its own", () => {
+		const setupStep = firstScreen.slice(
+			visibleAt(SETUP_SKILL_COMMAND),
+			visibleAt(OPERATOR_SKILL_COMMAND),
+		)
+		const operatorStep = firstScreen.slice(visibleAt(OPERATOR_SKILL_COMMAND), visibleAt(CHANNELS))
+		expect(setupStep).toMatch(/asks about your situation and goal/i)
+		expect(setupStep).toMatch(
+			/installs the traj operating skill from trajectonomics\/internal-skills/i,
+		)
+		expect(operatorStep).toMatch(/already set up/i)
+		expect(firstScreen).not.toMatch(/adds only the traj skill/i)
 	})
 
 	it("says the skill step needs Node, which the install scripts do not", () => {
 		const channels = visibleAt(CHANNELS)
-		const skill = visibleAt(SKILL_COMMAND)
+		const skill = visibleAt(SETUP_SKILL_COMMAND)
 		expect(skill).toBeGreaterThan(-1)
 		expect(channels).toBeGreaterThan(skill)
 		const step = firstScreen.slice(skill, channels)
-		expect(step).toMatch(/needs Node/)
+		expect(step).toMatch(/\bneeds? Node\b/)
 		expect(step).toMatch(/install scripts do not/)
 	})
 
@@ -100,8 +126,47 @@ describe("the README first screen", () => {
 	})
 })
 
+describe("the README's release marker", () => {
+	it("opens the section with the release that ships its commands, before any prose", () => {
+		expect(readme).toContain(FUTURE_HEADING)
+		const visible = futureSection.split("\n").filter((line) => line.trim() !== "")
+		expect(visible[0]).toBe(RELEASE_MARKER)
+	})
+
+	it("says what today's release lacks and where those commands arrive", () => {
+		const marker = prose(
+			futureSection
+				.split("\n")
+				.filter((line) => line.startsWith(">"))
+				.map((line) => line.replace(/^>\s?/, ""))
+				.join(" "),
+		)
+		expect(marker).toContain(
+			"The release you installed has no projection, fi or scenario tax: they are on main and reach the install channels with 0.2.0.",
+		)
+	})
+
+	it("still describes the commands that marker covers", () => {
+		for (const command of [
+			"traj projection run",
+			"traj projection compare",
+			"traj fi",
+			"traj scenario tax",
+		]) {
+			expect(futureSection).toContain(command)
+		}
+	})
+})
+
 describe("the README anywhere", () => {
 	it("never sends a reader to the unscoped package", () => {
 		expect(readme).not.toMatch(UNSCOPED_TRAJ)
+	})
+
+	it("names only commands this tree has, or marks the section that ships them", () => {
+		// The offline half of the release-docs check (ADR-0034): no network, so the tree's own
+		// paths stand in for a release and the freshness rule stays with the weekly run.
+		const known = leavesOf(root).map(({ path }) => path.join(" "))
+		expect(checkReleaseDocs({ readme, known, notes: [] })).toEqual([])
 	})
 })

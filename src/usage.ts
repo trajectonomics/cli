@@ -42,7 +42,7 @@ function groupUsage(group: Group, path: readonly string[]): string {
 	const isRoot = path.length === 0
 	return [
 		`Usage: traj ${[...path, "<command>"].join(" ")} [options]`,
-		...(isRoot ? [] : ["", group.summary]),
+		...(isRoot ? [] : ["", group.summary, ...(group.note === undefined ? [] : ["", group.note])]),
 		"",
 		"Commands:",
 		...table(rows),
@@ -98,6 +98,7 @@ function leafUsage(leaf: Leaf, path: readonly string[]): string {
 		...usage,
 		"",
 		leaf.summary,
+		...(leaf.note === undefined ? [] : ["", leaf.note]),
 		...(own.length > 0 ? ["", "Options:", ...table(own)] : []),
 		"",
 		"Global options:",
