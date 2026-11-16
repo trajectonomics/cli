@@ -131,11 +131,13 @@ describe("baseline show surface", () => {
 		expect(JSON.parse(res.out)).toEqual({ asOf: FIXTURE_AS_OF, currency: "THB", rows: [] })
 	})
 
-	it("prints the group's usage when no subcommand is given", async () => {
+	it("rejects a bare baseline as invalid input, keeping stdout empty", async () => {
 		const res = await cli(fixtureHome())(["baseline"])
-		expect(res.code).toBe(0)
-		expect(res.out).toContain("Usage: traj baseline <command>")
-		expect(res.out).toContain("show")
+		expect(res.code).toBe(2)
+		expect(res.out).toBe("")
+		expect(res.err).toBe(
+			'error: invalid_input: Missing command: baseline\nhint: Run "traj help baseline" to list its commands.',
+		)
 	})
 
 	it("rejects a flag it does not declare, naming it", async () => {

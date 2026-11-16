@@ -16,11 +16,51 @@ describe("command tree", () => {
 		expect((await demo(["version"])).code).toBe(0)
 	})
 
-	it("prints a group's usage when no subcommand is given", async () => {
+	it("rejects a group with no subcommand as invalid input, keeping stdout empty", async () => {
 		const res = await demo(["demo"])
+		expect(res.code).toBe(2)
+		expect(res.out).toBe("")
+		expect(res.err).toBe(
+			'error: invalid_input: Missing command: demo\nhint: Run "traj help demo" to list its commands.',
+		)
+	})
+
+	it("puts the missing command in the JSON envelope on stderr", async () => {
+		const res = await demo(["demo", "--json"])
+		expect(res.code).toBe(2)
+		expect(res.out).toBe("")
+		expect(JSON.parse(res.err)).toEqual({
+			error: {
+				code: "invalid_input",
+				exitCode: 2,
+				message: "Missing command: demo",
+				hint: 'Run "traj help demo" to list its commands.',
+			},
+		})
+	})
+
+	it("prints a group's usage when --help asks for it", async () => {
+		const res = await demo(["demo", "--help"])
 		expect(res.code).toBe(0)
 		expect(res.out).toContain("Usage: traj demo <command>")
 		expect(res.out).toContain("echo")
+		expect(res.err).toBe("")
+	})
+
+	it("lets --help win over a stray word after a bare --", async () => {
+		const res = await demo(["demo", "--help", "--", "nope"])
+		expect(res.code).toBe(0)
+		expect(res.out).toContain("Usage: traj demo <command>")
+	})
+
+	it("treats a bare -- under a group as no command at all", async () => {
+		const res = await demo(["demo", "--json", "--"])
+		expect(res.code).toBe(2)
+		expect(res.out).toBe("")
+		expect(JSON.parse(res.err).error).toMatchObject({
+			code: "invalid_input",
+			message: "Missing command: demo",
+		})
 	})
 
 	it("names the whole path when a subcommand is unknown", async () => {
@@ -29,6 +69,15 @@ describe("command tree", () => {
 		const { error } = JSON.parse(res.err)
 		expect(error.code).toBe("unknown_command")
 		expect(error.message).toContain("demo nope")
+	})
+
+	it("still names an unknown child left after a bare --", async () => {
+		const res = await demo(["demo", "--json", "--", "nope"])
+		expect(res.code).toBe(2)
+		expect(JSON.parse(res.err).error).toMatchObject({
+			code: "unknown_command",
+			message: "Unknown command: demo nope",
+		})
 	})
 
 	it("does not look for subcommands under a leaf: extra words are input", async () => {

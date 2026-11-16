@@ -11,11 +11,23 @@ export function sortedByName<T extends Node>(nodes: readonly T[]): T[] {
 /** Where a command line landed: the node it names, and the arguments left for that node. */
 export type Walk = { node: Node; path: string[]; rest: string[] }
 
+/** The recovery hint for a path that still needs a command under it: `traj help <path>`. */
+function listCommandsHint(path: readonly string[]): string {
+	return path.length === 0 ? HELP_HINT : `Run "traj help ${path.join(" ")}" to list its commands.`
+}
+
 export function unknownCommand(path: string[], word: string): AppError {
-	const where = path.length === 0 ? "" : ` ${path.join(" ")}`
 	return fail("unknown_command", {
 		message: `Unknown command: ${[...path, word].join(" ")}`,
-		hint: path.length === 0 ? HELP_HINT : `Run "traj help${where}" to list its commands.`,
+		hint: listCommandsHint(path),
+	})
+}
+
+/** A group below the root named with no command under it: the command line is incomplete. */
+export function missingCommand(path: readonly string[]): AppError {
+	return fail("invalid_input", {
+		message: `Missing command: ${path.join(" ")}`,
+		hint: listCommandsHint(path),
 	})
 }
 

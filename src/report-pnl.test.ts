@@ -163,11 +163,12 @@ describe("report pnl", () => {
 		expect(await pnl(home, ...argv)).toEqual(await pnl(home, ...argv))
 	})
 
-	it("prints the group's usage for a bare report and names an unknown leaf", async () => {
+	it("rejects a bare report and names an unknown leaf", async () => {
 		const bare = await cli(tempHome())(["report"])
-		expect(bare.code).toBe(0)
-		expect(bare.out).toContain("Usage: traj report <command>")
-		expect(bare.out).toContain("pnl")
+		expect(bare.code).toBe(2)
+		expect(bare.out).toBe("")
+		expect(bare.err).toContain("error: invalid_input: Missing command: report")
+		expect(bare.err).toContain('hint: Run "traj help report" to list its commands.')
 		const missing = await cli(tempHome())(["report", "nope", "--json"])
 		expect(missing.code).toBe(2)
 		expect(JSON.parse(missing.err).error).toMatchObject({
