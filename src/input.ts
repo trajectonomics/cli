@@ -1,4 +1,3 @@
-import type { z } from "zod"
 import type { Leaf } from "./command"
 import {
 	exclusiveFields,
@@ -9,7 +8,7 @@ import {
 } from "./document"
 import { type AppError, fail, isAppError } from "./errors"
 import { isVariadic, toKebab } from "./flags"
-import { commandFailure, inputFailure } from "./invalid"
+import { dispatchFailure, inputFailure } from "./invalid"
 import type { Parsed } from "./parse"
 
 /** Maps positional words onto the leaf's positional fields; the last may take all the rest. */
@@ -41,17 +40,13 @@ function assign(leaf: Leaf, words: readonly string[], variadic: boolean): Record
 	return fields
 }
 
-function invalid(leaf: Leaf, path: readonly string[], error: z.ZodError): AppError {
-	return inputFailure(leaf, path, error)
-}
-
 function validate(
 	leaf: Leaf,
 	raw: Record<string, unknown>,
 	path: readonly string[],
 ): { input: unknown } | AppError {
 	const result = leaf.input.safeParse(raw, { reportInput: true })
-	return result.success ? { input: result.data } : invalid(leaf, path, result.error)
+	return result.success ? { input: result.data } : inputFailure(leaf, path, result.error)
 }
 
 type ParsedInput = { input: unknown; document?: unknown }
@@ -70,7 +65,7 @@ async function documentForm(
 	if (typeof ref !== "string") {
 		return fail("invalid_input", {
 			path: spec.flag,
-			message: `${spec.flag} must be a path`,
+			message: `--${toKebab(spec.flag)} must be a path`,
 		})
 	}
 	const mixed = exclusiveFields(leaf.input, spec).filter((field) => fields[field] !== undefined)
@@ -105,5 +100,5 @@ export async function parseInput(
 	if (document === undefined) return validate(leaf, fields, path)
 	// A document failure names the field a caller can correct, so it follows the same rewrite as a
 	// command-raised one; a document path already starts with `document.` and passes through.
-	return isAppError(document) ? commandFailure(leaf, path, document) : document
+	return isAppError(document) ? dispatchFailure(leaf, path, document) : document
 }

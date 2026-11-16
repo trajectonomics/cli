@@ -50,20 +50,24 @@ export function inputRows(leaf: Leaf, error: z.ZodError): Row[] {
 	})
 }
 
+/** The one envelope both schema-validation steps build: the first row names the failure. */
+export function issueFailure(rows: Row[], hint?: string): AppError {
+	const first = rows[0]
+	return fail("invalid_input", {
+		message: first?.message ?? registry.invalid_input.message,
+		...(first?.path === undefined ? {} : { path: first.path }),
+		...(hint === undefined ? {} : { hint }),
+		details: rows,
+	})
+}
+
 /** The `invalid_input` the routing step builds from a leaf's input schema. */
 export function inputFailure(
 	leaf: Leaf,
 	commandPath: readonly string[],
 	error: z.ZodError,
 ): AppError {
-	const rows = inputRows(leaf, error)
-	const first = rows[0]
-	return fail("invalid_input", {
-		message: first?.message ?? registry.invalid_input.message,
-		...(first?.path === undefined ? {} : { path: first.path }),
-		hint: inputHint(commandPath),
-		details: rows,
-	})
+	return issueFailure(inputRows(leaf, error), inputHint(commandPath))
 }
 
 type InputOf = { field: string; spelling: string }
@@ -98,13 +102,13 @@ function rewriteRow(leaf: Leaf, row: unknown): unknown {
 }
 
 /**
- * The dispatch step's rewrite of an `invalid_input` a command raised after validation. It names an
- * input field only when the whole path is one (`out` is `--out`, `file` stays `file`), gains the
- * generic help hint when it has none, and drops a leading `<field>: ` from its message. Rows of an
- * array `details` follow the same rule; object `details` pass through untouched. Every other code
- * is out of scope in this change (ADR-0013).
+ * The dispatch step's rewrite of an `invalid_input` raised after schema validation, whether by the
+ * command or by the document form that ran before it. It names an input field only when the whole
+ * path is one (`out` is `--out`, `file` stays `file`), gains the generic help hint when it has
+ * none, and drops a leading `<field>: ` from its message. Rows of an array `details` follow the
+ * same rule; object `details` pass through untouched. Every other code is out of scope (ADR-0013).
  */
-export function commandFailure(
+export function dispatchFailure(
 	leaf: Leaf,
 	commandPath: readonly string[],
 	error: AppError,
