@@ -2,10 +2,10 @@ import type { Context, Env, Group, Leaf } from "./command"
 import { root as defaultRoot } from "./commands"
 import { type AppError, fail, isAppError } from "./errors"
 import { parseInput } from "./input"
-import { parseNodeArgs } from "./parse"
+import { type Parsed, parseNodeArgs } from "./parse"
 import { type Format, renderError, renderResult, resolveFormat } from "./render"
 import type { RenderHint } from "./table"
-import { findNode, unknownCommand, walk } from "./tree"
+import { findNode, missingCommand, unknownCommand, walk } from "./tree"
 
 export interface Io {
 	out: (line: string) => void
@@ -23,7 +23,20 @@ function builtIn(root: Group, name: string, input: unknown): Invocation | AppErr
 	return { leaf, input }
 }
 
-/** Decides what to run: `--version` and `--help` win, a bare group falls back to its usage. */
+/**
+ * A group named with no command under it: the root lists the commands, every other group is
+ * invalid input, and a word left after a bare `--` is still an unknown command.
+ */
+function atGroup(root: Group, path: string[], parsed: Parsed): Invocation | AppError {
+	const stray = parsed.positionals[0]
+	if (stray !== undefined) return unknownCommand(path, stray)
+	return path.length === 0 ? builtIn(root, "help", { path }) : missingCommand(path)
+}
+
+/**
+ * Decides what to run: `--version` and `--help` win, the root lists the commands, and any other
+ * group named with no command under it is invalid input.
+ */
 async function route(argv: string[], root: Group, stdin: Stdin): Promise<Invocation | AppError> {
 	const landed = walk(root, argv)
 	if (isAppError(landed)) return landed
@@ -31,12 +44,8 @@ async function route(argv: string[], root: Group, stdin: Stdin): Promise<Invocat
 	const parsed = parseNodeArgs(node.kind === "leaf" ? node.flags : [], rest, path)
 	if (isAppError(parsed)) return parsed
 	if (parsed.version) return builtIn(root, "version", {})
-	if (node.kind === "group") {
-		// Only words after a bare `--` can still be left over under a group.
-		const stray = parsed.positionals[0]
-		return stray === undefined ? builtIn(root, "help", { path }) : unknownCommand(path, stray)
-	}
 	if (parsed.help) return builtIn(root, "help", { path })
+	if (node.kind === "group") return atGroup(root, path, parsed)
 	const input = await parseInput(node, parsed, path, stdin)
 	if (isAppError(input)) return input
 	const document = input.document === undefined ? {} : { document: input.document }

@@ -17,6 +17,19 @@ describe("usage and version", () => {
 		}
 	})
 
+	it("keeps every explicit door to a group's usage at exit 0", async () => {
+		for (const argv of [
+			["help", "report"],
+			["report", "--help"],
+			["schema", "report"],
+		]) {
+			const res = await capture(argv)
+			expect(res.code).toBe(0)
+			expect(res.out).toContain("report")
+			expect(res.err).toBe("")
+		}
+	})
+
 	it("prints the bare version for --version and the version command", async () => {
 		for (const argv of [["--version"], ["version"]]) {
 			const res = await capture(argv)

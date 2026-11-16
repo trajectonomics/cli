@@ -85,7 +85,7 @@ export type Leaf = {
 	run: (input: unknown, document: unknown, ctx: Context) => Outcome<unknown>
 }
 
-/** A named set of subcommands. It has no `run` of its own: bare `traj tx` prints its usage. */
+/** A named set of subcommands. It has no `run`: a bare group is invalid input (ADR-0015). */
 export type Group = {
 	kind: "group"
 	name: string
