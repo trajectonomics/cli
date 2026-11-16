@@ -2,6 +2,7 @@ import type { Context, Env, Group, Leaf } from "./command"
 import { root as defaultRoot } from "./commands"
 import { type AppError, fail, isAppError } from "./errors"
 import { parseInput } from "./input"
+import { dispatchFailure } from "./invalid"
 import { type Parsed, parseNodeArgs } from "./parse"
 import { type Format, renderError, renderResult, resolveFormat } from "./render"
 import type { RenderHint } from "./table"
@@ -12,7 +13,7 @@ export interface Io {
 	err: (line: string) => void
 }
 
-type Invocation = { leaf: Leaf; input: unknown; document?: unknown }
+type Invocation = { leaf: Leaf; path: string[]; input: unknown; document?: unknown }
 type Stdin = () => Promise<string>
 
 const defaultStdin: Stdin = () => Bun.stdin.text()
@@ -20,7 +21,7 @@ const defaultStdin: Stdin = () => Bun.stdin.text()
 function builtIn(root: Group, name: string, input: unknown): Invocation | AppError {
 	const leaf = findNode(root, [name])
 	if (leaf?.kind !== "leaf") return fail("internal")
-	return { leaf, input }
+	return { leaf, path: [name], input }
 }
 
 /**
@@ -49,7 +50,7 @@ async function route(argv: string[], root: Group, stdin: Stdin): Promise<Invocat
 	const input = await parseInput(node, parsed, path, stdin)
 	if (isAppError(input)) return input
 	const document = input.document === undefined ? {} : { document: input.document }
-	return { leaf: node, input: input.input, ...document }
+	return { leaf: node, path, input: input.input, ...document }
 }
 
 type Dispatched = { data: unknown; hint?: RenderHint }
@@ -64,7 +65,8 @@ async function dispatch(
 	if (isAppError(invocation)) return invocation
 	const ctx: Context = { env, root, stdin }
 	const result = await invocation.leaf.run(invocation.input, invocation.document, ctx)
-	if (isAppError(result)) return result
+	// The dispatch step knows the leaf, so a command-raised failure follows ADR-0013's input paths.
+	if (isAppError(result)) return dispatchFailure(invocation.leaf, invocation.path, result)
 	// A result that breaks its own output schema is a programming error: it throws, and the
 	// top-level catch turns it into the fixed `internal` envelope.
 	const data = invocation.leaf.output.parse(result.data)

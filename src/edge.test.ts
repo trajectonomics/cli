@@ -39,7 +39,7 @@ describe("number flags", () => {
 		for (const value of ["0x10", "1e3", "Infinity", "", " "]) {
 			const res = await demo(["demo", "echo", "hi", `--times=${value}`, "--json"])
 			expect(errorOf(res).code).toBe("invalid_input")
-			expect(errorOf(res).path).toBe("times")
+			expect(errorOf(res).path).toBe("--times")
 		}
 	})
 })

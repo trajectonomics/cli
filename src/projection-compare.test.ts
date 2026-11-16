@@ -139,7 +139,7 @@ describe("projection compare", () => {
 			"45",
 		])
 		expect(noBirth.code).toBe(2)
-		expect(errorOf(noBirth)).toMatchObject({ code: "invalid_input", path: "age" })
+		expect(errorOf(noBirth)).toMatchObject({ code: "invalid_input", path: "--age" })
 		const badBirth = await projection(home, [
 			"compare",
 			"base",

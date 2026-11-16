@@ -1,6 +1,7 @@
 import { parseArgs } from "node:util"
 import { type AppError, fail } from "./errors"
 import type { FlagSpec } from "./flags"
+import { inputHint } from "./invalid"
 
 export type Parsed = {
 	json: boolean
@@ -34,16 +35,23 @@ function toFieldValue(spec: FlagSpec, value: unknown): unknown {
 	return Array.isArray(value) ? value.map(asNumber) : asNumber(value)
 }
 
-function failureOf(error: unknown, path: readonly string[]): AppError {
+function failureOf(error: unknown, path: readonly string[], flags: readonly FlagSpec[]): AppError {
 	const message = error instanceof Error ? error.message : ""
-	const hint = `Run "traj help${path.map((word) => ` ${word}`).join("")}" to see its flags.`
+	const hint = inputHint(path)
 	const unknown = /^Unknown option '([^']+)'/.exec(message)
 	if (unknown) return fail("unknown_flag", { message: `Unknown flag: ${unknown[1]}`, hint })
 	// parseArgs words these errors in its own way; we name the flag and say what is wrong.
 	const named = /^Option '(-[^' ]+)/.exec(message)
 	const flag = named?.[1] ?? "a flag"
+	// Only the leaf's own flag is an input field; a global flag, a group parse and the "a flag"
+	// fallback have none to name (ADR-0013).
+	const own = flags.find((spec) => named?.[1] === `--${spec.flag}`)
 	const detail = message.includes("does not take an argument") ? "takes no value" : "needs a value"
-	return fail("invalid_input", { message: `Flag ${flag} ${detail}.`, hint })
+	return fail("invalid_input", {
+		message: `Flag ${flag} ${detail}.`,
+		...(own === undefined ? {} : { path: `--${own.flag}` }),
+		hint,
+	})
 }
 
 /**
@@ -95,6 +103,6 @@ export function parseNodeArgs(
 			fields,
 		}
 	} catch (error) {
-		return failureOf(error, path)
+		return failureOf(error, path, flags)
 	}
 }

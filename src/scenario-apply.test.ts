@@ -78,8 +78,8 @@ describe("scenario apply", () => {
 	it("refuses a document sim-core refuses, at the failing document path and code", async () => {
 		const home = scenarioHome()
 		const cases: [string, string, string][] = [
-			["", "file", "invalid_input"],
-			["{not json", "file", "invalid_input"],
+			["", "--file", "invalid_input"],
+			["{not json", "--file", "invalid_input"],
 			["[]", "document", "NOT_AN_OBJECT"],
 			['{"goal":{}}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
 			['{"schemaVersion":"1"}', "document.schemaVersion", "UNSUPPORTED_SCHEMA_VERSION"],
@@ -92,7 +92,7 @@ describe("scenario apply", () => {
 			expect(res.code).toBe(2)
 			const error = errorOf(res)
 			expect(error).toMatchObject({ code: "invalid_input", path })
-			if (path !== "file") expect(error.details).toEqual([expect.objectContaining({ code })])
+			if (path !== "--file") expect(error.details).toEqual([expect.objectContaining({ code })])
 		}
 		expect(resultOf(await scenario(home, ["list"])).scenarios).toEqual([])
 	})
@@ -127,8 +127,8 @@ describe("scenario apply", () => {
 		expect(res.code).toBe(2)
 		expect(errorOf(res)).toMatchObject({
 			code: "invalid_input",
-			path: "file",
-			message: "file: name a JSON document, - for stdin, or --template",
+			path: "--file",
+			message: "Name a JSON document, - for stdin, or --template",
 			hint: TEMPLATE_HINT,
 		})
 	})

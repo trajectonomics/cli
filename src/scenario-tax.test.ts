@@ -104,7 +104,7 @@ describe("scenario tax", () => {
 		const home = await projectionHome()
 		const res = await tax(home, ["base", "--tax", "th-2026", "--label", "bonus=income.section40_1"])
 		expect(res.code).toBe(2)
-		expect(errorOf(res).path).toBe("label")
+		expect(errorOf(res).path).toBe("--label")
 		expect(errorOf(res).message).toContain('"bonus"')
 	})
 
@@ -118,7 +118,7 @@ describe("scenario tax", () => {
 			"salary=allowance.retirement.rmf",
 		])
 		expect(res.code).toBe(2)
-		expect(errorOf(res).path).toBe("label")
+		expect(errorOf(res).path).toBe("--label")
 		expect(errorOf(res).message).toContain("income Flow")
 	})
 
@@ -133,12 +133,12 @@ describe("scenario tax", () => {
 		const home = await projectionHome()
 		const profile = await tax(home, ["base", "--filing-status", "single"])
 		expect(profile.code).toBe(2)
-		expect(errorOf(profile).path).toBe("filingStatus")
+		expect(errorOf(profile).path).toBe("--filing-status")
 		expect(errorOf(profile).message).toContain("needs --tax")
 
 		const both = await tax(home, ["base", "--none", "--label", "salary=income.section40_1"])
 		expect(both.code).toBe(2)
-		expect(errorOf(both).path).toBe("label")
+		expect(errorOf(both).path).toBe("--label")
 	})
 
 	it("refuses more 2018-or-later children than children", async () => {
@@ -153,7 +153,7 @@ describe("scenario tax", () => {
 			"2",
 		])
 		expect(res.code).toBe(2)
-		expect(errorOf(res).path).toBe("childrenAtHigherRate")
+		expect(errorOf(res).path).toBe("--children-at-higher-rate")
 	})
 
 	it("replaces an existing tax Levy rather than stacking a second one", async () => {

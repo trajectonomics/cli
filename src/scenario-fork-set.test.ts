@@ -77,7 +77,7 @@ describe("scenario fork --set", () => {
 		expect(res.code).toBe(2)
 		expect(errorOf(res)).toMatchObject({
 			code: "invalid_input",
-			path: "set",
+			path: "--set",
 			details: { path: "economy.inflation" },
 		})
 	})
@@ -90,7 +90,7 @@ describe("scenario fork --set", () => {
 		const error = errorOf(res)
 		expect(error).toMatchObject({
 			code: "invalid_input",
-			path: "set",
+			path: "--set",
 			details: {
 				index: 0,
 				path: "flows.salery.amount",
@@ -129,7 +129,7 @@ describe("scenario fork --set", () => {
 		expect(res.code).toBe(2)
 		expect(errorOf(res)).toMatchObject({
 			code: "invalid_input",
-			path: "set",
+			path: "--set",
 			details: {
 				index: 0,
 				path: "schemaVersion",

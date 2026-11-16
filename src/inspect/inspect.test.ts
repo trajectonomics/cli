@@ -118,7 +118,7 @@ describe("inspect <table>", () => {
 		expect(res.code).toBe(2)
 		expect(JSON.parse(res.err).error).toMatchObject({
 			code: "invalid_input",
-			path: "all",
+			path: "--all",
 		})
 	})
 })

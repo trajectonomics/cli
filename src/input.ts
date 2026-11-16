@@ -7,8 +7,9 @@ import {
 	readDocument,
 	selectionSchema,
 } from "./document"
-import { type AppError, fail, isAppError, registry } from "./errors"
+import { type AppError, fail, isAppError } from "./errors"
 import { isVariadic, toKebab } from "./flags"
+import { commandFailure, inputFailure } from "./invalid"
 import type { Parsed } from "./parse"
 
 /** Maps positional words onto the leaf's positional fields; the last may take all the rest. */
@@ -40,22 +41,17 @@ function assign(leaf: Leaf, words: readonly string[], variadic: boolean): Record
 	return fields
 }
 
-function invalid(error: z.ZodError): AppError {
-	const issues = error.issues.map((issue) => ({
-		path: issue.path.join("."),
-		message: issue.message,
-	}))
-	const first = issues[0]
-	return fail("invalid_input", {
-		message: first?.message ?? registry.invalid_input.message,
-		...(first?.path ? { path: first.path } : {}),
-		details: issues,
-	})
+function invalid(leaf: Leaf, path: readonly string[], error: z.ZodError): AppError {
+	return inputFailure(leaf, path, error)
 }
 
-function validate(leaf: Leaf, raw: Record<string, unknown>): { input: unknown } | AppError {
-	const result = leaf.input.safeParse(raw)
-	return result.success ? { input: result.data } : invalid(result.error)
+function validate(
+	leaf: Leaf,
+	raw: Record<string, unknown>,
+	path: readonly string[],
+): { input: unknown } | AppError {
+	const result = leaf.input.safeParse(raw, { reportInput: true })
+	return result.success ? { input: result.data } : invalid(leaf, path, result.error)
 }
 
 type ParsedInput = { input: unknown; document?: unknown }
@@ -64,6 +60,7 @@ type ParsedInput = { input: unknown; document?: unknown }
 async function documentForm(
 	leaf: Leaf,
 	fields: Record<string, unknown>,
+	path: readonly string[],
 	stdin: () => Promise<string>,
 ): Promise<ParsedInput | AppError | undefined> {
 	const spec = leaf.document
@@ -71,7 +68,10 @@ async function documentForm(
 	const ref = fields[spec.flag]
 	if (ref === undefined) return undefined
 	if (typeof ref !== "string") {
-		return fail("invalid_input", { path: spec.flag, message: `${spec.flag} must be a path` })
+		return fail("invalid_input", {
+			path: spec.flag,
+			message: `${spec.flag} must be a path`,
+		})
 	}
 	const mixed = exclusiveFields(leaf.input, spec).filter((field) => fields[field] !== undefined)
 	if (mixed.length > 0) {
@@ -81,8 +81,8 @@ async function documentForm(
 			message: `--${toKebab(spec.flag)} cannot be combined with ${flags}`,
 		})
 	}
-	const selection = selectionSchema(leaf.input, spec).safeParse(fields)
-	if (!selection.success) return invalid(selection.error)
+	const selection = selectionSchema(leaf.input, spec).safeParse(fields, { reportInput: true })
+	if (!selection.success) return inputFailure(leaf, path, selection.error)
 	const missing = (spec.required ?? []).find((entry) => selection.data[entry.field] === undefined)
 	if (missing !== undefined) return missingFieldError(missing)
 	const text = await readDocument(ref, spec.flag, stdin)
@@ -101,6 +101,9 @@ export async function parseInput(
 	const positional = fillPositionals(leaf, parsed.positionals, path)
 	if (isAppError(positional)) return positional
 	const fields = { ...parsed.fields, ...positional }
-	const document = await documentForm(leaf, fields, stdin)
-	return document ?? validate(leaf, fields)
+	const document = await documentForm(leaf, fields, path, stdin)
+	if (document === undefined) return validate(leaf, fields, path)
+	// A document failure names the field a caller can correct, so it follows the same rewrite as a
+	// command-raised one; a document path already starts with `document.` and passes through.
+	return isAppError(document) ? commandFailure(leaf, path, document) : document
 }

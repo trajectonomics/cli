@@ -22,7 +22,7 @@ describe("projection run failures", () => {
 		const error = errorOf(res)
 		expect(error).toMatchObject({
 			code: "invalid_input",
-			path: "set",
+			path: "--set",
 			hint: 'Did you mean "flows.salary.amount"?',
 		})
 		expect(error.details).toMatchObject({ index: 0, segment: "salery" })
@@ -121,7 +121,7 @@ describe("projection run failures", () => {
 			expect(res.code).toBe(2)
 			expect(errorOf(res)).toMatchObject({
 				code: "invalid_input",
-				path: "horizon",
+				path: "--horizon",
 				details: [{ code, path: "timeline.horizon" }],
 			})
 		}
