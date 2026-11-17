@@ -12,17 +12,12 @@ import {
 	withFlowLabels,
 } from "./labels"
 
-/** The Levy id the CLI writes; a document that holds it is the one a projection reports as taxed. */
+/** The Levy id the CLI writes, and the one whose jurisdictions its notes may name. */
 export const TAX_LEVY_ID: string = "th-2026-pit"
 
 /** The Levies a document declares, as JSON records, in document order. */
 export function leviesOf(document: ScenarioDocument): JsonRecord[] {
 	return records(document["levies"])
-}
-
-/** Whether the document carries the Levy this build writes, so a projection reports tax as applied. */
-export function hasTaxLevy(document: ScenarioDocument): boolean {
-	return leviesOf(document).some((levy) => levy["id"] === TAX_LEVY_ID)
 }
 
 /** The Levy this build would write for a request; `AppError` when tax-core refuses the profile. */

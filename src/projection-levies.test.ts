@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { errorOf, fi, projection, projectionHome } from "./projection/testing"
-import { runBody } from "./projection-run-support"
+import { runBody, tableOf } from "./projection-run-support"
 import { scenario } from "./scenario-test-support"
 
 /** A Scenario of the fixture plan with the salary taxed as Section 40(1) income. */
@@ -56,23 +56,9 @@ describe("a taxed Projection", () => {
 		)
 	})
 
-	it("leaves a Levy the caller wrote alone, and the engine refuses it when it needs a Carry-in", async () => {
+	it("reports a Levy the caller wrote as applied, and names it", async () => {
 		const home = await projectionHome()
 		// The fixture "levied" Scenario states its own Levy and Carry-in, so nothing is injected...
-		expect(
-			(
-				await projection(home, [
-					"run",
-					"--scenario",
-					"levied",
-					"--as-of",
-					"2026-03-31",
-					"--horizon",
-					"2027-03-30",
-				])
-			).code,
-		).toBe(0)
-		// ...and the tax the CLI did not emit is not reported as applied.
 		const body = runBody(
 			await projection(home, [
 				"run",
@@ -84,7 +70,47 @@ describe("a taxed Projection", () => {
 				"2027-03-30",
 			]),
 		)
-		expect(body.tax).toBe("not_applied")
+		// ...and the tax it states is the tax the figures carry, whatever wrote the Levy (ADR-0032).
+		expect(body.tax).toBe("applied")
+		const notes = body.notes.join(" ")
+		expect(notes).not.toContain("No tax is applied")
+		expect(notes).toContain('Levy "national"')
+		// The claim is not cosmetic: the 3 % at source is already out of this figure.
+		expect(tableOf(body, "annual").rows.at(-1)?.closingNetWorth).toBe("1586723.96")
+	})
+
+	it("names every Levy the Scenario holds, and no jurisdiction it cannot see", async () => {
+		const home = await projectionHome()
+		// One document with this build's Levy and a caller's: both are the Scenario's own rule sets.
+		const document = {
+			...JSON.parse((await scenario(home, ["show", "levied"])).out).scenario.document,
+		}
+		const [national] = document.levies as Record<string, unknown>[]
+		const applied = await scenario(
+			home,
+			["apply", "two-levies", "--file", "-"],
+			JSON.stringify({
+				...document,
+				levies: [
+					{ ...national, id: "th-2026-pit" },
+					{ ...national, id: "national" },
+				],
+			}),
+		)
+		expect(applied.code).toBe(0)
+		const notes = runBody(
+			await projection(home, [
+				"run",
+				"--scenario",
+				"two-levies",
+				"--as-of",
+				"2026-03-31",
+				"--horizon",
+				"2027-03-30",
+			]),
+		).notes.join(" ")
+		expect(notes).toContain('Levy "th-2026-pit"')
+		expect(notes).toContain('Levy "national"')
 	})
 
 	it("refuses a Levy the CLI did not emit when the Timeline needs a Carry-in", async () => {
@@ -114,6 +140,34 @@ describe("a taxed Projection", () => {
 		])
 		expect(res.code).toBe(3)
 		expect(errorOf(res).details).toMatchObject([{ code: "MISSING_CARRY_IN" }])
+	})
+
+	it("reports mixed when one side of a compare is taxed, and says the deltas include it", async () => {
+		const home = await projectionHome()
+		const mixed = await projection(home, [
+			"compare",
+			"base",
+			"levied",
+			"--as-of",
+			"2026-03-31",
+			"--horizon",
+			"2027-03-30",
+		])
+		expect(mixed.code).toBe(0)
+		const body = JSON.parse(mixed.out) as { tax: string; notes: string[] }
+		expect(body.tax).toBe("mixed")
+		expect(body.notes.join(" ")).toContain("the Deltas between the two sides include the tax")
+		const both = await projection(home, [
+			"compare",
+			"levied",
+			"levied",
+			"--as-of",
+			"2026-03-31",
+			"--horizon",
+			"2027-03-30",
+		])
+		expect(both.code).toBe(0)
+		expect((JSON.parse(both.out) as { tax: string }).tax).toBe("applied")
 	})
 
 	it("applies the same tax to the FI date", async () => {

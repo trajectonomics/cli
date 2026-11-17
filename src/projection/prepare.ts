@@ -9,7 +9,7 @@ import type { Store } from "../store"
 import { contentHash, supportedCurrency } from "../store"
 import { canonicalJson } from "../store/canonical"
 import { guard } from "../store/guard"
-import { NO_TAX, taxNotes, withCarryIn } from "./levies"
+import { hasAnyLevy, taxNotes, withCarryIn } from "./levies"
 import type { ScenarioEcho, TaxStatus } from "./view"
 
 /** What every projection leaf resolves before it runs the engine. */
@@ -24,7 +24,7 @@ export type Prepared = {
 	currency: string
 	baseline: Baseline
 	timeline: Timeline
-	/** `applied` when the Scenario carries this build's tax Levy, else `not_applied` (ADR-0032). */
+	/** `applied` when the Scenario holds any Tax Levy, else `not_applied` (ADR-0032). */
 	tax: TaxStatus
 	/** The sentences the human format prints about the tax (ADR-0027, ADR-0032). */
 	notes: string[]
@@ -96,7 +96,7 @@ export function prepareProjection(input: PrepareInput): Prepared | AppError {
 		currency: BASELINE_CURRENCY,
 		baseline: mapped,
 		timeline: { start: input.asOf, horizon: input.horizon, resolution: "month" },
-		tax: notes[0] === NO_TAX ? "not_applied" : "applied",
+		tax: hasAnyLevy(applied.document) ? "applied" : "not_applied",
 		notes,
 	}
 }
