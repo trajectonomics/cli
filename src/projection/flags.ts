@@ -27,6 +27,14 @@ export const horizonFlag: z.ZodString = z
 	.string()
 	.describe("The date the Projection ends at, as YYYY-MM-DD.")
 
+/** `--carry-in`, the one document that states what each Levy's period already tallied (ADR-0032). */
+export const carryInFlag: z.ZodOptional<z.ZodString> = z
+	.string()
+	.optional()
+	.describe(
+		"Read what each Levy's period already tallied and prepaid from this JSON path, or - for stdin.",
+	)
+
 /** `--set`, one transient Override, repeatable and in command-line order (ADR-0024). */
 export const setFlag: z.ZodOptional<z.ZodArray<z.ZodString>> = z
 	.array(z.string())

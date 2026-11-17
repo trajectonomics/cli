@@ -1,30 +1,20 @@
 import { z } from "zod"
 import type { Leaf } from "../../command"
 import { defineCommand } from "../../command"
-import { checkedDate } from "../../date"
 import { type AppError, fail, isAppError } from "../../errors"
+import { type CarryInRecordForm, readCarryIn } from "../../projection/carryin"
+import { withCarryIn } from "../../projection/carryin-apply"
 import { compareOf } from "../../projection/compare"
-import { compareView } from "../../projection/compare-view"
-import { asOfFlag, horizonFlag, PROJECTION_ERROR_CODES, setFlag } from "../../projection/flags"
-import { withProjection } from "../../projection/leaf"
-
-const age = z
-	.number()
-	.int()
-	.min(0)
-	.describe("An age to report net worth at; repeatable and needs --birth-date.")
-
-/** Exactly one of the second Scenario and `--set` says what B is (ADR-0030). */
-function whatIfProblem(b: string | undefined, sets: readonly string[]): AppError | null {
-	if ((b === undefined) === (sets.length === 0)) {
-		return fail("invalid_input", {
-			path: "b",
-			message: "compare needs exactly one of a second Scenario or --set.",
-			hint: "Pass a second Scenario name, or --set to compare the first one with a what-if.",
-		})
-	}
-	return null
-}
+import { ageFlag, agesProblem, whatIfProblem } from "../../projection/compare-flags"
+import { type CompareView, compareView } from "../../projection/compare-view"
+import {
+	asOfFlag,
+	carryInFlag,
+	horizonFlag,
+	PROJECTION_ERROR_CODES,
+	setFlag,
+} from "../../projection/flags"
+import { type Prepare, withProjection } from "../../projection/leaf"
 
 export const compare: Leaf = defineCommand({
 	name: "compare",
@@ -34,6 +24,7 @@ export const compare: Leaf = defineCommand({
 		asOf: asOfFlag,
 		horizon: horizonFlag,
 		set: setFlag,
+		carryIn: carryInFlag,
 		a: z.string().describe("The first Scenario's exact name or its id."),
 		b: z
 			.string()
@@ -43,7 +34,7 @@ export const compare: Leaf = defineCommand({
 			.string()
 			.optional()
 			.describe("The birth date the ages count from, as YYYY-MM-DD; needed with --age."),
-		age: z.array(age).optional().describe("An age to report net worth at; repeatable."),
+		age: ageFlag,
 	}),
 	output: compareView,
 	examples: [
@@ -58,33 +49,57 @@ export const compare: Leaf = defineCommand({
 		},
 	],
 	errorCodes: PROJECTION_ERROR_CODES,
-	run: (input, ctx) => {
-		const sets = input.set ?? []
-		const problem = whatIfProblem(input.b, sets)
-		if (problem !== null) return problem
+	run: async (input, ctx) => {
+		const records = input.carryIn === undefined ? [] : await readCarryIn(input.carryIn, ctx.stdin)
+		if (isAppError(records)) return records
 		const ages = input.age ?? []
-		if (ages.length > 0 && input.birthDate === undefined) {
-			return fail("invalid_input", {
-				path: "age",
-				message: "--age needs --birth-date to know which birthday to read.",
-				hint: "Pass --birth-date YYYY-MM-DD beside --age.",
-			})
-		}
-		if (input.birthDate !== undefined) {
-			const birthDate = checkedDate(input.birthDate, "birthDate")
-			if (isAppError(birthDate)) return birthDate
-		}
-		return withProjection(input, ctx, (prepare) => {
-			const a = prepare({ scenario: input.a, scenarioPath: "a", sets: [] })
-			if (isAppError(a)) return a
-			// The what-if applies the Overrides to A and is compared with A; a second Scenario is
-			// compared as stored.
-			const b =
-				input.b === undefined
-					? prepare({ scenario: input.a, scenarioPath: "a", sets })
-					: prepare({ scenario: input.b, scenarioPath: "b", sets: [] })
-			if (isAppError(b)) return b
-			return compareOf({ a, b, birthDate: input.birthDate ?? null, ages })
-		})
+		const problem = whatIfProblem(input.b, input.set ?? []) ?? agesProblem(ages, input.birthDate)
+		if (problem !== null) return problem
+		return withProjection(input, ctx, (prepare) => compared({ input, records, ages, prepare }))
 	},
 })
+
+/** The flags one compare states, as the command's own input schema declares them. */
+type CompareFlags = {
+	a: string
+	b?: string | undefined
+	set?: readonly string[] | undefined
+	birthDate?: string | undefined
+	asOf: string
+}
+
+/** Both sides prepared and placed, then compared: a what-if reuses A's Scenario and its record. */
+function compared(input: {
+	input: CompareFlags
+	records: readonly CarryInRecordForm[]
+	ages: readonly number[]
+	prepare: Prepare
+}): CompareView | AppError {
+	const { prepare } = input
+	const a = prepare({ scenario: input.input.a, scenarioPath: "a", sets: [] })
+	if (isAppError(a)) return a
+	// The what-if applies the Overrides to A and is compared with A; a second Scenario is compared
+	// as stored.
+	const b =
+		input.input.b === undefined
+			? prepare({ scenario: input.input.a, scenarioPath: "a", sets: input.input.set ?? [] })
+			: prepare({ scenario: input.input.b, scenarioPath: "b", sets: [] })
+	if (isAppError(b)) return b
+	const placed = withCarryIn({
+		sides: [a, b],
+		records: input.records,
+		asOf: input.input.asOf,
+		currency: a.currency,
+	})
+	if (isAppError(placed)) return placed
+	const [sideA, sideB] = placed
+	if (sideA === undefined || sideB === undefined) {
+		return fail("internal", { message: "A compare prepared fewer than two sides." })
+	}
+	return compareOf({
+		a: sideA,
+		b: sideB,
+		birthDate: input.input.birthDate ?? null,
+		ages: input.ages,
+	})
+}

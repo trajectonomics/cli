@@ -95,6 +95,25 @@ which Section 40 class each income Flow belongs to, because a Levy tallies
 labels and never guesses them; `--none` takes both out again. A Scenario
 without the Levy is projected pre-tax, and every result says which it is.
 
+A Projection that starts inside a tax period also needs what that period had
+already taken: `--carry-in carry-in.json` states it, one record per Scenario,
+Levy and period, with a `"0.00"` for every class the period had no income in or
+one `"rest": "0.00"` for all the rest. The result echoes every record it used
+and where it came from, and one that starts on a period boundary needs nothing:
+
+```json
+[
+  {
+    "scenario": "base",
+    "levy": "th-2026-pit",
+    "periodStart": "2026-01-01",
+    "tallies": [{ "label": "income.section40_1", "basis": "gross", "amount": "0.00" }],
+    "prepaid": "0.00",
+    "rest": "0.00"
+  }
+]
+```
+
 ## Docs
 
 - [`GLOSSARY.md`](GLOSSARY.md): the project's vocabulary.

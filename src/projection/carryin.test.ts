@@ -1,16 +1,23 @@
 import { describe, expect, it } from "bun:test"
-import type { Baseline } from "@trajectonomics/sim"
+import type { Baseline, TallyBasis } from "@trajectonomics/sim"
 import { check, type Scenario, type Timeline } from "@trajectonomics/sim"
+import { isAppError } from "../errors"
+import type { ScenarioDocument } from "../scenario/document"
 import { withTaxLevy } from "../scenario/tax"
-import { withCarryIn } from "./levies"
+import { TH_CLASSES } from "./carry-in-support"
+import type { CarryInRecordForm } from "./carryin"
+import { placeCarryIn } from "./carryin-place"
 
 /*
- * The engine is the oracle for the Carry-in rule. `check()` needs a Carry-in record for every
- * period whose Settlement falls inside the Timeline, and the CLI derives those from the As-of, so
- * a sweep over the dates that move a period boundary is what keeps the derivation honest.
+ * The engine is the oracle for the Carry-in rule. `check()` needs a record for every period whose
+ * Settlement falls inside the Timeline, and the CLI derives those from the As-of, so a sweep over
+ * the dates that move a period boundary is what keeps the derivation honest.
  */
 
 const BASELINE: Baseline = { schemaVersion: 1, balances: [{ account: "cash", amount: 10_000_000 }] }
+
+/** The Thai Levy's classes, as its own measures read them: 22 income, 7 allowances. */
+const CLASSES: readonly { label: string; basis: TallyBasis }[] = TH_CLASSES
 
 /** One Scenario with a labelled salary and a labelled retirement contribution. */
 const DOCUMENT = {
@@ -41,7 +48,7 @@ const DOCUMENT = {
 	cashflow: { surplus: [{ account: "cash" }], contribute: ["cash"], withdraw: ["cash"] },
 } as const
 
-/** The document with this build's tax Levy, which is the only Levy the CLI fills a Carry-in for. */
+/** The document with this build's tax Levy, the only one whose scope record the CLI can write. */
 function taxed(): Scenario {
 	const written = withTaxLevy(
 		DOCUMENT,
@@ -53,6 +60,36 @@ function taxed(): Scenario {
 	)
 	if (!("levies" in (written as object))) throw new Error("the tax Levy was refused")
 	return written as unknown as Scenario
+}
+
+/** The period the Levy's year starts on, which is the first of January for the Thai Levy. */
+function currentOf(asOf: string): string {
+	return asOf.slice(5) === "01-01" ? asOf : `${asOf.slice(0, 4)}-01-01`
+}
+
+/** A caller's record for the period the As-of starts inside, every class stated as zero. */
+function stated(asOf: string): CarryInRecordForm[] {
+	return [
+		{
+			scenario: "base",
+			levy: "th-2026-pit",
+			periodStart: currentOf(asOf),
+			tallies: CLASSES.map(({ label, basis }) => ({ label, basis, amount: "0.00" })),
+			prepaid: "0.00",
+		},
+	]
+}
+
+/** The document with the Carry-in placed, or the sentence its refusal carried. */
+function placed(asOf: string, records: readonly CarryInRecordForm[]): Scenario | string {
+	const result = placeCarryIn({
+		document: taxed() as unknown as ScenarioDocument,
+		scenario: { id: "an-id", name: "base", path: "scenario" },
+		asOf,
+		currency: "THB",
+		records,
+	})
+	return isAppError(result) ? result.body.message : (result.document as unknown as Scenario)
 }
 
 /** The dates a period boundary can move on: year ends, the Settlement day, a leap day, mid-months. */
@@ -79,29 +116,34 @@ const AS_OF_DATES: readonly string[] = [
 
 describe("the Carry-in the As-of implies", () => {
 	it("satisfies the engine for every date a period boundary can move on", () => {
-		const scenario = taxed()
 		for (const asOf of AS_OF_DATES) {
 			const timeline: Timeline = { start: asOf, horizon: "2029-12-31", resolution: "month" }
-			const problems = check(BASELINE, withCarryIn(scenario, asOf), timeline)
+			const midPeriod = asOf !== currentOf(asOf)
+			const scenario = placed(asOf, midPeriod ? stated(asOf) : [])
+			if (typeof scenario === "string") throw new Error(`${asOf}: ${scenario}`)
+			const problems = check(BASELINE, scenario, timeline)
 			expect({ asOf, problems }).toEqual({ asOf, problems: [] })
 		}
 	})
 
-	it("adds the previous year only when its Settlement falls inside the Projection", () => {
-		const scenario = taxed()
-		const starts = (asOf: string) =>
-			(withCarryIn(scenario, asOf).levies?.[0]?.carryIn ?? []).map((it) => it.periodStart)
+	it("writes the scope record only for a period that ended before the As-of", () => {
+		const starts = (asOf: string, records: readonly CarryInRecordForm[]) => {
+			const scenario = placed(asOf, records)
+			if (typeof scenario === "string") throw new Error(`${asOf}: ${scenario}`)
+			return (scenario.levies?.[0]?.carryIn ?? []).map((it) => it.periodStart)
+		}
 		// The Settlement of 2025 falls on 31 March 2026, so a Projection from the first day of 2026
-		// still has to state what 2025 had tallied.
-		expect(starts("2026-01-01")).toEqual(["2025-01-01"])
-		expect(starts("2026-03-30")).toEqual(["2025-01-01", "2026-01-01"])
+		// still has to state what 2025 had tallied, and the CLI states the empty record it can vouch
+		// for; the period the As-of starts inside is always the caller's.
+		expect(starts("2026-01-01", [])).toEqual(["2025-01-01"])
+		expect(starts("2026-03-30", stated("2026-03-30"))).toEqual(["2025-01-01", "2026-01-01"])
 		// The engine's rule is `settlement >= start`, so the Settlement day itself still names the
 		// previous period; the day after it does not.
-		expect(starts("2026-03-31")).toEqual(["2025-01-01", "2026-01-01"])
-		expect(starts("2026-04-01")).toEqual(["2026-01-01"])
+		expect(starts("2026-03-31", stated("2026-03-31"))).toEqual(["2025-01-01", "2026-01-01"])
+		expect(starts("2026-04-01", stated("2026-04-01"))).toEqual(["2026-01-01"])
 	})
 
-	it("leaves a Levy the CLI did not emit untouched", () => {
+	it("refuses a Levy it did not emit where the empty record would be an invention", () => {
 		const own = {
 			...taxed(),
 			levies: [
@@ -114,6 +156,17 @@ describe("the Carry-in the As-of implies", () => {
 				},
 			],
 		}
-		expect(withCarryIn(own as Scenario, "2026-02-01").levies?.[0]?.carryIn).toBeUndefined()
+		const result = placeCarryIn({
+			document: own as unknown as ScenarioDocument,
+			scenario: { id: "an-id", name: "base", path: "scenario" },
+			asOf: "2026-01-01",
+			currency: "THB",
+			records: [],
+		})
+		if (!isAppError(result)) throw new Error("the own Levy's missing record was accepted")
+		// The field name, not the flag: the dispatch step spells `--carry-in` on the wire (ADR-0013).
+		expect(result.body).toMatchObject({ code: "invalid_input", path: "carryIn" })
+		expect(result.body.message).toContain('Levy "national"')
+		expect(result.body.message).toContain("2025-01-01")
 	})
 })

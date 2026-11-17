@@ -5,11 +5,11 @@ import {
 } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
+import type { Placed } from "./carryin-apply"
 import { echoOf } from "./echo"
 import { refusal } from "./engine"
 import type { BestCaseView, FiAnswer, FiView, RuleOfThumbView } from "./fi-view"
 import { moneyOf } from "./money"
-import type { Prepared } from "./prepare"
 
 function referenceView(reference: RuleOfThumbReference, currency: string): RuleOfThumbView {
 	const money = moneyOf(currency)
@@ -54,7 +54,7 @@ export type FiSolution = {
 	definition: { method: "survival"; definitionVersion: number }
 }
 
-export function fiAnswerOf(prepared: Prepared): FiSolution | AppError {
+export function fiAnswerOf(prepared: Placed): FiSolution | AppError {
 	const result = financialIndependence(prepared.baseline, prepared.document, prepared.timeline, {
 		method: "survival",
 	})
@@ -88,7 +88,7 @@ export function fiAnswerOf(prepared: Prepared): FiSolution | AppError {
 }
 
 /** `traj fi`: the survival answer with its definition echoed (ADR-0008). */
-export function independenceOf(prepared: Prepared): FiView | AppError {
+export function independenceOf(prepared: Placed): FiView | AppError {
 	const solution = fiAnswerOf(prepared)
 	if (isAppError(solution)) return solution
 	return {

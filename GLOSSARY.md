@@ -159,7 +159,7 @@ Whether a result's figures include income tax: `applied`, `not_applied`, or `mix
 _Avoid_: Taxed, pre-tax, after-tax (as a status)
 
 **Carry-in**:
-What a Levy's period had already tallied before the as-of, and what had already been prepaid. It is a property of the projection, not of the scenario, because the same scenario projected from two dates needs two answers.
+What a Levy's period had already tallied before the as-of, and what had already been prepaid. It is a property of the projection, not of the scenario, because the same scenario projected from two dates needs two answers. The caller states it with `--carry-in`, one record per Levy and period, and the result echoes it with the source it came from: `flag`, `document` or `scope`.
 _Avoid_: Opening balance, prior year
 
 **Tax label**:
@@ -223,7 +223,7 @@ What a command returns when it succeeds, shaped by that command's output schema.
 _Avoid_: Output, response, payload
 
 **Echo**:
-The block every result carries stating what it was computed from: the as-of, the engine and its version, the scenario with its hashes, the applied overrides, the tax status, and the sentences a person must read before the figures.
+The block every result carries stating what it was computed from: the as-of, the engine and its version, the scenario with its hashes, the applied overrides, the tax status, the Carry-in it placed, and the sentences a person must read before the figures.
 _Avoid_: Metadata, header, provenance block
 
 **Data directory**:

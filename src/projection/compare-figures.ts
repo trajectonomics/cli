@@ -1,14 +1,14 @@
 import type { ProjectionRow, RunsOut } from "@trajectonomics/sim"
+import type { Placed } from "./carryin-apply"
 import type { CompareSide } from "./compare-side"
 import type { CompareDeltas } from "./compare-view"
 import { monthsBetween, yearsBetween } from "./dates"
 import type { FiSolution } from "./fi"
-import type { Prepared } from "./prepare"
 import { runsOutView } from "./rows"
 
 /** One side's engine facts, kept as the engine states them so a delta is a subtraction. */
 export type SideData = {
-	prepared: Prepared
+	prepared: Placed
 	fi: FiSolution
 	runsOut: RunsOut | undefined
 	final: ProjectionRow
@@ -20,6 +20,7 @@ export function sideView(data: SideData, money: (minor: number) => string): Comp
 	return {
 		scenario: data.prepared.scenario,
 		overrides: data.prepared.overrides,
+		...(data.prepared.carryIn.length === 0 ? {} : { carryIn: data.prepared.carryIn }),
 		fi: data.fi.fi,
 		runOut: runsOutView(data.runsOut, data.prepared.currency),
 		netWorth: {

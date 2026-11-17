@@ -1,8 +1,11 @@
 import { describe, expect, it } from "bun:test"
+import { writeFileSync } from "node:fs"
+import { join } from "node:path"
 import simPackage from "@trajectonomics/sim/package.json"
 import { goldenTextIn, recordGoldenTextIn } from "./golden-test-support"
 import { AS_OF, baseFlags, HORIZON, projection, projectionHome } from "./projection/testing"
 import { runBody, tableOf } from "./projection-run-support"
+import { scenario } from "./scenario-test-support"
 import { type Captured, capture } from "./test-support"
 
 const GOLDENS = new URL("./projection/fixtures/", import.meta.url)
@@ -154,6 +157,7 @@ describe("projection run", () => {
 		expect(data.positionals).toEqual([])
 		expect(Object.keys(data.input.properties).sort()).toEqual([
 			"asOf",
+			"carryIn",
 			"horizon",
 			"monthly",
 			"scenario",
@@ -161,8 +165,55 @@ describe("projection run", () => {
 		])
 		expect(data.input.required.sort()).toEqual(["asOf", "horizon", "scenario"])
 		expect(data.output.properties.tables.type).toBe("array")
+		expect(data.output.properties.carryIn.type).toBe("array")
 		for (const code of ["invalid_input", "not_found", "projection_refused", "INVALID_DATE"]) {
 			expect(data.errorCodes).toContain(code)
 		}
+	})
+})
+
+describe("projection run with a caller Carry-in", () => {
+	it("matches the committed golden of the echoed records and the notes (ADR-0032)", async () => {
+		const home = await projectionHome()
+		const taxed = await scenario(home, [
+			"tax",
+			"base",
+			"--tax",
+			"th-2026",
+			"--label",
+			"salary=income.section40_1",
+		])
+		expect(taxed.code).toBe(0)
+		// One record states the salary class and asserts every other class was zero, so the golden
+		// pins the expanded echo rather than the one-line assertion it came from.
+		const path = join(home, "carry-in.json")
+		writeFileSync(
+			path,
+			JSON.stringify([
+				{
+					scenario: "base",
+					levy: "th-2026-pit",
+					periodStart: "2026-01-01",
+					tallies: [{ label: "income.section40_1", basis: "gross", amount: "0.00" }],
+					prepaid: "0.00",
+					rest: "0.00",
+				},
+			]),
+		)
+		const res = await projection(home, [
+			"run",
+			"--scenario",
+			"base",
+			"--as-of",
+			"2026-06-01",
+			"--horizon",
+			"2027-12-31",
+			"--carry-in",
+			path,
+		])
+		expect(res.code).toBe(0)
+		const text = goldenText(res)
+		await recordGoldenTextIn(GOLDENS, "run-carry-in.output", text)
+		expect(await goldenTextIn(GOLDENS, "run-carry-in.output")).toBe(text)
 	})
 })

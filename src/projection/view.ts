@@ -1,4 +1,5 @@
 import { z } from "zod"
+import type { CarryInEcho } from "./carryin-view"
 import { dateField, moneyField } from "./money"
 
 /**
@@ -33,6 +34,8 @@ export type Echo = {
 	scenario: ScenarioEcho
 	overrides: OverrideEcho[]
 	tax: TaxStatus
+	/** Present only when the Projection placed at least one record (ADR-0032). */
+	carryIn?: CarryInEcho[] | undefined
 	notes: string[]
 }
 
@@ -74,7 +77,7 @@ export const overridesField: z.ZodType<OverrideEcho[]> = z
 export const taxField: z.ZodType<TaxStatus> = z
 	.enum(TAX_VALUES)
 	.describe(
-		"The tax status of the figures: `applied` when the Scenario carries the tax Levy, `not_applied` otherwise, and `mixed` for a compare whose two sides disagree.",
+		"The tax status of the figures: `applied` when the Scenario holds any Levy, `not_applied` when it holds none, and `mixed` for a compare whose two sides disagree.",
 	)
 
 /** Plain sentences a person should read; only the human Format prints them. */

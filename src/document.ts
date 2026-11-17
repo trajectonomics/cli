@@ -75,7 +75,11 @@ export async function readDocument(
 }
 
 /** Empty text is invalid input; JSON syntax and shape errors both name the document's field. */
-export function parseDocument(spec: DocumentSpec, text: string, path: string): unknown | AppError {
+export function parseDocument<D extends z.ZodType>(
+	spec: DocumentSpec<D>,
+	text: string,
+	path: string,
+): z.output<D> | AppError {
 	if (text.trim() === "") {
 		return fail("invalid_input", { path, message: `${path}: the document is empty` })
 	}

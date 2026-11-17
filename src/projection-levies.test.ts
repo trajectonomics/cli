@@ -1,22 +1,8 @@
 import { describe, expect, it } from "bun:test"
+import { carryInFile, taxedHome, thRecord } from "./projection/carry-in-support"
 import { errorOf, fi, projection, projectionHome } from "./projection/testing"
-import { runBody } from "./projection-run-support"
+import { runBody, tableOf } from "./projection-run-support"
 import { scenario } from "./scenario-test-support"
-
-/** A Scenario of the fixture plan with the salary taxed as Section 40(1) income. */
-async function taxedHome(): Promise<string> {
-	const home = await projectionHome()
-	const applied = await scenario(home, [
-		"tax",
-		"base",
-		"--tax",
-		"th-2026",
-		"--label",
-		"salary=income.section40_1",
-	])
-	if (applied.code !== 0) throw new Error(applied.err)
-	return home
-}
 
 describe("a taxed Projection", () => {
 	it("fills the Carry-in the As-of implies, and says the earlier tax is not recomputed", async () => {
@@ -38,41 +24,9 @@ describe("a taxed Projection", () => {
 		expect(notes.join(" ")).not.toContain("not the whole year")
 	})
 
-	it("says when the first tax year is charged on part of the year", async () => {
-		const home = await taxedHome()
-		const res = await projection(home, [
-			"run",
-			"--scenario",
-			"base",
-			"--as-of",
-			"2026-06-01",
-			"--horizon",
-			"2027-12-31",
-		])
-		expect(res.code).toBe(0)
-		const notes = runBody(res).notes
-		expect(notes.join(" ")).toContain(
-			"The 2026 tax year is charged on the Flows from 2026-06-01, not the whole year.",
-		)
-	})
-
-	it("leaves a Levy the caller wrote alone, and the engine refuses it when it needs a Carry-in", async () => {
+	it("reports a Levy the caller wrote as applied, and names it", async () => {
 		const home = await projectionHome()
 		// The fixture "levied" Scenario states its own Levy and Carry-in, so nothing is injected...
-		expect(
-			(
-				await projection(home, [
-					"run",
-					"--scenario",
-					"levied",
-					"--as-of",
-					"2026-03-31",
-					"--horizon",
-					"2027-03-30",
-				])
-			).code,
-		).toBe(0)
-		// ...and the tax the CLI did not emit is not reported as applied.
 		const body = runBody(
 			await projection(home, [
 				"run",
@@ -84,13 +38,53 @@ describe("a taxed Projection", () => {
 				"2027-03-30",
 			]),
 		)
-		expect(body.tax).toBe("not_applied")
+		// ...and the tax it states is the tax the figures carry, whatever wrote the Levy (ADR-0032).
+		expect(body.tax).toBe("applied")
+		const notes = body.notes.join(" ")
+		expect(notes).not.toContain("No tax is applied")
+		expect(notes).toContain('Levy "national"')
+		// The claim is not cosmetic: the 3 % at source is already out of this figure.
+		expect(tableOf(body, "annual").rows.at(-1)?.closingNetWorth).toBe("1586723.96")
 	})
 
-	it("refuses a Levy the CLI did not emit when the Timeline needs a Carry-in", async () => {
+	it("names every Levy the Scenario holds, and no jurisdiction it cannot see", async () => {
 		const home = await projectionHome()
-		// A caller's own Levy with no Carry-in is the caller's to state: the engine refuses it, and
-		// the CLI does not invent "nothing was tallied before the As-of" (ADR-0032).
+		// One document with this build's Levy and a caller's: both are the Scenario's own rule sets.
+		const document = {
+			...JSON.parse((await scenario(home, ["show", "levied"])).out).scenario.document,
+		}
+		const [national] = document.levies as Record<string, unknown>[]
+		const applied = await scenario(
+			home,
+			["apply", "two-levies", "--file", "-"],
+			JSON.stringify({
+				...document,
+				levies: [
+					{ ...national, id: "th-2026-pit" },
+					{ ...national, id: "national" },
+				],
+			}),
+		)
+		expect(applied.code).toBe(0)
+		const notes = runBody(
+			await projection(home, [
+				"run",
+				"--scenario",
+				"two-levies",
+				"--as-of",
+				"2026-03-31",
+				"--horizon",
+				"2027-03-30",
+			]),
+		).notes.join(" ")
+		expect(notes).toContain('Levy "th-2026-pit"')
+		expect(notes).toContain('Levy "national"')
+	})
+
+	it("refuses a Levy the CLI did not emit when the As-of leaves a period open", async () => {
+		const home = await projectionHome()
+		// A caller's own Levy with no Carry-in is the caller's to state: the CLI refuses it at the
+		// flag that states one rather than letting the engine be the first to notice (ADR-0032).
 		const document = {
 			...JSON.parse((await scenario(home, ["show", "levied"])).out).scenario.document,
 		}
@@ -112,8 +106,62 @@ describe("a taxed Projection", () => {
 			"--horizon",
 			"2027-03-30",
 		])
-		expect(res.code).toBe(3)
-		expect(errorOf(res).details).toMatchObject([{ code: "MISSING_CARRY_IN" }])
+		expect(res.code).toBe(2)
+		expect(errorOf(res)).toMatchObject({ code: "invalid_input", path: "--carry-in" })
+	})
+
+	it("keeps both sides' notes when both are taxed, each naming its own Levy", async () => {
+		const home = await taxedHome()
+		// Side A is this build's Levy, which leaves 2025's Settlement open; side B states its own
+		// Levy and its own record, so neither side's sentences may be dropped in favour of the other.
+		const res = await projection(home, [
+			"compare",
+			"levied",
+			"base",
+			"--as-of",
+			"2026-03-31",
+			"--horizon",
+			"2027-03-30",
+			"--carry-in",
+			carryInFile(home, [thRecord()]),
+		])
+		expect(res.code).toBe(0)
+		const notes = (JSON.parse(res.out) as { notes: string[] }).notes.join(" ")
+		expect(notes).toContain('Levy "national"')
+		expect(notes).toContain('Levy "th-2026-pit"')
+		expect(notes).toContain("Tax before 2026 is not recomputed")
+	})
+
+	it("reports mixed when one side of a compare is taxed, and says the deltas include it", async () => {
+		const home = await projectionHome()
+		const mixed = await projection(home, [
+			"compare",
+			"base",
+			"levied",
+			"--as-of",
+			"2026-03-31",
+			"--horizon",
+			"2027-03-30",
+		])
+		expect(mixed.code).toBe(0)
+		const body = JSON.parse(mixed.out) as { tax: string; notes: string[] }
+		expect(body.tax).toBe("mixed")
+		const notes = body.notes.join(" ")
+		expect(notes).toContain("the Deltas between the two sides include the tax")
+		// The deltas are after-tax, so the untaxed side's sentence would contradict them.
+		expect(notes).not.toContain("No tax is applied")
+		expect(notes).toContain('Levy "national"')
+		const both = await projection(home, [
+			"compare",
+			"levied",
+			"levied",
+			"--as-of",
+			"2026-03-31",
+			"--horizon",
+			"2027-03-30",
+		])
+		expect(both.code).toBe(0)
+		expect((JSON.parse(both.out) as { tax: string }).tax).toBe("applied")
 	})
 
 	it("applies the same tax to the FI date", async () => {

@@ -37,7 +37,8 @@ export function drainedScenario(at: string): Scenario {
 
 /**
  * The same plan with one Levy over salary: 3% is taken at source and settled. Its period began
- * before the fixture's As-of, so a carry-in says what it had already taken (ADR-0024).
+ * before the fixture's As-of, so a Carry-in says what it had already taken — the salary class at
+ * zero, which every record must state class by class rather than leave to be assumed (ADR-0032).
  */
 export function leviedScenario(): Scenario {
 	return {
@@ -57,7 +58,13 @@ export function leviedScenario(): Scenario {
 					{ id: "due", op: "scale", of: "gross", num: 3, den: 100, rounding: "halfUp" },
 				],
 				due: "due",
-				carryIn: [{ periodStart: "2026-01-01", tallies: [], prepaid: 0 }],
+				carryIn: [
+					{
+						periodStart: "2026-01-01",
+						tallies: [{ label: "salary", basis: "gross", amount: 0 }],
+						prepaid: 0,
+					},
+				],
 			},
 		],
 	}

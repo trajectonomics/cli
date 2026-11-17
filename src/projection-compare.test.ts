@@ -215,6 +215,7 @@ describe("projection compare", () => {
 			"asOf",
 			"b",
 			"birthDate",
+			"carryIn",
 			"horizon",
 			"set",
 		])
