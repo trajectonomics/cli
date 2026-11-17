@@ -78,11 +78,11 @@ describe("projection run failures", () => {
 		expect(JSON.parse(shown.out).scenario.document.schemaVersion).toBe(1)
 	})
 
-	it("projects a levied Scenario, and refuses one whose Carry-in the Timeline needs", async () => {
+	it("projects a levied Scenario, and refuses one whose Carry-in the As-of leaves open", async () => {
 		const home = await projectionHome()
 		expect((await projection(home, ["run", ...baseFlags("levied")])).code).toBe(0)
-		// The Levy's period began before the As-of, so the engine needs a carry-in; without one the
-		// projection is refused with the engine's own code at the field (ADR-0024).
+		// The Levy's period began before the As-of, so it needs a Carry-in; without one the CLI
+		// refuses it at the flag that states one, and the engine is never reached (ADR-0032).
 		const { levies = [] } = leviedScenario()
 		const without = {
 			...leviedScenario(),
@@ -95,12 +95,9 @@ describe("projection run failures", () => {
 			JSON.stringify(without),
 		)
 		const res = await projection(home, ["run", ...baseFlags("no-carry")])
-		expect(res.code).toBe(3)
-		expect(errorOf(res)).toMatchObject({
-			code: "projection_refused",
-			path: "scenario.levies.0.carryIn",
-			details: [{ code: "MISSING_CARRY_IN", path: "scenario.levies.0.carryIn" }],
-		})
+		expect(res.code).toBe(2)
+		expect(errorOf(res)).toMatchObject({ code: "invalid_input", path: "--carry-in" })
+		expect(errorOf(res).message).toContain('Levy "national"')
 	})
 
 	it("reports a Timeline problem at the flag that caused it, as invalid_input", async () => {

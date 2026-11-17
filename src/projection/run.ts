@@ -1,9 +1,9 @@
 import { project } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
+import type { Placed } from "./carryin-apply"
 import { echoOf } from "./echo"
 import { refusal } from "./engine"
-import type { Prepared } from "./prepare"
 import { annualRow, monthlyRow, runsOutView } from "./rows"
 import type { ProjectionRunView, ProjectionTable } from "./run-view"
 
@@ -11,7 +11,7 @@ import type { ProjectionRunView, ProjectionTable } from "./run-view"
  * `traj projection run`: the engine's Projection in the CLI's money, annual by default and with
  * the monthly rows when asked. It computes nothing the engine does not report (ADR-0030).
  */
-export function projectionOf(prepared: Prepared, monthly: boolean): ProjectionRunView | AppError {
+export function projectionOf(prepared: Placed, monthly: boolean): ProjectionRunView | AppError {
 	const { timeline, baseline, currency } = prepared
 	const result = project(baseline, prepared.document, timeline)
 	if (!result.ok) return refusal(result.problems)

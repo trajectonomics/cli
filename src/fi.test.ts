@@ -115,6 +115,7 @@ describe("fi", () => {
 		expect(data.positionals).toEqual([])
 		expect(Object.keys(data.input.properties).sort()).toEqual([
 			"asOf",
+			"carryIn",
 			"horizon",
 			"scenario",
 			"set",

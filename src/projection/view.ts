@@ -1,4 +1,5 @@
 import { z } from "zod"
+import type { CarryInEcho } from "./carryin-view"
 import { dateField, moneyField } from "./money"
 
 /**
@@ -33,6 +34,8 @@ export type Echo = {
 	scenario: ScenarioEcho
 	overrides: OverrideEcho[]
 	tax: TaxStatus
+	/** Present only when the Projection placed at least one record (ADR-0032). */
+	carryIn?: CarryInEcho[] | undefined
 	notes: string[]
 }
 

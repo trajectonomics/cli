@@ -1,6 +1,7 @@
 import { project } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
 import { fail, isAppError } from "../errors"
+import type { Placed } from "./carryin-apply"
 import { deltasOf, type SideData, sideView } from "./compare-figures"
 import type { CompareView } from "./compare-view"
 import { birthdayAt, rowAt } from "./dates"
@@ -8,7 +9,6 @@ import { refusal, SIM_PACKAGE, SIM_VERSION } from "./engine"
 import { fiAnswerOf } from "./fi"
 import { NO_TAX } from "./levies"
 import { moneyOf } from "./money"
-import type { Prepared } from "./prepare"
 import type { TaxStatus } from "./view"
 
 /**
@@ -31,8 +31,8 @@ function taxOf(input: CompareInput): { tax: TaxStatus; notes: string[] } {
 
 /** The two sides of a compare: `A`, or the base of a what-if, and `B`, or the what-if. */
 export type CompareInput = {
-	a: Prepared
-	b: Prepared
+	a: Placed
+	b: Placed
 	/** The birth date the ages count from, checked by the caller; null without `--age`. */
 	birthDate: string | null
 	/** The ages asked for with `--age`, in command-line order. */
@@ -42,7 +42,7 @@ export type CompareInput = {
 /** One `--age` and the birthday it reads, resolved before either side is projected. */
 type Birthday = { age: number; birthday: string }
 
-function dataOf(prepared: Prepared, birthdays: readonly Birthday[]): SideData | AppError {
+function dataOf(prepared: Placed, birthdays: readonly Birthday[]): SideData | AppError {
 	const solution = fiAnswerOf(prepared)
 	if (isAppError(solution)) return solution
 	const result = project(prepared.baseline, prepared.document, prepared.timeline)

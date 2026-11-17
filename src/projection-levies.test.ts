@@ -38,24 +38,6 @@ describe("a taxed Projection", () => {
 		expect(notes.join(" ")).not.toContain("not the whole year")
 	})
 
-	it("says when the first tax year is charged on part of the year", async () => {
-		const home = await taxedHome()
-		const res = await projection(home, [
-			"run",
-			"--scenario",
-			"base",
-			"--as-of",
-			"2026-06-01",
-			"--horizon",
-			"2027-12-31",
-		])
-		expect(res.code).toBe(0)
-		const notes = runBody(res).notes
-		expect(notes.join(" ")).toContain(
-			"The 2026 tax year is charged on the Flows from 2026-06-01, not the whole year.",
-		)
-	})
-
 	it("reports a Levy the caller wrote as applied, and names it", async () => {
 		const home = await projectionHome()
 		// The fixture "levied" Scenario states its own Levy and Carry-in, so nothing is injected...
@@ -113,10 +95,10 @@ describe("a taxed Projection", () => {
 		expect(notes).toContain('Levy "national"')
 	})
 
-	it("refuses a Levy the CLI did not emit when the Timeline needs a Carry-in", async () => {
+	it("refuses a Levy the CLI did not emit when the As-of leaves a period open", async () => {
 		const home = await projectionHome()
-		// A caller's own Levy with no Carry-in is the caller's to state: the engine refuses it, and
-		// the CLI does not invent "nothing was tallied before the As-of" (ADR-0032).
+		// A caller's own Levy with no Carry-in is the caller's to state: the CLI refuses it at the
+		// flag that states one rather than letting the engine be the first to notice (ADR-0032).
 		const document = {
 			...JSON.parse((await scenario(home, ["show", "levied"])).out).scenario.document,
 		}
@@ -138,8 +120,8 @@ describe("a taxed Projection", () => {
 			"--horizon",
 			"2027-03-30",
 		])
-		expect(res.code).toBe(3)
-		expect(errorOf(res).details).toMatchObject([{ code: "MISSING_CARRY_IN" }])
+		expect(res.code).toBe(2)
+		expect(errorOf(res)).toMatchObject({ code: "invalid_input", path: "--carry-in" })
 	})
 
 	it("reports mixed when one side of a compare is taxed, and says the deltas include it", async () => {

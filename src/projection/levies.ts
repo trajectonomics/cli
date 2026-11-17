@@ -1,34 +1,10 @@
-import type { Scenario } from "@trajectonomics/sim"
 import type { ScenarioDocument } from "../scenario/document"
 import { leviesOf, TAX_LEVY_ID } from "../scenario/tax"
-import { carryInPlan, carryInStarts, periodStartAtOrBefore, storedMonthDay } from "./periods"
+import type { CarryInEcho } from "./carryin-view"
+import { periodStartAtOrBefore, storedMonthDay } from "./periods"
 
 /** The one sentence a person must read before the figures, so a pre-tax plan is not mistaken. */
 export const NO_TAX: string = "No tax is applied; figures are before tax."
-
-/**
- * Adds the Carry-in records the As-of implies to this build's tax Levy, and leaves every other
- * Levy exactly as the caller wrote it (ADR-0032).
- */
-export function withCarryIn(document: Scenario, asOf: string): Scenario {
-	const levies = document.levies
-	if (levies === undefined) return document
-	return {
-		...document,
-		levies: levies.map((levy) => {
-			if (levy.id !== TAX_LEVY_ID) return levy
-			if ((levy.carryIn ?? []).length > 0) return levy
-			const period = levy.period
-			const settlement = levy.settlement
-			if (period === undefined || settlement === undefined) return levy
-			const starts = carryInStarts(asOf, { period, settlement })
-			return {
-				...levy,
-				carryIn: starts.map((periodStart) => ({ periodStart, tallies: [], prepaid: 0 })),
-			}
-		}),
-	}
-}
 
 /**
  * The one sentence for a Levy, which names the jurisdiction only for the Levy this build emits:
@@ -42,18 +18,22 @@ function levySentence(id: string): string {
 }
 
 /** The sentences one Levy's own period adds, or none when it states no period. */
-function periodNotes(levy: Record<string, unknown>, asOf: string): string[] {
+function periodNotes(levy: Record<string, unknown>, asOf: string, scoped: boolean): string[] {
 	const period = storedMonthDay(levy["period"])
 	if (period === undefined) return []
-	const settlement = storedMonthDay(levy["settlement"])
 	const current = periodStartAtOrBefore(asOf, period)
 	const year = current.slice(0, 4)
 	const notes: string[] = []
-	// A period the As-of starts inside is charged on a part of the year, and says so.
+	// A period the As-of starts inside is charged on the part of the year it covers, plus the
+	// Carry-in the caller stated for the months before it, and the sentence says both.
 	if (asOf !== current) {
-		notes.push(`The ${year} tax year is charged on the Flows from ${asOf}, not the whole year.`)
+		notes.push(
+			`The ${year} tax year is charged on the Flows from ${asOf} plus the stated Carry-in, not the whole year.`,
+		)
 	}
-	if (settlement !== undefined && carryInPlan(asOf, { period, settlement }).priorYearSettles) {
+	// Only the CLI's own scope record means no tax before this year was computed at all: a record
+	// the caller stated is what that period settled, and saying otherwise would deny its figures.
+	if (scoped) {
 		notes.push(
 			`Tax before ${year} is not recomputed; any tax still owed belongs in the Ledger as a liability.`,
 		)
@@ -67,14 +47,19 @@ function periodNotes(levy: Record<string, unknown>, asOf: string): string[] {
  * year is whole, so a projection that starts mid-year is never silent about it. The same sentence
  * twice is one sentence: two Levies can share a period and its year.
  */
-export function taxNotes(document: ScenarioDocument, asOf: string): string[] {
+export function taxNotes(
+	document: ScenarioDocument,
+	asOf: string,
+	carryIn: readonly CarryInEcho[],
+): string[] {
 	const levies = leviesOf(document)
 	if (levies.length === 0) return [NO_TAX]
+	const scoped = new Set(carryIn.filter((it) => it.source === "scope").map((it) => it.levy))
 	const notes: string[] = []
 	for (const levy of levies) {
 		const id = levy["id"]
 		if (typeof id !== "string" || id === "") continue
-		notes.push(levySentence(id), ...periodNotes(levy, asOf))
+		notes.push(levySentence(id), ...periodNotes(levy, asOf, scoped.has(id)))
 	}
 	return [...new Set(notes)]
 }

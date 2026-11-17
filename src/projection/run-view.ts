@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { carryInField } from "./carryin-view"
 import { dateField } from "./money"
 import { type AnnualRow, annualRow, type MonthlyRow, monthlyRow } from "./rows-view"
 import {
@@ -47,6 +48,7 @@ export const projectionRunView: z.ZodType<ProjectionRunView> = z.strictObject({
 	scenario: scenarioEcho,
 	overrides: overridesField,
 	tax: taxField,
+	carryIn: carryInField,
 	notes: notesField,
 	horizon: dateField("The date the Projection ends at"),
 	currency: z.string().describe("The Scenario's ISO 4217 currency; v1 is THB only."),

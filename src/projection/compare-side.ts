@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { ageFigures } from "./ages-view"
+import { type CarryInEcho, carryInField } from "./carryin-view"
 import { type FiAnswer, fiAnswer } from "./fi-view"
 import { dateField, moneyField } from "./money"
 import {
@@ -15,6 +16,8 @@ import {
 export type CompareSide = {
 	scenario: ScenarioEcho
 	overrides: OverrideEcho[]
+	/** This side's Carry-in, present only when it placed at least one record (ADR-0032). */
+	carryIn?: CarryInEcho[] | undefined
 	fi: FiAnswer
 	runOut: RunsOutView | null
 	netWorth: {
@@ -26,6 +29,7 @@ export type CompareSide = {
 export const compareSide: z.ZodType<CompareSide> = z.strictObject({
 	scenario: scenarioEcho,
 	overrides: z.array(overrideEcho).describe("The applied overrides for this side, in order."),
+	carryIn: carryInField,
 	fi: fiAnswer.describe("This side's own FI answer."),
 	runOut: runsOut.nullable().describe("The month this side runs out of money, or null."),
 	netWorth: z.strictObject({
