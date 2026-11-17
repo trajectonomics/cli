@@ -51,12 +51,3 @@ export function amountsOf(
 	}
 	return { prepaid, rest: true, stated }
 }
-
-/** The refusal for a stored record whose shape this build cannot read at all. */
-export function unreadable(path: string, levy: string, at: string, what: string): AppError {
-	return fail("invalid_input", {
-		path,
-		message: `The stored Carry-in for "${levy}" from ${at} states ${what}.`,
-		hint: "Re-apply the Scenario with a periodStart, tallies and a prepaid amount for every record.",
-	})
-}

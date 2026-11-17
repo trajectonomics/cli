@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test"
 import type { Baseline, TallyBasis } from "@trajectonomics/sim"
 import { check, type Scenario, type Timeline } from "@trajectonomics/sim"
-import { emitThLevy } from "@trajectonomics/tax/th"
 import type { ScenarioDocument } from "../scenario/document"
 import { withTaxLevy } from "../scenario/tax"
+import { TH_CLASSES } from "./carry-in-support"
 import type { CarryInRecordForm } from "./carryin"
 import { placeCarryIn } from "./carryin-place"
 
@@ -16,13 +16,7 @@ import { placeCarryIn } from "./carryin-place"
 const BASELINE: Baseline = { schemaVersion: 1, balances: [{ account: "cash", amount: 10_000_000 }] }
 
 /** The Thai Levy's classes, as its own measures read them: 22 income, 7 allowances. */
-const CLASSES: readonly { label: string; basis: TallyBasis }[] = emitThLevy({
-	filingStatus: "single",
-	allowances: { children: { totalCount: 0, secondPlusBorn2018OrLaterCount: 0 } },
-	levy: { id: "th-2026-pit" },
-})
-	.measures.filter((measure) => measure.op === "tally")
-	.map((measure) => ({ label: measure.label, basis: measure.basis as TallyBasis }))
+const CLASSES: readonly { label: string; basis: TallyBasis }[] = TH_CLASSES
 
 /** One Scenario with a labelled salary and a labelled retirement contribution. */
 const DOCUMENT = {

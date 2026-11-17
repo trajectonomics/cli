@@ -1,7 +1,7 @@
 import { z } from "zod"
 import type { Leaf } from "../command"
 import { defineCommand } from "../command"
-import { isAppError } from "../errors"
+import { fail, isAppError } from "../errors"
 import { readCarryIn } from "../projection/carryin"
 import { withCarryIn } from "../projection/carryin-apply"
 import { independenceOf } from "../projection/fi"
@@ -58,7 +58,7 @@ export const fi: Leaf = defineCommand({
 			})
 			if (isAppError(placed)) return placed
 			const [side] = placed
-			if (side === undefined) return prepared
+			if (side === undefined) return fail("internal", { message: "fi placed no side." })
 			return independenceOf(side)
 		})
 	},

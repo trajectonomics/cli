@@ -13,7 +13,6 @@ export type Needed = { starts: readonly string[]; current: string }
 
 /** Where the records came from, and what the caller named, as every refusal here spells it. */
 export type LevyInput = {
-	asOf: string
 	currency: string
 	scenario: { id: string; name: string; path: string }
 }

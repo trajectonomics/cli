@@ -2,6 +2,7 @@ import type { TallyBasis } from "@trajectonomics/sim"
 import { z } from "zod"
 import { parseDocument, readDocument } from "../document"
 import { type AppError, isAppError } from "../errors"
+import { CARRY_IN_BASES } from "./carryin-view"
 
 /*
  * `--carry-in` is one JSON document the caller states (ADR-0032): what each Levy's period had
@@ -11,14 +12,6 @@ import { type AppError, isAppError } from "../errors"
 
 /** The input path a whole-document failure names, spelled as ADR-0013 spells a flag. */
 export const CARRY_IN_FLAG: string = "--carry-in"
-
-/** The bases a Carry-in tally may state, as the engine's own type names them (ADR-0004). */
-const CARRY_IN_BASES = [
-	"gross",
-	"funded",
-	"returns",
-	"gains",
-] as const satisfies readonly TallyBasis[]
 
 /** One class a period tallied: the label, the basis the Levy tallies it under, and the amount. */
 export type CarryInTallyForm = { label: string; basis: TallyBasis; amount: string }
@@ -69,5 +62,5 @@ export async function readCarryIn(
 		text,
 		CARRY_IN_FLAG,
 	)
-	return isAppError(parsed) ? parsed : (parsed as readonly CarryInRecordForm[])
+	return parsed
 }

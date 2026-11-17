@@ -1,22 +1,8 @@
 import { describe, expect, it } from "bun:test"
+import { taxedHome } from "./projection/carry-in-support"
 import { errorOf, fi, projection, projectionHome } from "./projection/testing"
 import { runBody, tableOf } from "./projection-run-support"
 import { scenario } from "./scenario-test-support"
-
-/** A Scenario of the fixture plan with the salary taxed as Section 40(1) income. */
-async function taxedHome(): Promise<string> {
-	const home = await projectionHome()
-	const applied = await scenario(home, [
-		"tax",
-		"base",
-		"--tax",
-		"th-2026",
-		"--label",
-		"salary=income.section40_1",
-	])
-	if (applied.code !== 0) throw new Error(applied.err)
-	return home
-}
 
 describe("a taxed Projection", () => {
 	it("fills the Carry-in the As-of implies, and says the earlier tax is not recomputed", async () => {

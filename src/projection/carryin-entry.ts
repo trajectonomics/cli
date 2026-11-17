@@ -1,12 +1,21 @@
 import type { MonthDay } from "@trajectonomics/sim"
-import { type AppError, isAppError } from "../errors"
+import { type AppError, fail, isAppError } from "../errors"
 import type { JsonRecord } from "../scenario/tax/json"
 import { records as objects } from "../scenario/tax/json"
 import type { CarryInRecordForm } from "./carryin"
 import { type CarryInClass, type StatedTally, withAllClasses } from "./carryin-classes"
-import { alignedStart, amountsOf, unreadable } from "./carryin-record"
+import { alignedStart, amountsOf } from "./carryin-record"
 import { flagProblem, storedProblem } from "./carryin-refuse"
 import { type CarryInSource, isBasis } from "./carryin-view"
+
+/** The refusal for a stored record whose shape this build cannot read at all. */
+function unreadable(path: string, levy: string, at: string, what: string): AppError {
+	return fail("invalid_input", {
+		path,
+		message: `The stored Carry-in for "${levy}" from ${at} states ${what}.`,
+		hint: "Re-apply the Scenario with a periodStart, tallies and a prepaid amount for every record.",
+	})
+}
 
 /** One Carry-in record resolved into minor units, ready to place in a Levy and echo. */
 export type CarryInEntry = {

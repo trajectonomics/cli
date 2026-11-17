@@ -1,5 +1,5 @@
 import type { Scenario } from "@trajectonomics/sim"
-import { type AppError, fail } from "../errors"
+import { type AppError, fail, isAppError } from "../errors"
 import type { CarryInRecordForm } from "./carryin"
 import { placeCarryIn } from "./carryin-place"
 import type { CarryInEcho } from "./carryin-view"
@@ -45,7 +45,7 @@ export function withCarryIn(input: {
 			currency: input.currency,
 			records: input.records,
 		})
-		if ("body" in outcome) return outcome
+		if (isAppError(outcome)) return outcome
 		placed.push({
 			...side,
 			document: outcome.document as unknown as Scenario,
