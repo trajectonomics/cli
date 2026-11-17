@@ -43,12 +43,23 @@ the channel smoke installs through `npx` and `bunx`.
 
 Never run a stable release from a branch other than `main`; the shared workflow refuses it.
 
-Before you dispatch a release that ships work this repository marked as unreleased, land the
-pull request that clears those markers: the `> **Ships in X.Y.Z.**` line in `README.md` and every
-help note that names the version you are cutting. A marker left in place is wrong for good in
-that release's help and in the README of its tag, and a published version number is spent
-(ADR-0023). The release-docs check fails a pull request that names an unreleased command without
-a marker, and its weekly run reports a marker that names an already-released version.
+Once `npm dist-tags.latest` serves the version you cut, land the marker-clearing pull request
+(see [After the dispatch](#after-the-dispatch-clear-the-markers)).
+
+## After the dispatch: clear the markers
+
+The `> **Ships in X.Y.Z.**` line in `README.md` and every help note that names the version you just
+cut come out **after** the dispatch, in the next pull request. The release-docs pull-request check
+compares with the latest *published* release, so a pull request that removes a marker fails
+`unreleased_command` until `npm dist-tags.latest` serves the new version; wait for it to, then land
+the clearing pull request. The Monday freshness run reports any marker that still names an
+already-released version.
+
+The release that first ships marked work therefore carries its marker in its own help and in the
+README of its tag. That is the accepted cost ([ADR-0034](../adr/0034-docs-and-help-name-the-release-that-ships-what-they-describe.md)):
+the alternative is a pull request merged with a knowingly red check, or a check weakened by a
+bypass label or a repository variable. A published version number is spent (ADR-0023), so the
+clearing pull request is part of cutting a release, not a follow-up nobody owes.
 
 ## What a green release means
 
