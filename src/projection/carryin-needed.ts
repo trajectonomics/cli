@@ -1,6 +1,6 @@
 import { type AppError, fail } from "../errors"
 import { TAX_LEVY_ID } from "../scenario/tax"
-import { CARRY_IN_FLAG } from "./carryin"
+import { CARRY_IN_FIELD } from "./carryin"
 import type { CarryInClass } from "./carryin-classes"
 import type { Needed, Working } from "./carryin-levy"
 
@@ -11,7 +11,7 @@ function needsRecord(
 	classes: readonly CarryInClass[],
 ): AppError {
 	return fail("invalid_input", {
-		path: CARRY_IN_FLAG,
+		path: CARRY_IN_FIELD,
 		message: `The Levy "${levy}" needs a Carry-in record for the period that started ${periodStart}, which this Projection starts inside of.`,
 		hint: 'State what that period tallied and prepaid before the As-of with --carry-in, and "0.00" for a class it had no income in.',
 		details: { levy, periodStart, missing: classes },
@@ -21,7 +21,7 @@ function needsRecord(
 /** The refusal for a past period only the caller can state, because the CLI did not write the Levy. */
 function needsOwnRecord(levy: string, periodStart: string): AppError {
 	return fail("invalid_input", {
-		path: CARRY_IN_FLAG,
+		path: CARRY_IN_FIELD,
 		message: `The Levy "${levy}" needs its Carry-in record for ${periodStart}, and this build does not know what a Levy it did not write settled.`,
 		hint: "State that period's record with --carry-in rather than letting the CLI assume it was empty.",
 	})

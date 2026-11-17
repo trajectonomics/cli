@@ -2,13 +2,13 @@ import { type AppError, fail, isAppError } from "../errors"
 import type { ScenarioDocument } from "../scenario/document"
 import { leviesOf } from "../scenario/tax"
 import type { JsonRecord } from "../scenario/tax/json"
-import { CARRY_IN_FLAG, type CarryInRecordForm } from "./carryin"
+import { CARRY_IN_FIELD, type CarryInRecordForm } from "./carryin"
 import { echoOf, replaced } from "./carryin-echo"
 import { entriesOf } from "./carryin-levy"
 import { completed } from "./carryin-needed"
 import type { CarryInEcho } from "./carryin-view"
 import { taxNotes } from "./levies"
-import { carryInPlan, periodStartAtOrBefore, storedMonthDay } from "./periods"
+import { carryInStarts, periodStartAtOrBefore, storedMonthDay } from "./periods"
 
 /** A Projection's input: the effective Scenario, the dates, and the records the flag stated. */
 export type PlaceInput = {
@@ -31,14 +31,16 @@ function neededOf(levy: JsonRecord, asOf: string): { starts: string[]; current: 
 	const period = storedMonthDay(levy["period"])
 	const settlement = storedMonthDay(levy["settlement"])
 	if (period === undefined || settlement === undefined) return null
-	const plan = carryInPlan(asOf, { period, settlement })
-	return { starts: plan.starts, current: periodStartAtOrBefore(asOf, period) }
+	return {
+		starts: carryInStarts(asOf, { period, settlement }),
+		current: periodStartAtOrBefore(asOf, period),
+	}
 }
 
 /** The refusal for a `--carry-in` whose Scenario holds no Levy to state anything about. */
 function noLevy(scenario: string): AppError {
 	return fail("invalid_input", {
-		path: CARRY_IN_FLAG,
+		path: CARRY_IN_FIELD,
 		message: `The Scenario "${scenario}" holds no Levy, so there is no Carry-in to state.`,
 		hint: 'Remove --carry-in, or write a Levy into the Scenario with "traj scenario tax".',
 	})

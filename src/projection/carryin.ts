@@ -10,8 +10,12 @@ import { CARRY_IN_BASES } from "./carryin-view"
  * stored Scenario, because the same plan projected from two dates needs two answers.
  */
 
-/** The input path a whole-document failure names, spelled as ADR-0013 spells a flag. */
-export const CARRY_IN_FLAG: string = "--carry-in"
+/**
+ * The input field a whole-document failure names. It is the schema field, not the flag, because
+ * the dispatch step rewrites a command-raised path to the caller's spelling (`--carry-in`) and
+ * adds its help hint (ADR-0013); a path spelled as a flag would bypass both.
+ */
+export const CARRY_IN_FIELD: string = "carryIn"
 
 /** One class a period tallied: the label, the basis the Levy tallies it under, and the amount. */
 export type CarryInTallyForm = { label: string; basis: TallyBasis; amount: string }
@@ -55,12 +59,12 @@ export async function readCarryIn(
 	ref: string,
 	stdin: () => Promise<string>,
 ): Promise<readonly CarryInRecordForm[] | AppError> {
-	const text = await readDocument(ref, CARRY_IN_FLAG, stdin)
+	const text = await readDocument(ref, CARRY_IN_FIELD, stdin)
 	if (isAppError(text)) return text
 	const parsed = parseDocument(
-		{ flag: CARRY_IN_FLAG, schema: carryInDocument },
+		{ flag: CARRY_IN_FIELD, schema: carryInDocument },
 		text,
-		CARRY_IN_FLAG,
+		CARRY_IN_FIELD,
 	)
 	return parsed
 }

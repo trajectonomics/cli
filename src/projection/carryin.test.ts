@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import type { Baseline, TallyBasis } from "@trajectonomics/sim"
 import { check, type Scenario, type Timeline } from "@trajectonomics/sim"
+import { isAppError } from "../errors"
 import type { ScenarioDocument } from "../scenario/document"
 import { withTaxLevy } from "../scenario/tax"
 import { TH_CLASSES } from "./carry-in-support"
@@ -88,7 +89,7 @@ function placed(asOf: string, records: readonly CarryInRecordForm[]): Scenario |
 		currency: "THB",
 		records,
 	})
-	return "body" in result ? result.body.message : (result.document as unknown as Scenario)
+	return isAppError(result) ? result.body.message : (result.document as unknown as Scenario)
 }
 
 /** The dates a period boundary can move on: year ends, the Settlement day, a leap day, mid-months. */
@@ -162,8 +163,9 @@ describe("the Carry-in the As-of implies", () => {
 			currency: "THB",
 			records: [],
 		})
-		if (!("body" in result)) throw new Error("the own Levy's missing record was accepted")
-		expect(result.body).toMatchObject({ code: "invalid_input", path: "--carry-in" })
+		if (!isAppError(result)) throw new Error("the own Levy's missing record was accepted")
+		// The field name, not the flag: the dispatch step spells `--carry-in` on the wire (ADR-0013).
+		expect(result.body).toMatchObject({ code: "invalid_input", path: "carryIn" })
 		expect(result.body.message).toContain('Levy "national"')
 		expect(result.body.message).toContain("2025-01-01")
 	})

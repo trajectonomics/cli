@@ -4,7 +4,7 @@ import { addDays } from "./dates"
 /*
  * A Levy's periods are yearly and recur every year, so the only arithmetic the CLI needs is the
  * date a period starts on. sim-core owns the rule that decides which periods a Projection needs a
- * Carry-in for; `carryInPlan` mirrors it, and the engine is the oracle that keeps the mirror honest.
+ * Carry-in for; `carryInStarts` mirrors it, and the engine is the oracle that keeps the mirror honest.
  */
 
 /** `YYYY-MM-DD` from a year and a one-based month, with the day clamped to the month's length. */
@@ -36,30 +36,22 @@ export function settlementAfter(date: string, settlement: MonthDay): string {
 }
 
 /**
- * The period starts the engine requires a Carry-in for, in order, mirroring its own rule: the
- * period containing the As-of needs one when the As-of is inside it, and the period before needs
- * one too when its Settlement still falls inside the Projection. The engine is the oracle — the
- * taxed-projection test fails if this ever disagrees with it.
+ * The period starts the engine requires a Carry-in for, in engine order, mirroring its own rule:
+ * the period containing the As-of needs one when the As-of is inside it, and the period before
+ * needs one too when its Settlement still falls inside the Projection. The engine is the oracle —
+ * the taxed-projection test fails if this ever disagrees with it.
  */
-export function carryInPlan(
+export function carryInStarts(
 	asOf: string,
 	levy: { period: MonthDay; settlement: MonthDay },
-): { starts: string[]; priorYearSettles: boolean } {
+): string[] {
 	const current = periodStartAtOrBefore(asOf, levy.period)
 	const previous = periodStartAtOrBefore(addDays(current, -1), levy.period)
 	const priorYearSettles = settlementAfter(addDays(current, -1), levy.settlement) >= asOf
 	const starts: string[] = []
 	if (priorYearSettles) starts.push(previous)
 	if (asOf !== current) starts.push(current)
-	return { starts, priorYearSettles }
-}
-
-/** The period starts a Levy needs a Carry-in for, in engine order. */
-export function carryInStarts(
-	asOf: string,
-	levy: { period: MonthDay; settlement: MonthDay },
-): string[] {
-	return carryInPlan(asOf, levy).starts
+	return starts
 }
 
 /** A `MonthDay` a stored Levy states, or `undefined` when it does not state one. */
