@@ -146,7 +146,11 @@ describe("a taxed Projection", () => {
 		expect(mixed.code).toBe(0)
 		const body = JSON.parse(mixed.out) as { tax: string; notes: string[] }
 		expect(body.tax).toBe("mixed")
-		expect(body.notes.join(" ")).toContain("the Deltas between the two sides include the tax")
+		const notes = body.notes.join(" ")
+		expect(notes).toContain("the Deltas between the two sides include the tax")
+		// The deltas are after-tax, so the untaxed side's sentence would contradict them.
+		expect(notes).not.toContain("No tax is applied")
+		expect(notes).toContain('Levy "national"')
 		const both = await projection(home, [
 			"compare",
 			"levied",

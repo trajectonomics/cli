@@ -19,7 +19,9 @@ function both(a: readonly string[], b: readonly string[]): string[] {
 /**
  * The tax a compare reports: both sides taxed is `applied`, neither is `not_applied`, and one is
  * `mixed` — a Delta between a taxed and an untaxed Scenario is mostly the tax, and the note says
- * so. Both sides' notes are kept, because each side names its own Levies and its own Carry-in.
+ * so. Both sides' notes are kept only when both are taxed, because each side then names its own
+ * Levies and its own Carry-in; a mixed compare keeps the taxed side's, since the untaxed side's
+ * sentence would deny the tax the deltas include.
  */
 function taxOf(input: CompareInput): { tax: TaxStatus; notes: string[] } {
 	const applied = input.a.tax === "applied"
@@ -30,7 +32,7 @@ function taxOf(input: CompareInput): { tax: TaxStatus; notes: string[] } {
 		tax: "mixed",
 		notes: [
 			`Only ${applied ? "A" : "B"} is taxed, so the Deltas between the two sides include the tax.`,
-			...both(input.a.notes, input.b.notes),
+			...(applied ? input.a.notes : input.b.notes),
 		],
 	}
 }
