@@ -22,6 +22,27 @@ function unknownScenario(record: CarryInRecordForm, index: number): AppError {
 }
 
 /**
+ * The Carry-in of a command that prepares exactly one Scenario, so `run` and `fi` share one flow.
+ */
+export function withCarryInSide(input: {
+	prepared: Prepared
+	records: readonly CarryInRecordForm[]
+	asOf: string
+}): Placed | AppError {
+	const placed = withCarryIn({
+		sides: [input.prepared],
+		records: input.records,
+		asOf: input.asOf,
+		currency: input.prepared.currency,
+	})
+	if (isAppError(placed)) return placed
+	const [side] = placed
+	if (side === undefined)
+		return fail("internal", { message: "A one-sided command placed no side." })
+	return side
+}
+
+/**
  * Places the caller's Carry-in into every prepared side (ADR-0032). It runs once per command,
  * after both sides are prepared, because only the pair knows which Scenario names are valid: a
  * record that names neither side is refused before any side says it is missing one.

@@ -1,9 +1,9 @@
 import { z } from "zod"
 import type { Leaf } from "../../command"
 import { defineCommand } from "../../command"
-import { fail, isAppError } from "../../errors"
+import { isAppError } from "../../errors"
 import { readCarryIn } from "../../projection/carryin"
-import { withCarryIn } from "../../projection/carryin-apply"
+import { withCarryInSide } from "../../projection/carryin-apply"
 import {
 	asOfFlag,
 	carryInFlag,
@@ -53,18 +53,9 @@ export const run: Leaf = defineCommand({
 				sets: input.set ?? [],
 			})
 			if (isAppError(prepared)) return prepared
-			const placed = withCarryIn({
-				sides: [prepared],
-				records,
-				asOf: input.asOf,
-				currency: prepared.currency,
-			})
+			const placed = withCarryInSide({ prepared, records, asOf: input.asOf })
 			if (isAppError(placed)) return placed
-			const [side] = placed
-			if (side === undefined) {
-				return fail("internal", { message: "projection run placed no side." })
-			}
-			return projectionOf(side, input.monthly)
+			return projectionOf(placed, input.monthly)
 		})
 	},
 })

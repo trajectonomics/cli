@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { taxedHome } from "./projection/carry-in-support"
+import { carryInFile, taxedHome, thRecord } from "./projection/carry-in-support"
 import { errorOf, fi, projection, projectionHome } from "./projection/testing"
 import { runBody, tableOf } from "./projection-run-support"
 import { scenario } from "./scenario-test-support"
@@ -108,6 +108,28 @@ describe("a taxed Projection", () => {
 		])
 		expect(res.code).toBe(2)
 		expect(errorOf(res)).toMatchObject({ code: "invalid_input", path: "--carry-in" })
+	})
+
+	it("keeps both sides' notes when both are taxed, each naming its own Levy", async () => {
+		const home = await taxedHome()
+		// Side A is this build's Levy, which leaves 2025's Settlement open; side B states its own
+		// Levy and its own record, so neither side's sentences may be dropped in favour of the other.
+		const res = await projection(home, [
+			"compare",
+			"levied",
+			"base",
+			"--as-of",
+			"2026-03-31",
+			"--horizon",
+			"2027-03-30",
+			"--carry-in",
+			carryInFile(home, [thRecord()]),
+		])
+		expect(res.code).toBe(0)
+		const notes = (JSON.parse(res.out) as { notes: string[] }).notes.join(" ")
+		expect(notes).toContain('Levy "national"')
+		expect(notes).toContain('Levy "th-2026-pit"')
+		expect(notes).toContain("Tax before 2026 is not recomputed")
 	})
 
 	it("reports mixed when one side of a compare is taxed, and says the deltas include it", async () => {

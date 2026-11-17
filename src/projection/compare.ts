@@ -11,20 +11,26 @@ import { NO_TAX } from "./levies"
 import { moneyOf } from "./money"
 import type { TaxStatus } from "./view"
 
+/** The same sentence twice is one sentence: two sides can share a Levy, a period or a year. */
+function both(a: readonly string[], b: readonly string[]): string[] {
+	return [...new Set([...a, ...b])]
+}
+
 /**
  * The tax a compare reports: both sides taxed is `applied`, neither is `not_applied`, and one is
- * `mixed` — a Delta between a taxed and an untaxed Scenario is mostly the tax, and the note says so.
+ * `mixed` — a Delta between a taxed and an untaxed Scenario is mostly the tax, and the note says
+ * so. Both sides' notes are kept, because each side names its own Levies and its own Carry-in.
  */
 function taxOf(input: CompareInput): { tax: TaxStatus; notes: string[] } {
 	const applied = input.a.tax === "applied"
 	const alsoApplied = input.b.tax === "applied"
-	if (applied && alsoApplied) return { tax: "applied", notes: input.a.notes }
+	if (applied && alsoApplied) return { tax: "applied", notes: both(input.a.notes, input.b.notes) }
 	if (!applied && !alsoApplied) return { tax: "not_applied", notes: [NO_TAX] }
 	return {
 		tax: "mixed",
 		notes: [
 			`Only ${applied ? "A" : "B"} is taxed, so the Deltas between the two sides include the tax.`,
-			...(applied ? input.a.notes : input.b.notes),
+			...both(input.a.notes, input.b.notes),
 		],
 	}
 }
