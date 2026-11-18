@@ -34,3 +34,8 @@ export function hintOf(counts: StoredCounts): string | undefined {
 	if (counts.transactions === 0) return TRANSACTION_HINT
 	return undefined
 }
+
+/** The result field to spread beside the values: present only when there is a sentence. */
+export function hintField(hint: string | undefined): { hint?: string } {
+	return hint === undefined ? {} : { hint }
+}

@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite"
 import { describe, expect, it } from "bun:test"
 import { join } from "node:path"
+import { ACCOUNT_HINT } from "./hint"
 import {
 	FIXTURE_ACCOUNTS,
 	FIXTURE_AS_OF,
@@ -80,7 +81,12 @@ describe("balance", () => {
 	it("renders an empty Ledger as empty arrays at exit 0", async () => {
 		const res = await balance(ledgerHome())
 		expect(res.code).toBe(0)
-		expect(JSON.parse(res.out)).toEqual({ asOf: FIXTURE_AS_OF, rows: [], netWorth: [] })
+		expect(JSON.parse(res.out)).toEqual({
+			asOf: FIXTURE_AS_OF,
+			rows: [],
+			netWorth: [],
+			hint: ACCOUNT_HINT,
+		})
 	})
 
 	it("omits the optional trialBalance key unless it was asked for", async () => {

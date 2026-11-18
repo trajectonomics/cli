@@ -13,6 +13,12 @@ const resultSchema: z.ZodType<BalanceResult> = z.strictObject({
 	trialBalance: trialBalanceView
 		.optional()
 		.describe("The Trial Balance, present only when --trial-balance is given."),
+	hint: z
+		.string()
+		.optional()
+		.describe(
+			"The command that creates the first account, present only while the Ledger holds none.",
+		),
 })
 
 export const balance: Leaf = defineCommand({

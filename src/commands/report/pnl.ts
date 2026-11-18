@@ -20,6 +20,12 @@ const resultSchema: z.ZodType<PnlResult> = z.strictObject({
 		.describe(
 			"Income minus expenses, the negated sum of the rows: positive when income exceeds expenses; one entry per currency.",
 		),
+	hint: z
+		.string()
+		.optional()
+		.describe(
+			"The command that creates the first account, present only while the Ledger holds none.",
+		),
 })
 
 export const pnl: Leaf = defineCommand({

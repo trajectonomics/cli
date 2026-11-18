@@ -2,7 +2,7 @@ import { z } from "zod"
 import type { Leaf } from "../command"
 import { defineCommand, ok } from "../command"
 import { isAppError } from "../errors"
-import { ACCOUNT_HINT } from "../hint"
+import { ACCOUNT_HINT, hintField } from "../hint"
 import { createLedger } from "../store/ledger-file"
 
 export const init: Leaf = defineCommand({
@@ -29,6 +29,6 @@ export const init: Leaf = defineCommand({
 	run: (_input, ctx) => {
 		const ledger = createLedger(ctx.env)
 		if (isAppError(ledger)) return ledger
-		return ok(ledger.created ? { ...ledger, hint: ACCOUNT_HINT } : ledger)
+		return ok({ ...ledger, ...hintField(ledger.created ? ACCOUNT_HINT : undefined) })
 	},
 })

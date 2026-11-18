@@ -23,6 +23,12 @@ const resultSchema: z.ZodType<NetWorthResult> = z.strictObject({
 		.array(reportRow)
 		.describe("The asset and liability Leaf Accounts behind the total, in `account list` order."),
 	totals: z.array(totalView).describe("Assets minus liabilities, one entry per currency."),
+	hint: z
+		.string()
+		.optional()
+		.describe(
+			"The command that creates the first account, present only while the Ledger holds none.",
+		),
 })
 
 export const networth: Leaf = defineCommand({
