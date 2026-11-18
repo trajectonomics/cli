@@ -183,4 +183,14 @@ describe("report pnl", () => {
 		expect(data.input.required).toEqual(["until"])
 		expect(data.errorCodes).toContain("INVALID_PERIOD")
 	})
+
+	it("states the sign convention where the schema describes the result", async () => {
+		const data = JSON.parse((await cli(tempHome())(["schema", "report", "pnl", "--json"])).out)
+		expect(data.output.properties.rows.description).toContain("income is negative")
+		expect(data.output.properties.rows.description).toContain("expense")
+		expect(data.output.properties.totals.description).toContain("negated sum of the rows")
+		expect(data.output.properties.totals.description).toContain(
+			"positive when income exceeds expenses",
+		)
+	})
 })

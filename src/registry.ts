@@ -16,6 +16,7 @@ export type ErrorCode =
 	| "scenario_name_taken"
 	| "unsupported_currency"
 	| "account_archived"
+	| "liability_opening_positive"
 	| "external_ref_conflict"
 	| "database_busy"
 	| "database_too_new"
@@ -59,6 +60,10 @@ export const registry: Record<ErrorCode, ErrorSpec> = {
 	scenario_name_taken: { exit: 5, message: "A scenario with this name already exists." },
 	unsupported_currency: { exit: 3, message: "The currency is not supported in v1." },
 	account_archived: { exit: 3, message: "The account is archived and accepts no postings." },
+	liability_opening_positive: {
+		exit: 3,
+		message: "A liability's opening balance is negative: enter the debt as a negative amount.",
+	},
 	external_ref_conflict: {
 		exit: 5,
 		message: "A transaction with this external reference already exists with other content.",

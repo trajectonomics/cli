@@ -11,3 +11,7 @@ Defaulting `--until` to the date of the latest posted Transaction was rejected. 
 ## Consequences
 
 A human types the date or lets their shell supply it; an agent always has one. Every result echoes the As-of it was stated at, so a stored report can be read later without guessing its boundary. A caller who wants "as of now" spells it, which is what makes it their choice rather than the CLI's.
+
+## Addendum
+
+A result may also state a date the data supplies when that date qualifies the answer. The rule above is about which date the reading is *taken at*; it never forbids a result from reporting a date it read. `report networth` states `firstTransactionDate` and `noTransactionsBefore`, because an As-of before the Ledger's first Transaction is not a reading of zero: the zero rows and totals mean the record has not started, not that the person held nothing, and without the fields a month-on-month comparison charges the whole Balance to the month the record began (cli#149). The pair is a field rather than an error because the date the caller typed is valid and the empty answer is the true one; the false part was the silent 0.00. `balance` and `baseline show` read the same Ledger and do not state it yet; a change that adds it there reuses these two names rather than inventing a second spelling.

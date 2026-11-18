@@ -10,8 +10,16 @@ const resultSchema: z.ZodType<PnlResult> = z.strictObject({
 	since: z.string().nullable().describe("The period's inclusive start date, or null."),
 	until: z.string().describe("The period's inclusive end date, as YYYY-MM-DD."),
 	project: z.string().nullable().describe("The Project this result was filtered to, or null."),
-	rows: z.array(reportRow).describe("One row per income and expense Leaf Account."),
-	totals: z.array(totalView).describe("Income minus expenses, one entry per currency."),
+	rows: z
+		.array(reportRow)
+		.describe(
+			"One row per income and expense Leaf Account, raw signed: income is negative and expense is positive.",
+		),
+	totals: z
+		.array(totalView)
+		.describe(
+			"Income minus expenses, the negated sum of the rows: positive when income exceeds expenses; one entry per currency.",
+		),
 })
 
 export const pnl: Leaf = defineCommand({

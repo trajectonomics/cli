@@ -25,6 +25,8 @@ export type StoreRaised = Exclude<
 	| "export_failed"
 	// Raised by the projection commands, from the engine's own problems.
 	| "projection_refused"
+	// Raised by tx add's opening form, before the store is asked to write anything.
+	| "liability_opening_positive"
 >
 
 function fixture() {

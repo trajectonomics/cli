@@ -8,6 +8,17 @@ import { LEDGER_READ_CODES } from "../../store"
 
 const resultSchema: z.ZodType<NetWorthResult> = z.strictObject({
 	asOf: z.string().describe("The date the result is stated at, as YYYY-MM-DD."),
+	firstTransactionDate: z
+		.string()
+		.nullable()
+		.describe(
+			"The date, as YYYY-MM-DD, of the Ledger's earliest Transaction; null when it has none.",
+		),
+	noTransactionsBefore: z
+		.boolean()
+		.describe(
+			"True when the earliest Transaction is dated after the As-of, so the zero figures state that the record has not started, not that nothing is held.",
+		),
 	rows: z
 		.array(reportRow)
 		.describe("The asset and liability Leaf Accounts behind the total, in `account list` order."),

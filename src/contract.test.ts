@@ -59,6 +59,34 @@ describe("contract", () => {
 			return capture(argv, { TRAJ_HOME: home })
 		},
 		not_found: () => capture(["account", "show", "Nope", "--json"], { TRAJ_HOME: tempHome() }),
+		liability_opening_positive: async () => {
+			const home = tempHome()
+			for (const [name, type] of [
+				["Opening", "equity"],
+				["Loan", "liability"],
+			] as const) {
+				await capture(["account", "add", name, "--type", type, "--currency", "THB", "--json"], {
+					TRAJ_HOME: home,
+				})
+			}
+			return capture(
+				[
+					"tx",
+					"add",
+					"--opening",
+					"--from",
+					"Opening",
+					"--to",
+					"Loan",
+					"--amount",
+					"300000.00",
+					"--date",
+					"2026-11-01",
+					"--json",
+				],
+				{ TRAJ_HOME: home },
+			)
+		},
 		projection_refused: async () => {
 			const home = fixtureHome()
 			await capture(

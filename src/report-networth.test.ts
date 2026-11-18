@@ -53,7 +53,83 @@ describe("report networth", () => {
 	it("renders an empty Ledger as empty arrays at exit 0", async () => {
 		const res = await networth(tempHome())
 		expect(res.code).toBe(0)
-		expect(JSON.parse(res.out)).toEqual({ asOf: FIXTURE_AS_OF, rows: [], totals: [] })
+		expect(JSON.parse(res.out)).toEqual({
+			asOf: FIXTURE_AS_OF,
+			firstTransactionDate: null,
+			noTransactionsBefore: false,
+			rows: [],
+			totals: [],
+		})
+	})
+
+	it("states the first Transaction and that the As-of covers the record", async () => {
+		const data = JSON.parse((await networth(fixtureHome())).out) as {
+			firstTransactionDate: string | null
+			noTransactionsBefore: boolean
+		}
+		expect(data.firstTransactionDate).toBe("2026-01-01")
+		expect(data.noTransactionsBefore).toBe(false)
+	})
+
+	it("says the record has not started when the As-of precedes every Transaction", async () => {
+		const res = await cli(fixtureHome())(["report", "networth", "--as-of", "2025-12-31", "--json"])
+		expect(res.code).toBe(0)
+		const data = JSON.parse(res.out) as {
+			asOf: string
+			firstTransactionDate: string | null
+			noTransactionsBefore: boolean
+			rows: Row[]
+			totals: { currency: string; amount: string }[]
+		}
+		expect(data.asOf).toBe("2025-12-31")
+		expect(data.firstTransactionDate).toBe("2026-01-01")
+		expect(data.noTransactionsBefore).toBe(true)
+		expect(data.rows.every((row) => row.amount === "0.00")).toBe(true)
+		expect(data.totals).toEqual([{ currency: "THB", amount: "0.00" }])
+		const human = await cli(fixtureHome())(["report", "networth", "--as-of", "2025-12-31"])
+		expect(human.code).toBe(0)
+		expect(human.out).toContain("firstTransactionDate: 2026-01-01")
+		expect(human.out).toContain("noTransactionsBefore: true")
+	})
+
+	it("takes the earliest dated Transaction, not the first one stored", async () => {
+		const home = tempHome()
+		const traj = cli(home)
+		for (const name of ["Cash", "Opening"]) {
+			const type = name === "Cash" ? "asset" : "equity"
+			const added = await traj(["account", "add", name, "--type", type, "--currency", "THB"])
+			expect(added.code).toBe(0)
+		}
+		for (const [date, amount] of [
+			["2026-01-01", "1000.00"],
+			["2025-12-01", "500.00"],
+		] as const) {
+			const written = await traj([
+				"tx",
+				"add",
+				"--opening",
+				"--from",
+				"Opening",
+				"--to",
+				"Cash",
+				"--amount",
+				amount,
+				"--date",
+				date,
+				"--json",
+			])
+			expect(written.code).toBe(0)
+		}
+		const before = JSON.parse(
+			(await traj(["report", "networth", "--as-of", "2025-11-30", "--json"])).out,
+		)
+		expect(before.firstTransactionDate).toBe("2025-12-01")
+		expect(before.noTransactionsBefore).toBe(true)
+		const inside = JSON.parse(
+			(await traj(["report", "networth", "--as-of", "2025-12-31", "--json"])).out,
+		)
+		expect(inside.noTransactionsBefore).toBe(false)
+		expect(inside.totals).toEqual([{ currency: "THB", amount: "500.00" }])
 	})
 
 	it("requires --as-of", async () => {
@@ -110,5 +186,7 @@ describe("report networth", () => {
 		expect(data.name).toBe("report networth")
 		expect(data.input.required).toEqual(["asOf"])
 		expect(data.input.properties.project).toBeUndefined()
+		expect(data.output.properties.firstTransactionDate.type).toEqual(["string", "null"])
+		expect(data.output.properties.noTransactionsBefore.type).toBe("boolean")
 	})
 })
