@@ -140,7 +140,7 @@ describe("the README first screen", () => {
 // The install page is where a person hands their bank history to an agent, so it names the
 // ledger beside the download cache and the command that takes a lossless copy (cli#143).
 const LEDGER_PATH = "~/.traj/traj.db"
-const LEDGER_COMMAND = "traj export --format jsonl --out backup"
+const EXPORT_COMMAND = "traj export --format jsonl --out backup"
 
 describe("the README says where the ledger lives", () => {
 	it("names the ledger in the data directory, and TRAJ_HOME when it is set", () => {
@@ -157,9 +157,9 @@ describe("the README says where the ledger lives", () => {
 	it("names the lossless copy after the uninstall step, so the passage explains the directory", () => {
 		// `uninstall` mentions the cache first; the ledger path is what disambiguates it.
 		const uninstall = visibleAt(UNINSTALL)
-		expect(at(LEDGER_COMMAND)).toBeGreaterThan(-1)
+		expect(at(EXPORT_COMMAND)).toBeGreaterThan(-1)
 		expect(visibleAt(LEDGER_PATH)).toBeGreaterThan(uninstall)
-		expect(visibleAt(LEDGER_COMMAND)).toBeGreaterThan(uninstall)
+		expect(visibleAt(EXPORT_COMMAND)).toBeGreaterThan(uninstall)
 	})
 
 	it("says --out must not exist yet and that JSONL is the only lossless format", () => {
