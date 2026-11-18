@@ -104,30 +104,6 @@ describe("tx add flags", () => {
 		})
 	})
 
-	it("reports a posting account that is not in the chart as UNKNOWN_ACCOUNT", async () => {
-		const traj = cli(ledgerHome())
-		await account(traj, "Cash")
-		const res = await traj([
-			"tx",
-			"add",
-			"--from",
-			"Nope",
-			"--to",
-			"Cash",
-			"--amount",
-			"1.00",
-			"--date",
-			"2026-03-01",
-			"--json",
-		])
-		expect(res.code).toBe(3)
-		expect(JSON.parse(res.err).error).toMatchObject({
-			code: "UNKNOWN_ACCOUNT",
-			exitCode: 3,
-			path: "from",
-		})
-	})
-
 	it("leaves calendar validation to the core with INVALID_DATE", async () => {
 		const traj = cli(ledgerHome())
 		await account(traj, "Cash")

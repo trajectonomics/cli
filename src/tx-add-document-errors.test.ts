@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { UNKNOWN_ACCOUNT_HINT } from "./hint"
 import { accounts, cli, ledgerHome, type Traj } from "./tx-test-support"
 
 type Posting = { account: string; amount: string; currency: string }
@@ -151,6 +152,7 @@ describe("tx add document errors", () => {
 			code: "UNKNOWN_ACCOUNT",
 			exitCode: 3,
 			path: "postings.0.account",
+			hint: UNKNOWN_ACCOUNT_HINT,
 		})
 	})
 
