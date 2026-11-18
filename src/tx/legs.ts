@@ -1,5 +1,6 @@
 import type { ChartOfAccounts, Transaction } from "@trajectonomics/ledger"
 import { LedgerValidationError } from "@trajectonomics/ledger"
+import { checkedDate } from "../date"
 import { type AppError, isAppError } from "../errors"
 import {
 	type AccountRow,
@@ -88,6 +89,8 @@ export function preparedTransfer(
 	store: Store,
 	path: FieldPath,
 ): Prepared | AppError {
+	const date = checkedDate(input.date, path("date"))
+	if (isAppError(date)) return date
 	const from = store.getAccount(input.from)
 	if (isAppError(from)) return from
 	if (from === null) return unknownAccount(input.from, path("from"))

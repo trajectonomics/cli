@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { checkedDate } from "../date"
+import { checkedBirthDate } from "../date"
 import { type AppError, fail, isAppError } from "../errors"
 
 /** One `--age`, repeatable, which needs the birth date the months count from. */
@@ -38,6 +38,6 @@ export function agesProblem(
 		})
 	}
 	if (birthDate === undefined) return null
-	const checked = checkedDate(birthDate, "birthDate")
+	const checked = checkedBirthDate(birthDate, "birthDate")
 	return isAppError(checked) ? checked : null
 }

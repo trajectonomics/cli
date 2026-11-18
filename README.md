@@ -85,7 +85,8 @@ nominal and real (monthly rows with `--monthly`); `traj projection compare`
 puts two Scenarios side by side, or one against a `--set` what-if, with the
 deltas in FI date, net worth at the ages you name and run-out year; and
 `traj fi` reports the survival FI date beside the 25× rule of thumb as a
-labelled reference. Every result states its As-of, the engine version, the
+labelled reference. Every date flag is a Gregorian year between 1900 and
+2100, so a Buddhist year is refused instead of read as 543 years later. Every result states its As-of, the engine version, the
 Scenario's hashes, the Overrides it applied, and its tax status.
 `traj schema <command>` describes each one.
 

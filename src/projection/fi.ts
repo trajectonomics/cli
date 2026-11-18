@@ -1,55 +1,13 @@
-import {
-	type FiBestCase,
-	financialIndependence,
-	project,
-	type RuleOfThumbReference,
-} from "@trajectonomics/sim"
+import { financialIndependence, project } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
 import type { Placed } from "./carryin-apply"
 import { echoOf } from "./echo"
 import { refusal } from "./engine"
-import type { BestCaseView, FiAnswer, FiView, RuleOfThumbView } from "./fi-view"
+import { bestCaseView, referenceView } from "./fi-figures"
+import type { FiAnswer, FiView } from "./fi-view"
 import { fundingNotes } from "./funding"
-import { moneyOf } from "./money"
 import { taxYearsOf } from "./tax-view"
-
-function referenceView(reference: RuleOfThumbReference, currency: string): RuleOfThumbView {
-	const money = moneyOf(currency)
-	return {
-		label: reference.label,
-		date: reference.date,
-		multiplier: reference.multiplier,
-		basis: reference.basis,
-		window: reference.window,
-		terms: reference.terms,
-		unlockedAssets: money(reference.unlockedAssets),
-		numerator: money(reference.numerator),
-		annualExpenses: money(reference.annualExpenses),
-		threshold: money(reference.threshold),
-		multipleBps: reference.multipleBps ?? null,
-		partial: reference.partial,
-		met: reference.met,
-	}
-}
-
-function bestCaseView(bestCase: FiBestCase, currency: string): BestCaseView {
-	const money = moneyOf(currency)
-	if ("runsOut" in bestCase) {
-		return {
-			month: bestCase.month,
-			runsOut: { date: bestCase.runsOut.date, unmet: money(bestCase.runsOut.unmet) },
-		}
-	}
-	return {
-		month: bestCase.month,
-		bufferBreach: {
-			date: bestCase.bufferBreach.date,
-			required: money(bestCase.bufferBreach.required),
-			accessible: money(bestCase.bufferBreach.accessible),
-		},
-	}
-}
 
 /** The engine's survival answer in the CLI's money, with its own definition echo (ADR-0008). */
 export type FiSolution = {
