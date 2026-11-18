@@ -1,14 +1,10 @@
 import { existsSync, readFileSync, statSync } from "node:fs"
 import { join, resolve } from "node:path"
+import { errorCodeOf } from "../error-code"
 import { type AppError, fail } from "../errors"
 
 /** The one file a backup holds and a restore reads: the canonical JSONL dump (ADR-0028). */
 export const BACKUP_FILE = "traj.jsonl"
-
-function codeOf(error: unknown): string | undefined {
-	const code = (error as { code?: unknown } | null)?.code
-	return typeof code === "string" ? code : undefined
-}
 
 /** The file a backup path names: the path itself when it is a file, else `traj.jsonl` inside it. */
 export function backupFileOf(path: string): string {
@@ -37,7 +33,7 @@ export function readBackup(
 	try {
 		return { file, text: readFileSync(file, "utf8") }
 	} catch (error) {
-		const code = codeOf(error)
+		const code = errorCodeOf(error)
 		return fail("backup_unreadable", {
 			path: field,
 			message: `The backup could not be read: ${file}`,

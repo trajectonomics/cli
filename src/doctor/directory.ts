@@ -1,6 +1,6 @@
 import { existsSync, unlinkSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { step } from "./checks"
+import { skipped, step } from "./checks"
 import type { DoctorCheck } from "./output"
 
 export type DirectoryFacts = { path: string; exists: boolean; writable: boolean }
@@ -33,7 +33,7 @@ function directoryCheck(directory: string, exists: boolean): DoctorCheck {
 }
 
 function writableCheck(exists: boolean, writable: boolean): DoctorCheck {
-	if (!exists) return step("writable", "skipped", "the data directory does not exist.")
+	if (!exists) return skipped("writable", "The data directory does not exist.")
 	return step(
 		"writable",
 		writable ? "pass" : "fail",
