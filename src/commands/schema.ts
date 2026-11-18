@@ -3,46 +3,9 @@ import type { Leaf } from "../command"
 import { defineCommand, ok } from "../command"
 import { registryListing } from "../error-listing"
 import { fail } from "../errors"
+import { NOT_SUPPORTED } from "../schema/limits"
+import { detailSchema, listingSchema } from "../schema/output"
 import { findNode, leavesOf } from "../tree"
-
-const jsonSchema = z.record(z.string(), z.unknown())
-
-const listing = z.strictObject({
-	commands: z.array(z.strictObject({ name: z.string(), summary: z.string() })),
-	errors: z
-		.array(
-			z.strictObject({
-				code: z.string(),
-				exitCode: z.number().int().min(0).max(5),
-				message: z.string(),
-				retryable: z.boolean().describe("True when retrying the same command can succeed."),
-			}),
-		)
-		.optional()
-		.describe("The whole error registry, sorted by code. Only listed for the root."),
-})
-
-const document = z
-	.strictObject({
-		flag: z.string().describe("The input field that names the document; `-` reads stdin."),
-		schema: jsonSchema.describe("JSON Schema of the document form's input."),
-		required: z
-			.array(z.string())
-			.optional()
-			.describe("The input fields the document form requires, checked before it is read."),
-	})
-	.describe("The alternate document form, beside the flag form.")
-
-const detail = z.strictObject({
-	name: z.string().describe("The full command path."),
-	summary: z.string(),
-	positionals: z.array(z.string()).describe("Input fields filled from words, in order."),
-	input: jsonSchema.describe("JSON Schema of the command's input. Non-positionals are flags."),
-	document: document.optional(),
-	output: jsonSchema.describe("JSON Schema of the command's result."),
-	examples: z.array(z.strictObject({ command: z.string(), description: z.string() })),
-	errorCodes: z.array(z.string()).describe("Registry codes this command raises."),
-})
 
 export const schema: Leaf = defineCommand({
 	name: "schema",
@@ -51,9 +14,12 @@ export const schema: Leaf = defineCommand({
 	input: z.strictObject({
 		path: z.array(z.string()).default([]).describe("A command or group path; omit to list all."),
 	}),
-	output: z.union([listing, detail]),
+	output: z.union([listingSchema(), detailSchema()]),
 	examples: [
-		{ command: "traj schema", description: "List commands and every error code." },
+		{
+			command: "traj schema",
+			description: "List commands, every error code and what this version does not support.",
+		},
 		{ command: "traj schema init --json", description: "Show the input and output of init." },
 	],
 	errorCodes: ["unknown_command"],
@@ -71,7 +37,11 @@ export const schema: Leaf = defineCommand({
 				name: path.join(" "),
 				summary: leaf.summary,
 			}))
-			return ok(input.path.length === 0 ? { commands, errors: registryListing() } : { commands })
+			return ok(
+				input.path.length === 0
+					? { commands, errors: registryListing(), notSupported: [...NOT_SUPPORTED] }
+					: { commands },
+			)
 		}
 		const document =
 			node.document === undefined
@@ -85,12 +55,22 @@ export const schema: Leaf = defineCommand({
 								: { required: node.document.required.map((entry) => entry.field) }),
 						},
 					}
+		const documents =
+			node.flagDocuments === undefined
+				? {}
+				: {
+						flagDocuments: node.flagDocuments.map((entry) => ({
+							flag: entry.flag,
+							schema: z.toJSONSchema(entry.schema, { io: "input" }),
+						})),
+					}
 		return ok({
 			name: input.path.join(" "),
 			summary: node.summary,
 			positionals: [...node.positionals],
 			input: z.toJSONSchema(node.input, { io: "input" }),
 			...document,
+			...documents,
 			output: z.toJSONSchema(node.output, { io: "output" }),
 			examples: node.examples.map((example) => ({ ...example })),
 			errorCodes: [...node.errorCodes].sort(),

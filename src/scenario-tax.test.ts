@@ -2,8 +2,9 @@ import { describe, expect, it } from "bun:test"
 import { SIM_SCENARIO } from "./baseline/fixture"
 import { errorOf, projection, projectionHome, seededHome } from "./projection/testing"
 import { runBody, tableOf } from "./projection-run-support"
-import { applyScenario, scenario } from "./scenario-test-support"
-import type { Captured } from "./test-support"
+import { TAX_CONTRIBUTION_LABELS, TAX_INCOME_LABELS } from "./scenario/tax"
+import { applyScenario, scenario, scenarioHome } from "./scenario-test-support"
+import { type Captured, capture } from "./test-support"
 
 /** `traj scenario tax ...` in JSON against one data directory. */
 function tax(home: string, argv: readonly string[]): Promise<Captured> {
@@ -199,5 +200,19 @@ describe("scenario tax", () => {
 		const res = await tax(home, ["missing", "--tax", "th-2026"])
 		expect(res.code).toBe(4)
 		expect(errorOf(res).code).toBe("not_found")
+	})
+})
+
+describe("scenario tax schema", () => {
+	it("names every label the core reads, for an income and for a contribution Flow", async () => {
+		const res = await capture(["schema", "scenario", "tax", "--json"], {
+			TRAJ_HOME: scenarioHome(),
+		})
+		expect(res.code).toBe(0)
+		const label = JSON.parse(res.out).input.properties.label.description as string
+		for (const code of TAX_INCOME_LABELS) expect(label).toContain(code)
+		for (const code of TAX_CONTRIBUTION_LABELS) expect(label).toContain(code)
+		expect(label).toContain("income Flow")
+		expect(label).toContain("contribution Flow")
 	})
 })

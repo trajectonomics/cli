@@ -1,6 +1,4 @@
 import { check, type Problem } from "@trajectonomics/sim"
-import { version as simVersion } from "@trajectonomics/sim/package.json"
-import { z } from "zod"
 import { type AppError, fail } from "../errors"
 
 // `sim-core` owns the Scenario model (AGENTS.md rule 5, ADR-0024). Its `check()` reads a Baseline,
@@ -80,9 +78,9 @@ export function documentPath(base: string, segments: readonly (string | number)[
 }
 
 /** One refusal's envelope fields, built once so the command, the Store and a restore agree. */
-type Refusal = { path: string; message: string; code: string; hint?: string }
+export type Refusal = { path: string; message: string; code: string; hint?: string }
 
-function refusalOf(problem: ScenarioProblem, base: string): Refusal {
+export function refusalOf(problem: ScenarioProblem, base: string): Refusal {
 	const path = documentPath(base, problem.segments)
 	const unsupported = problem.code === "UNSUPPORTED_SCHEMA_VERSION"
 	const accepted = unsupported ? acceptedScenarioSchemaVersion() : undefined
@@ -117,38 +115,3 @@ export function scenarioDocumentError(value: unknown, base = "document"): AppErr
 		details: detailsOf(problems, base),
 	})
 }
-
-/** The JSON Schema of `schemaVersion`: the one accepted version, when the pin names one. */
-function schemaVersionSchema(): Record<string, unknown> {
-	const version = acceptedScenarioSchemaVersion()
-	return version === undefined ? {} : { const: version }
-}
-
-/**
- * The document form's schema and `traj schema`'s view of it (ADR-0020). It accepts any JSON value
- * and defers to `sim-core`, so `NOT_AN_OBJECT` and `UNSUPPORTED_SCHEMA_VERSION` are the core's
- * codes and this layer never rejects a document first. Its JSON Schema is the envelope level only:
- * the CLI does not restate `sim-core`'s model (ADR-0024).
- */
-export const scenarioDocument: z.ZodType<unknown> = z
-	.unknown()
-	.superRefine((value, ctx) => {
-		for (const problem of scenarioProblems(value)) {
-			const refusal = refusalOf(problem, "document")
-			ctx.addIssue({
-				code: "custom",
-				message: refusal.message,
-				path: [...problem.segments],
-				params: {
-					code: problem.code,
-					...(refusal.hint === undefined ? {} : { hint: refusal.hint }),
-				},
-			})
-		}
-	})
-	.meta({
-		type: "object",
-		properties: { schemaVersion: schemaVersionSchema() },
-		required: ["schemaVersion"],
-		description: `A Scenario document, validated by @trajectonomics/sim@${simVersion}'s check() with an empty Baseline and no Timeline.`,
-	})

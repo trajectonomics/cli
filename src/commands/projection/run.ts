@@ -7,6 +7,7 @@ import { withCarryInSide } from "../../projection/carryin-apply"
 import {
 	asOfFlag,
 	carryInFlag,
+	carryInFlagDocument,
 	horizonFlag,
 	PROJECTION_ERROR_CODES,
 	scenarioFlag,
@@ -29,6 +30,7 @@ export const run: Leaf = defineCommand({
 		carryIn: carryInFlag,
 		monthly: z.boolean().default(false).describe("Also report the monthly rows."),
 	}),
+	flagDocuments: [carryInFlagDocument],
 	output: projectionRunView,
 	render: projectionHint,
 	examples: [

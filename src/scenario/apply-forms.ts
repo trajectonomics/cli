@@ -1,6 +1,6 @@
 import type { DocumentSpec, RequiredDocumentField } from "../command"
 import { type AppError, fail } from "../errors"
-import { scenarioDocument } from "./document"
+import { scenarioDocument } from "./document-form"
 
 /** The input fields `scenario apply` reads; the two forms share one input schema. */
 export type ApplyFlags = {

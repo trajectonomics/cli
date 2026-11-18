@@ -20,6 +20,7 @@ describe("tx list", () => {
 			date: "2026-03-01",
 			memo: null,
 			linkedTo: null,
+			externalRef: null,
 			postings: [
 				{
 					ordinal: 0,
@@ -37,6 +38,33 @@ describe("tx list", () => {
 				},
 			],
 		})
+	})
+
+	it("shows each transaction's external reference, so a row ties back to its bank row", async () => {
+		const traj = cli(tempHome())
+		await accounts(traj, [
+			["Cash", "asset"],
+			["Food", "expense"],
+		])
+		const added = await traj([
+			"tx",
+			"add",
+			"--from",
+			"Cash",
+			"--to",
+			"Food",
+			"--amount",
+			"12.00",
+			"--date",
+			"2026-03-01",
+			"--external-ref",
+			"kbank:2026-03-01:0001",
+			"--json",
+		])
+		expect(added.code).toBe(0)
+		const res = await traj(["tx", "list", "--json"])
+		const data = JSON.parse(res.out)
+		expect(data.transactions[0].externalRef).toBe("kbank:2026-03-01:0001")
 	})
 
 	it("orders by date and then by id, whatever the insertion order", async () => {

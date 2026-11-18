@@ -10,6 +10,7 @@ import { type CompareView, compareView } from "../../projection/compare-view"
 import {
 	asOfFlag,
 	carryInFlag,
+	carryInFlagDocument,
 	horizonFlag,
 	PROJECTION_ERROR_CODES,
 	setFlag,
@@ -36,6 +37,7 @@ export const compare: Leaf = defineCommand({
 			.describe("The birth date the ages count from, as YYYY-MM-DD; needed with --age."),
 		age: ageFlag,
 	}),
+	flagDocuments: [carryInFlagDocument],
 	output: compareView,
 	examples: [
 		{

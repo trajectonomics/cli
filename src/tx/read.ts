@@ -1,14 +1,7 @@
 import { z } from "zod"
 import { type AccountRef, accountRef } from "../account/view"
 import { type AppError, isAppError } from "../errors"
-import {
-	formatMinorUnits,
-	type PostingRow,
-	type Store,
-	TX_CORRECTIONS,
-	type TxCorrection,
-	type TxRow,
-} from "../store"
+import { formatMinorUnits, type PostingRow, type Store, type TxRow } from "../store"
 
 export type ReadPosting = {
 	ordinal: number
@@ -24,21 +17,8 @@ export type ReadTransaction = {
 	date: string
 	memo: string | null
 	linkedTo: string | null
+	externalRef: string | null
 	postings: ReadPosting[]
-}
-
-export type TransactionRef = { id: string; date: string }
-
-/** A linked row, named as what it is to the transaction it corrects. */
-export type CorrectionRef = TransactionRef & { correction: TxCorrection | null }
-
-export type TransactionLinks = {
-	/** The transaction this one voids or amends, or null when it corrects nothing. */
-	corrects: TransactionRef | null
-	/** What this transaction is to `corrects`: a reversal or a replacement, or null. */
-	correction: TxCorrection | null
-	/** The transactions that void or amend this one, oldest first and then by id. */
-	correctedBy: CorrectionRef[]
 }
 
 export const readPosting: z.ZodType<ReadPosting> = z.strictObject({
@@ -57,33 +37,11 @@ export const readTransaction: z.ZodType<ReadTransaction> = z.strictObject({
 	date: z.string().describe("The transaction's YYYY-MM-DD date."),
 	memo: z.string().nullable().describe("The free-text memo, or null."),
 	linkedTo: z.string().nullable().describe("The transaction this one corrects, or null."),
-	postings: z.array(readPosting).describe("The postings in the order they were written."),
-})
-
-export const transactionRef: z.ZodType<TransactionRef> = z.strictObject({
-	id: z.string().describe("The linked transaction's id."),
-	date: z.string().describe("The linked transaction's YYYY-MM-DD date."),
-})
-
-const correction = z
-	.enum(TX_CORRECTIONS)
-	.nullable()
-	.describe("A void's reversal or an amend's replacement; null when this row corrects nothing.")
-
-export const correctionRef: z.ZodType<CorrectionRef> = z.strictObject({
-	id: z.string().describe("The linked transaction's id."),
-	date: z.string().describe("The linked transaction's YYYY-MM-DD date."),
-	correction,
-})
-
-export const transactionLinks: z.ZodType<TransactionLinks> = z.strictObject({
-	corrects: transactionRef
+	externalRef: z
+		.string()
 		.nullable()
-		.describe("The transaction this one voids or amends, or null."),
-	correction: correction.describe("What this transaction is to `corrects`, or null."),
-	correctedBy: z
-		.array(correctionRef)
-		.describe("The transactions that void or amend this one, by date then id, each named."),
+		.describe("The external reference that ties this row to a bank row, or null."),
+	postings: z.array(readPosting).describe("The postings in the order they were written."),
 })
 
 /** Every account's name by id, tombstones included, so a posting can always be named. */
@@ -103,6 +61,7 @@ export function transactionView(
 		date: tx.date,
 		memo: tx.memo,
 		linkedTo: tx.linkedTo,
+		externalRef: tx.externalRef,
 		postings: postings.map((row) => ({
 			ordinal: row.ordinal,
 			account: { id: row.accountId, name: names.get(row.accountId)! },
@@ -111,13 +70,4 @@ export function transactionView(
 			dimensions: row.dimensions,
 		})),
 	}
-}
-
-export function refOf(tx: TxRow): TransactionRef {
-	return { id: tx.id, date: tx.date }
-}
-
-/** A linked row as its own transaction names it: id, date and what kind of correction it is. */
-export function correctionRefOf(tx: TxRow): CorrectionRef {
-	return { ...refOf(tx), correction: tx.correctionKind }
 }

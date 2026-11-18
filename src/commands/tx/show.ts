@@ -4,15 +4,8 @@ import { defineCommand, ok } from "../../command"
 import { type AppError, isAppError } from "../../errors"
 import type { Store, TxRow } from "../../store"
 import { transactionNotFound } from "../../tx/errors"
-import {
-	accountNames,
-	correctionRefOf,
-	readTransaction,
-	refOf,
-	type TransactionLinks,
-	transactionLinks,
-	transactionView,
-} from "../../tx/read"
+import { correctionRefOf, refOf, type TransactionLinks, transactionLinks } from "../../tx/links"
+import { accountNames, readTransaction, transactionView } from "../../tx/read"
 import { withStore } from "../../with-store"
 
 function linksOf(store: Store, tx: TxRow): TransactionLinks | AppError {

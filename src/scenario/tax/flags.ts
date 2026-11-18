@@ -1,5 +1,6 @@
 import type { ThFilingStatus } from "@trajectonomics/tax/th"
 import { type AppError, fail } from "../../errors"
+import { labelSetsSentence } from "./labels"
 
 export type { ThFilingStatus }
 
@@ -32,6 +33,18 @@ export const FILING_STATUSES: readonly [ThFilingStatus, ...ThFilingStatus[]] = [
 	"married_joint",
 	"married_separate_40_1_joint_rest",
 ]
+
+/**
+ * The `--label` flag's one description, so usage and `traj schema` publish the same closed sets
+ * (ADR-0010). Both lists are `@trajectonomics/tax`'s own exports: a pin bump that changes them
+ * changes what this says, and no label is restated here (ADR-0032).
+ */
+export function labelFlagDescription(): string {
+	return [
+		"Classify one Flow for tax as <flow>=<label>, such as salary=income.section40_1; repeatable and needs --tax.",
+		labelSetsSentence(),
+	].join(" ")
+}
 
 /** `--none` beside any flag that writes a Levy: one or the other, never both. */
 function noneConflict(flags: TaxFlags): AppError | null {
