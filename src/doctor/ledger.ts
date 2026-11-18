@@ -6,7 +6,7 @@ import { NO_TRIAL, sentenceOf, skipped, step } from "./checks"
 import type { DoctorCheck, DoctorResult } from "./output"
 
 /** The integrity check's row-per-finding answer, `["ok"]` when SQLite found nothing. */
-function integrityCheck(store: Store): DoctorCheck {
+export function integrityCheck(store: Store): DoctorCheck {
 	const findings = store.integrity()
 	if (isAppError(findings)) return step("integrity", "fail", sentenceOf(findings))
 	const healthy = findings.length === 1 && findings[0] === "ok"
@@ -42,15 +42,15 @@ function trialCheck(ledger: Ledger, asOf: string) {
 }
 
 /**
- * The integrity, ledger and trial-balance checks over an opened store. The date is the caller's,
- * so an invalid one is raised as the input error it is rather than reported as a finding.
+ * The ledger and trial-balance checks over an opened store, after its integrity check. The date is
+ * the caller's, so an invalid one is raised as the input error it is rather than a finding.
  */
-export function storeChecks(
+export function ledgerChecks(
 	store: Store,
 	asOf: string | undefined,
 ): { checks: DoctorCheck[]; trialBalance?: DoctorResult["trialBalance"] | undefined } | AppError {
 	const ledger = ledgerCheck(store)
-	const checks: DoctorCheck[] = [integrityCheck(store), ledger.check]
+	const checks: DoctorCheck[] = [ledger.check]
 	if (asOf === undefined) {
 		return { checks: [...checks, skipped("trialBalance", NO_TRIAL)] }
 	}

@@ -238,7 +238,7 @@ _Avoid_: Format, schema, bank export
 
 **Backup**:
 A directory holding `traj.jsonl`, the canonical JSONL Dump, written by `traj backup` and read by `traj restore`. Two backups of the same database are byte-identical, so a backup is compared by its bytes and never by a timestamp.
-_Avoid_: Snapshot (a Backup is a file, a Snapshot is not a term here), Dump (a Dump is the rows; a Backup is the directory that holds them)
+_Avoid_: Snapshot, Copy (a Backup is the directory that holds a Dump; the Dump is the rows)
 
 **Restore**:
 Writing a Backup's rows into an empty database, verbatim. It never merges and never overwrites.

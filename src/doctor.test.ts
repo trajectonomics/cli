@@ -121,6 +121,18 @@ describe("doctor", () => {
 		)
 	})
 
+	it("names every check it knows when it could not run them", async () => {
+		const data = JSON.parse((await doctor(tempHome())).out)
+		expect(data.checks.map((check: { name: string }) => check.name)).toEqual([
+			"directory",
+			"writable",
+			"database",
+			"integrity",
+			"ledger",
+			"trialBalance",
+		])
+	})
+
 	it("gives byte-identical output for two runs over the same data", async () => {
 		const home = await goldenHome()
 		expect(await doctor(home)).toEqual(await doctor(home))

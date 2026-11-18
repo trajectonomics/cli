@@ -8,7 +8,6 @@ export const DOCTOR_CHECKS = [
 	"directory",
 	"writable",
 	"database",
-	"schemaVersion",
 	"integrity",
 	"ledger",
 	"trialBalance",

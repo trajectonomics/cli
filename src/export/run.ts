@@ -1,7 +1,7 @@
 import { resolve } from "node:path"
 import type { Context } from "../command"
 import { ok } from "../command"
-import { viewDump } from "../dump/view"
+import { countsOf, viewDump } from "../dump/view"
 import { type AppError, isAppError } from "../errors"
 import type { RestoreCounts } from "../store"
 import { withStore } from "../with-store"
@@ -33,15 +33,7 @@ export async function writeDumpExport(
 		const rows = store.dump()
 		if (isAppError(rows)) return rows
 		const files = exportFiles(format, schemaVersion, viewDump(rows))
-		// The counts come from the same dump, so they equal what was written to every file.
-		const counts: RestoreCounts = {
-			entity: rows.entity.length,
-			account: rows.account.length,
-			tx: rows.tx.length,
-			posting: rows.posting.length,
-			scenario: rows.scenario.length,
-		}
-		return ok({ schemaVersion, files, counts })
+		return ok({ schemaVersion, files, counts: countsOf(rows) })
 	})
 	if (isAppError(read)) return read
 	const { schemaVersion, files, counts } = read.data

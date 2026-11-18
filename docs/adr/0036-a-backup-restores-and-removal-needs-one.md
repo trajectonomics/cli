@@ -36,7 +36,7 @@ error's `message`, because the human Format renders `message` and `hint` and not
 the same numbers travel in `details.rows` for a JSON caller. A typed path cannot be
 mis-clicked, and a refusal that states the loss is also the answer to "what is in there".
 
-**Only the database's files go.** The removal deletes `traj.db-wal`, `traj.db-shm` and
+**Only the database's files go.** The removal deletes `traj.db-shm`, `traj.db-wal` and
 `traj.db`, in that order, and leaves the data directory, the launcher's `bin/` cache and
 anything else in it (ADR-0014). The database goes last, so a removal that fails part way has not
 removed what holds the data. The result lists the files removed and what remains beside them.

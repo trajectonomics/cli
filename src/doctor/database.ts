@@ -3,7 +3,7 @@ import type { Context } from "../command"
 import { type AppError, isAppError } from "../errors"
 import { HEAD, openStore, type RestoreCounts, type Store } from "../store"
 import { sentenceOf, skipped, step } from "./checks"
-import { storeChecks } from "./ledger"
+import { integrityCheck, ledgerChecks } from "./ledger"
 import type { DoctorCheck, DoctorResult } from "./output"
 
 export type DatabaseFacts = DoctorResult["database"]
@@ -58,18 +58,24 @@ function readOpened(
 		"pass",
 		`${database} opens at schema version ${version} of ${HEAD}.`,
 	)
+	const integrity = integrityCheck(store)
 	const rows = store.counts()
 	if (isAppError(rows)) {
 		const failed = step("ledger", "fail", sentenceOf(rows))
 		return {
 			facts,
 			rows: { ...NO_ROWS },
-			checks: [opened, failed, skipped("trialBalance", "It could not be read.")],
+			checks: [opened, integrity, failed, skipped("trialBalance", "It could not be read.")],
 		}
 	}
-	const checks = storeChecks(store, asOf)
-	if (isAppError(checks)) return checks
-	return { facts, rows, checks: [opened, ...checks.checks], trialBalance: checks.trialBalance }
+	const rest = ledgerChecks(store, asOf)
+	if (isAppError(rest)) return rest
+	return {
+		facts,
+		rows,
+		checks: [opened, integrity, ...rest.checks],
+		trialBalance: rest.trialBalance,
+	}
 }
 
 /**
