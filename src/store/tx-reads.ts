@@ -1,7 +1,7 @@
 import type { AppError } from "../errors"
 import { POSTING_COLUMNS, POSTING_ORDER, TX_COLUMNS, TX_ORDER } from "./columns"
 import type { Ctx } from "./context"
-import { guard } from "./guard"
+import { read } from "./guard"
 import { parsePosting, txById } from "./tx-content"
 import { whereOf } from "./tx-filter"
 import type { PostingRow, PostingSort, TxFilter, TxRow, TxSort } from "./types"
@@ -11,21 +11,19 @@ export function listTransactions(
 	options: { sort: TxSort } & TxFilter,
 ): TxRow[] | AppError {
 	const where = whereOf(options)
-	return guard(
-		() =>
-			ctx.db
-				.query<TxRow, string[]>(
-					`SELECT ${TX_COLUMNS} FROM tx WHERE entity_id = ? ${where.sql}
+	return read(ctx.db, () =>
+		ctx.db
+			.query<TxRow, string[]>(
+				`SELECT ${TX_COLUMNS} FROM tx WHERE entity_id = ? ${where.sql}
 				ORDER BY ${TX_ORDER[options.sort]}`,
-				)
-				.all(ctx.entityId, ...where.params),
-		ctx.db.filename,
+			)
+			.all(ctx.entityId, ...where.params),
 	)
 }
 
 /** The transaction with this id in the personal entity, or null. */
 export function getTransaction(ctx: Ctx, id: string): TxRow | null | AppError {
-	return guard(() => txById(ctx, id), ctx.db.filename)
+	return read(ctx.db, () => txById(ctx, id))
 }
 
 export function listPostings(
@@ -33,16 +31,14 @@ export function listPostings(
 	options: { sort: PostingSort; filter?: TxFilter },
 ): PostingRow[] | AppError {
 	const where = whereOf(options.filter ?? {})
-	return guard(
-		() =>
-			ctx.db
-				.query<Parameters<typeof parsePosting>[0], string[]>(
-					`SELECT ${POSTING_COLUMNS} FROM posting
+	return read(ctx.db, () =>
+		ctx.db
+			.query<Parameters<typeof parsePosting>[0], string[]>(
+				`SELECT ${POSTING_COLUMNS} FROM posting
 				WHERE tx_id IN (SELECT id FROM tx WHERE entity_id = ? ${where.sql})
 				ORDER BY ${POSTING_ORDER[options.sort]}`,
-				)
-				.all(ctx.entityId, ...where.params)
-				.map(parsePosting),
-		ctx.db.filename,
+			)
+			.all(ctx.entityId, ...where.params)
+			.map(parsePosting),
 	)
 }

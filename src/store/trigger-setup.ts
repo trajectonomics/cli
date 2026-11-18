@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite"
 import { chmodSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { capture } from "../test-support"
-import { guard } from "./guard"
+import { guardAt } from "./guard"
 import { openStore } from "./index"
 import { mustOpen, steppingClock, tempHome } from "./testing"
 
@@ -63,12 +63,9 @@ export function corruptHome(): unknown {
 	return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
 }
 
-/** The envelope `guard` returns on a full disk, without needing a full disk. */
+/** The envelope `guardAt` returns on a full disk, without needing a full disk. */
 export function fullDisk(): unknown {
-	return guard(
-		() => {
-			throw Object.assign(new Error("database or disk is full"), { code: "SQLITE_FULL" })
-		},
-		join(tempHome(), "traj.db"),
-	)
+	return guardAt(join(tempHome(), "traj.db"), () => {
+		throw Object.assign(new Error("database or disk is full"), { code: "SQLITE_FULL" })
+	})
 }

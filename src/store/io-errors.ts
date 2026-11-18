@@ -99,14 +99,7 @@ export function databaseStep<T>(path: string, work: () => T): T | AppError {
 	}
 }
 
-/** The codes the mapping names, so a migration can pass an environment failure through. */
-const FILE_ERROR_CODES: ReadonlySet<string> = new Set(
-	"EACCES EPERM EROFS ENOSPC EDQUOT EEXIST ENOTDIR EISDIR SQLITE_CANTOPEN SQLITE_PERM SQLITE_AUTH SQLITE_READONLY SQLITE_NOTADB SQLITE_CORRUPT SQLITE_FULL".split(
-		" ",
-	),
-)
-
-/** True when this is a filesystem failure the mapping names, not a programming error. */
+/** True when the mapping names this filesystem failure, not a programming error. */
 export function isFileFailure(error: unknown): boolean {
-	return FILE_ERROR_CODES.has(errorCodeOf(error) ?? "")
+	return directoryFailure("", error) !== undefined || databaseFailure("", error) !== undefined
 }

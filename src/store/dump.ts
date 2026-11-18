@@ -2,7 +2,7 @@ import { type AppError, isAppError } from "../errors"
 import { listAccounts } from "./accounts"
 import type { Ctx } from "./context"
 import { listEntities } from "./entities"
-import { abort, guard } from "./guard"
+import { abort, read } from "./guard"
 import { listScenarios } from "./scenarios"
 import { listPostings, listTransactions } from "./tx-reads"
 import type { RestoreCounts, RestoreRows } from "./types"
@@ -29,16 +29,14 @@ function readAll(ctx: Ctx): RestoreRows | AppError {
  * of them cannot produce a posting whose transaction is missing from the same dump.
  */
 export function dumpRows(ctx: Ctx): RestoreRows | AppError {
-	return guard(
-		() =>
-			ctx.db
-				.transaction(() => {
-					const rows = readAll(ctx)
-					if (isAppError(rows)) abort(rows)
-					return rows
-				})
-				.deferred(),
-		ctx.db.filename,
+	return read(ctx.db, () =>
+		ctx.db
+			.transaction(() => {
+				const rows = readAll(ctx)
+				if (isAppError(rows)) abort(rows)
+				return rows
+			})
+			.deferred(),
 	)
 }
 
@@ -47,7 +45,8 @@ export function dumpRows(ctx: Ctx): RestoreRows | AppError {
  * summary never reads every row. The numbers are the dump's own row counts.
  */
 export function dumpCounts(ctx: Ctx): RestoreCounts | AppError {
-	return guard(
+	return read(
+		ctx.db,
 		() =>
 			ctx.db
 				.query<RestoreCounts, [string]>(
@@ -59,6 +58,5 @@ export function dumpCounts(ctx: Ctx): RestoreCounts | AppError {
 					(SELECT count(*) FROM scenario WHERE entity_id = ?1) AS scenario`,
 				)
 				.get(ctx.entityId)!,
-		ctx.db.filename,
 	)
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { chmodSync } from "node:fs"
 import { join } from "node:path"
 import { isAppError } from "../errors"
-import { guard } from "./guard"
+import { guardAt } from "./guard"
 import { mustOpen, tempHome } from "./testing"
 
 describe("a write refused by the filesystem", () => {
@@ -27,9 +27,9 @@ describe("a write refused by the filesystem", () => {
 
 	it("names a full disk as a retryable disk_full", () => {
 		const path = join(tempHome(), "traj.db")
-		const outcome = guard(() => {
+		const outcome = guardAt(path, () => {
 			throw Object.assign(new Error("database or disk is full"), { code: "SQLITE_FULL" })
-		}, path)
+		})
 		if (!isAppError(outcome)) throw new Error("expected disk_full")
 		expect(outcome.body).toMatchObject({ code: "disk_full", exitCode: 1, details: { path } })
 		expect(outcome.body.hint).toContain("Free space")
@@ -37,12 +37,9 @@ describe("a write refused by the filesystem", () => {
 
 	it("leaves an unknown failure to the internal envelope", () => {
 		expect(() =>
-			guard(
-				() => {
-					throw new Error("boom")
-				},
-				join(tempHome(), "traj.db"),
-			),
+			guardAt(join(tempHome(), "traj.db"), () => {
+				throw new Error("boom")
+			}),
 		).toThrow("boom")
 	})
 })

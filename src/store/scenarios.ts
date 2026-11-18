@@ -2,7 +2,7 @@ import { type AppError, fail } from "../errors"
 import { contentHash } from "./canonical"
 import { liveOnly, SCENARIO_COLUMNS, SCENARIO_ORDER } from "./columns"
 import type { Ctx } from "./context"
-import { guard, write } from "./guard"
+import { read, write } from "./guard"
 import { canonicalDocument, insertScenario, liveScenario, replaceDocument } from "./scenario-rows"
 import type {
 	ListOptions,
@@ -15,9 +15,9 @@ import type {
 
 /** The live Scenario this id or name names; an id is read first (ADR-0018). */
 export function getScenario(ctx: Ctx, idOrName: string): ScenarioRow | null | AppError {
-	return guard(
+	return read(
+		ctx.db,
 		() => liveScenario(ctx, "id", idOrName) ?? liveScenario(ctx, "name", idOrName),
-		ctx.db.filename,
 	)
 }
 
@@ -52,14 +52,12 @@ export function listScenarios(
 	ctx: Ctx,
 	options: ListOptions<ScenarioSort>,
 ): ScenarioRow[] | AppError {
-	return guard(
-		() =>
-			ctx.db
-				.query<ScenarioRow, [string]>(
-					`SELECT ${SCENARIO_COLUMNS} FROM scenario WHERE entity_id = ?1
+	return read(ctx.db, () =>
+		ctx.db
+			.query<ScenarioRow, [string]>(
+				`SELECT ${SCENARIO_COLUMNS} FROM scenario WHERE entity_id = ?1
 				${liveOnly(options.includeDeleted)} ORDER BY ${SCENARIO_ORDER[options.sort]}`,
-				)
-				.all(ctx.entityId),
-		ctx.db.filename,
+			)
+			.all(ctx.entityId),
 	)
 }

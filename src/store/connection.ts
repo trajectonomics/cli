@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite"
 import { type AppError, isAppError } from "../errors"
-import { guard } from "./guard"
+import { guardAt } from "./guard"
 import { HEAD, migrate, tooNew, userVersion } from "./migrations"
 
 /**
@@ -10,17 +10,17 @@ import { HEAD, migrate, tooNew, userVersion } from "./migrations"
 export function connect(path: string, busyTimeoutMs: number): Database | AppError {
 	let db: Database | undefined
 	try {
-		const opened = guard(() => new Database(path, { create: true }), path)
+		const opened = guardAt(path, () => new Database(path, { create: true }))
 		if (isAppError(opened)) return opened
 		db = opened
-		const outcome = guard(() => {
+		const outcome = guardAt(path, () => {
 			opened.run(`PRAGMA busy_timeout = ${busyTimeoutMs}`)
 			const version = userVersion(opened)
 			if (version > HEAD) return tooNew(version)
 			opened.run("PRAGMA journal_mode = WAL")
 			opened.run("PRAGMA foreign_keys = ON")
 			return migrate(opened)
-		}, path)
+		})
 		if (isAppError(outcome)) {
 			opened.close()
 			return outcome
