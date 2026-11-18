@@ -1,6 +1,6 @@
 import { ThLevyContributionLabel } from "@trajectonomics/tax/th"
 import type { ScenarioDocument } from "../document"
-import { ALLOWANCE_FLAGS } from "./allowances"
+import { ALLOWANCE_FLAGS, type TaxAllowances } from "./allowances"
 import type { TaxRequest } from "./flags"
 import { records } from "./json"
 import { flowsOf } from "./labels"
@@ -12,21 +12,12 @@ import { leviesOf, TAX_LEVY_ID } from "./levy"
  * no flag a caller could leave out. `retirementContributions` and `thaiEsg` are not flags either:
  * they arrive as labelled contribution Flows, which the Levy tallies instead (ADR-0032).
  */
-export const TAX_ALLOWANCE_CLASSES = [
+export const TAX_ALLOWANCE_CLASSES: readonly [
 	"children",
-	"parents",
-	"disabledCare",
-	"socialSecurity",
-	"lifeInsurance",
-	"healthInsurance",
-	"parentHealthInsurance",
-	"spouseLifeInsurance",
-	"mortgageInterest",
-	"donation2x",
-	"donation1x",
+	...(keyof TaxAllowances)[],
 	"retirementContributions",
 	"thaiEsg",
-] as const
+] = ["children", ...ALLOWANCE_FLAGS, "retirementContributions", "thaiEsg"]
 
 export type TaxAllowanceClass = (typeof TAX_ALLOWANCE_CLASSES)[number]
 
@@ -73,7 +64,7 @@ export function taxProfileOf(request: TaxRequest, document: ScenarioDocument): T
 	const stated = new Set<TaxAllowanceClass>()
 	if (request.children > 0) stated.add("children")
 	for (const field of ALLOWANCE_FLAGS) {
-		if (request.allowances[field] > 0) stated.add(field as TaxAllowanceClass)
+		if (request.allowances[field] > 0) stated.add(field)
 	}
 	const read = fundedLabelsOf(document)
 	const carried = contributionLabelsOf(document)

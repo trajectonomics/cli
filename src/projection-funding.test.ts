@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import type { CompareView } from "./projection/compare-view"
-import { dateFlags, projection, projectionHome } from "./projection/testing"
+import type { FiView } from "./projection/fi-view"
+import { dateFlags, fi, projection, projectionHome } from "./projection/testing"
 import { runBody } from "./projection-run-support"
 import { capture } from "./test-support"
 
@@ -21,6 +22,14 @@ describe("a Projection that could not fund a Contribution", () => {
 		expect(res.code).toBe(0)
 		const body = JSON.parse(res.out) as CompareView
 		expect(body.notes.join(" ")).toContain("Side B could not fund")
+	})
+
+	it("adds the same sentence to fi, whose Projection is the one it reports", async () => {
+		const home = await projectionHome()
+		const res = await fi(home, ["--scenario", "base", ...dateFlags(), ...TOO_BIG])
+		expect(res.code).toBe(0)
+		const body = JSON.parse(res.out) as FiView
+		expect(body.notes.join(" ")).toContain("of Contributions could not be funded")
 	})
 
 	it("adds no sentence when every Contribution was funded", async () => {

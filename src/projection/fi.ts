@@ -10,6 +10,7 @@ import type { Placed } from "./carryin-apply"
 import { echoOf } from "./echo"
 import { refusal } from "./engine"
 import type { BestCaseView, FiAnswer, FiView, RuleOfThumbView } from "./fi-view"
+import { fundingNotes } from "./funding"
 import { moneyOf } from "./money"
 import { taxYearsOf } from "./tax-view"
 
@@ -99,6 +100,10 @@ export function independenceOf(prepared: Placed): FiView | AppError {
 	if (!result.ok) return refusal(result.problems)
 	return {
 		...echoOf(prepared),
+		notes: [
+			...prepared.notes,
+			...fundingNotes(result.projection.unfundedContributions, prepared.currency),
+		],
 		horizon: prepared.timeline.horizon,
 		currency: prepared.currency,
 		method: solution.definition.method,

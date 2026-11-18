@@ -1,21 +1,11 @@
 import { z } from "zod"
+import type { TaxAllowances } from "./allowances"
 
 /** One deduction flag: an amount or count the caller states, never a required one. */
 type DeductionFlag = z.ZodOptional<z.ZodNumber>
 
-/** The deduction flags `scenario tax` accepts. */
-export type DeductionFlags = {
-	parents: DeductionFlag
-	disabledCare: DeductionFlag
-	socialSecurity: DeductionFlag
-	lifeInsurance: DeductionFlag
-	healthInsurance: DeductionFlag
-	parentHealthInsurance: DeductionFlag
-	spouseLifeInsurance: DeductionFlag
-	mortgageInterest: DeductionFlag
-	donation2x: DeductionFlag
-	donation1x: DeductionFlag
-}
+/** The deduction flags `scenario tax` accepts, one per allowance a caller can state. */
+export type DeductionFlags = Record<keyof TaxAllowances, DeductionFlag>
 
 /**
  * The deduction flags `scenario tax` accepts. Each states an amount the taxpayer paid in the tax

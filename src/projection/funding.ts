@@ -2,7 +2,7 @@ import type { AccountAmount } from "@trajectonomics/sim"
 import { moneyOf } from "./money"
 
 /** The total a Projection could not invest, in minor units; `null` when the sum is not exact. */
-export function unfundedTotal(unfunded: readonly AccountAmount[]): number | null {
+function unfundedTotal(unfunded: readonly AccountAmount[]): number | null {
 	let total = 0n
 	for (const item of unfunded) total += BigInt(item.amount)
 	const limit = BigInt(Number.MAX_SAFE_INTEGER)
