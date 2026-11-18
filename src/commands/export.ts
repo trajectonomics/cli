@@ -1,13 +1,10 @@
-import { resolve } from "node:path"
 import { z } from "zod"
 import type { Leaf } from "../command"
 import { defineCommand, ok } from "../command"
-import { viewDump } from "../dump/view"
 import { isAppError } from "../errors"
-import { EXPORT_FORMATS, exportFiles } from "../export/files"
+import { EXPORT_FORMATS } from "../export/files"
 import { exportOutput } from "../export/output"
-import { writeExport } from "../export/write"
-import { withStore } from "../with-store"
+import { writeDumpExport } from "../export/run"
 
 export const exportCommand: Leaf = defineCommand({
 	name: "export",
@@ -37,32 +34,7 @@ export const exportCommand: Leaf = defineCommand({
 		"migration_failed",
 	],
 	run: async (input, ctx) => {
-		// Read the dump inside the store, then close it before writing anything.
-		const read = withStore(ctx, (store) => {
-			const schemaVersion = store.schemaVersion()
-			if (isAppError(schemaVersion)) return schemaVersion
-			const rows = store.dump()
-			if (isAppError(rows)) return rows
-			return ok({ schemaVersion, rows })
-		})
-		if (isAppError(read)) return read
-		const { schemaVersion, rows } = read.data
-		const view = viewDump(rows)
-		const files = exportFiles(input.format, schemaVersion, view)
-		const failure = await writeExport(input.out, files)
-		if (failure) return failure
-		return ok({
-			format: input.format,
-			directory: resolve(input.out),
-			schemaVersion,
-			files: files.map((file) => file.name),
-			rows: {
-				entity: view.entity.length,
-				account: view.account.length,
-				tx: view.tx.length,
-				posting: view.posting.length,
-				scenario: view.scenario.length,
-			},
-		})
+		const written = await writeDumpExport(ctx, input.format, input.out, "export")
+		return isAppError(written) ? written : ok({ format: input.format, ...written })
 	},
 })

@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { z } from "zod"
 import type { Leaf } from "../command"
 import { defineCommand, ok } from "../command"
-import { dataDirectory } from "../data-directory"
+import { DATABASE_FILE, dataDirectory } from "../data-directory"
 import { isAppError } from "../errors"
 import { databaseStep, directoryStep } from "../store/io-errors"
 
@@ -25,7 +25,7 @@ export const init: Leaf = defineCommand({
 	errorCodes: ["database_corrupt", "disk_full", "not_a_directory", "permission_denied"],
 	run: (_input, ctx) => {
 		const directory = dataDirectory(ctx.env)
-		const database = join(directory, "traj.db")
+		const database = join(directory, DATABASE_FILE)
 		const created = !existsSync(database)
 		const made = directoryStep(directory, () => mkdirSync(directory, { recursive: true }))
 		if (isAppError(made)) return made

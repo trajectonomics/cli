@@ -5,14 +5,19 @@ import { type AppError, fail } from "../errors"
 import type { ExportFile } from "./files"
 
 /** Never the OS's own message: a stable code, the path, and whether a partial directory remains. */
-function failed(target: string, error: unknown, cleaned: boolean): AppError {
+function failed(
+	target: string,
+	error: unknown,
+	cleaned: boolean,
+	what: "backup" | "export",
+): AppError {
 	const code = errorCodeOf(error)
 	const hint = cleaned
 		? "Nothing was written; the database is unchanged."
 		: "A partial directory may remain; remove it before retrying."
 	return fail("export_failed", {
 		path: "out",
-		message: `The export could not be written: ${target}`,
+		message: `The ${what} could not be written: ${target}`,
 		details: code === undefined ? { path: target } : { path: target, code },
 		hint,
 	})
@@ -34,24 +39,24 @@ function outputExists(target: string): AppError {
 }
 
 /** The parent may be created recursively; the target itself never is (see below). */
-async function makeParent(target: string): Promise<AppError | null> {
+async function makeParent(target: string, what: "backup" | "export"): Promise<AppError | null> {
 	try {
 		await mkdir(dirname(target), { recursive: true })
 		return null
 	} catch (error) {
 		// Nothing of ours exists yet, so nothing needs removing.
-		return failed(target, error, true)
+		return failed(target, error, true, what)
 	}
 }
 
 /** A non-recursive `mkdir` is the race-safe existence test: only EEXIST means "already there". */
-async function makeTarget(target: string): Promise<AppError | null> {
+async function makeTarget(target: string, what: "backup" | "export"): Promise<AppError | null> {
 	try {
 		await mkdir(target)
 		return null
 	} catch (error) {
 		if (errorCodeOf(error) === "EEXIST") return outputExists(target)
-		return failed(target, error, await removeQuietly(target))
+		return failed(target, error, await removeQuietly(target), what)
 	}
 }
 
@@ -59,21 +64,22 @@ async function makeTarget(target: string): Promise<AppError | null> {
  * Writes `files` into a directory created at `out`. The parent is created recursively, then the
  * target with a non-recursive `mkdir`, so an existing path is `output_exists` at exit 5 and a
  * typo can never overwrite an older backup. A failed write removes the directory this run
- * created; `null` means every file was written.
+ * created; `null` means every file was written. `what` names the command in the failure.
  */
 export async function writeExport(
 	out: string,
 	files: readonly ExportFile[],
+	what: "backup" | "export",
 ): Promise<AppError | null> {
 	const target = resolve(out)
-	const parent = await makeParent(target)
+	const parent = await makeParent(target, what)
 	if (parent) return parent
-	const created = await makeTarget(target)
+	const created = await makeTarget(target, what)
 	if (created) return created
 	try {
 		for (const file of files) await Bun.write(join(target, file.name), file.contents)
 		return null
 	} catch (error) {
-		return failed(target, error, await removeQuietly(target))
+		return failed(target, error, await removeQuietly(target), what)
 	}
 }

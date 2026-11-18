@@ -48,7 +48,7 @@ describe("importJsonl refusals", () => {
 		const store = mustOpen(tempHome())
 		store.createAccount({ name: "Cash", type: "asset", currency: "THB" })
 		const body = refused(await goldenJsonl(), store)
-		expect(body).toMatchObject({ code: "invalid_input", details: { rows: 1 } })
+		expect(body).toMatchObject({ code: "restore_target_not_empty", details: { rows: 1 } })
 	})
 
 	it("refuses a v1 Scenario document at its line, which the pinned engine no longer accepts", async () => {

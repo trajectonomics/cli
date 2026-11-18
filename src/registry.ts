@@ -2,8 +2,8 @@
 export type ExitCode = 0 | 1 | 2 | 3 | 4 | 5
 
 /**
- * Every registered failure name, never reused. CLI-owned codes are snake_case; the ledger core's
- * codes are registered verbatim in upper case, so a caller sees the core's own name for a rule.
+ * Every registered failure name, never reused: CLI-owned codes are snake_case, the ledger core's
+ * verbatim in upper case, so a caller sees the core's own name for a rule.
  */
 export type ErrorCode =
 	| "internal"
@@ -27,6 +27,9 @@ export type ErrorCode =
 	| "migration_failed"
 	| "output_exists"
 	| "export_failed"
+	| "backup_unreadable"
+	| "backup_stale"
+	| "restore_target_not_empty"
 	| "projection_refused"
 	| "SINGLE_POSTING"
 	| "INVALID_AMOUNT"
@@ -84,6 +87,9 @@ export const registry: Record<ErrorCode, ErrorSpec> = {
 	migration_failed: { exit: 1, message: "The database could not be migrated." },
 	output_exists: { exit: 5, message: "The output path already exists." },
 	export_failed: { exit: 1, message: "The export could not be written." },
+	backup_unreadable: { exit: 1, message: "The backup could not be read." },
+	backup_stale: { exit: 3, message: "The backup does not match the data in the ledger." },
+	restore_target_not_empty: { exit: 5, message: "The database already holds data." },
 	projection_refused: { exit: 3, message: "The projection engine refused its input." },
 	SINGLE_POSTING: { exit: 3, message: "A transaction needs at least two postings." },
 	INVALID_AMOUNT: { exit: 3, message: "The amount is not a safe integer of minor units." },
