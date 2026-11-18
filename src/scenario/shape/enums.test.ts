@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { TAX_CONTRIBUTION_LABELS, TAX_INCOME_LABELS } from "../tax/labels"
 import { scenarioExample } from "./index"
 import { canonical, documented, nodeAt, type Path, probed, refusalsOf, VERSION } from "./testing"
 
@@ -184,6 +185,13 @@ describe("the closed value sets the shape states", () => {
 			for (const document of documents) expect(refusalsOf(document)).toEqual([])
 			const probedValues = documents.map((document) => readAt(document, entry.path))
 			expect([...probedValues].sort()).toEqual([...values].sort())
+		}
+	})
+
+	it("names every tax label a Flow may carry, in the field that carries one", () => {
+		const label = String(nodeAt(["flows", 0, "label"])["description"])
+		for (const code of [...TAX_INCOME_LABELS, ...TAX_CONTRIBUTION_LABELS]) {
+			expect(label).toContain(code)
 		}
 	})
 

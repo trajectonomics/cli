@@ -14,6 +14,17 @@ import { type JsonRecord, records } from "./json"
 export const TAX_INCOME_LABELS: readonly string[] = TH_LEVY_INCOME_LABELS
 export const TAX_CONTRIBUTION_LABELS: readonly string[] = TH_LEVY_CONTRIBUTION_LABELS
 
+/**
+ * The two closed sets in one sentence, so the `--label` flag and the Scenario document's `label`
+ * field both name them from here (ADR-0010, ADR-0032).
+ */
+export function labelSetsSentence(): string {
+	return [
+		`An income Flow takes one of ${TAX_INCOME_LABELS.join(", ")}.`,
+		`A contribution Flow takes one of ${TAX_CONTRIBUTION_LABELS.join(", ")}.`,
+	].join(" ")
+}
+
 /** One `--label flow=label`, the classification the Levy tallies this Flow under. */
 export type FlowLabel = { flow: string; label: string }
 

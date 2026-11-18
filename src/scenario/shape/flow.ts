@@ -1,3 +1,4 @@
+import { labelSetsSentence } from "../tax/labels"
 import { cappedPrepaymentShape, deriveShape, prepaymentsShape } from "./flow-parts"
 import { BASIS_POINTS, DATE, FREQUENCIES, MINOR_UNITS } from "./terms"
 
@@ -55,8 +56,7 @@ export const flowShape: Record<string, unknown> = {
 		},
 		label: {
 			type: "string",
-			description:
-				"Income and contribution only: the Tally label a Levy sums this Flow under, written by `traj scenario tax --label`. A Flow without one is not tax-free, it is income no Levy is told about. Needs a Levy.",
+			description: `Income and contribution only: the Tally label a Levy sums this Flow under, written by \`traj scenario tax --label\`. A Flow without one is not tax-free, it is income no Levy is told about. ${labelSetsSentence()} Needs a Levy.`,
 		},
 		prepayments: prepaymentsShape,
 		cappedPrepayment: cappedPrepaymentShape,

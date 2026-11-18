@@ -1,6 +1,6 @@
 import type { ThFilingStatus } from "@trajectonomics/tax/th"
 import { type AppError, fail } from "../../errors"
-import { TAX_CONTRIBUTION_LABELS, TAX_INCOME_LABELS } from "./labels"
+import { labelSetsSentence } from "./labels"
 
 export type { ThFilingStatus }
 
@@ -42,8 +42,7 @@ export const FILING_STATUSES: readonly [ThFilingStatus, ...ThFilingStatus[]] = [
 export function labelFlagDescription(): string {
 	return [
 		"Classify one Flow for tax as <flow>=<label>, such as salary=income.section40_1; repeatable and needs --tax.",
-		`An income Flow takes one of ${TAX_INCOME_LABELS.join(", ")}.`,
-		`A contribution Flow takes one of ${TAX_CONTRIBUTION_LABELS.join(", ")}.`,
+		labelSetsSentence(),
 	].join(" ")
 }
 
