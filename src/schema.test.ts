@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { type ErrorCode, registry } from "./errors"
 import { RETRYABLE_CODES } from "./registry"
+import { scenarioHome } from "./scenario-test-support"
 import { capture } from "./test-support"
 
 describe("schema", () => {
@@ -97,5 +98,57 @@ describe("schema", () => {
 		const res = await capture(["schema"])
 		expect(res.code).toBe(0)
 		expect(res.out).toContain("unknown_command")
+	})
+})
+
+describe("schema of the Scenario document", () => {
+	it("publishes the shape, its units and one worked example a person can apply", async () => {
+		const res = await capture(["schema", "scenario", "apply", "--json"])
+		expect(res.code).toBe(0)
+		const document = JSON.parse(res.out).document
+		expect(Object.keys(document.schema.properties)).toEqual([
+			"schemaVersion",
+			"currency",
+			"economy",
+			"accounts",
+			"flows",
+			"cashflow",
+			"levies",
+			"calendar",
+		])
+		expect(document.schema.additionalProperties).toBe(false)
+		expect(document.schema.description).toContain("minor units")
+		expect(document.schema.description).toContain("basis points")
+		expect(document.schema.description).toContain("check()")
+		expect(document.schema.examples).toHaveLength(1)
+		const applied = await capture(
+			["scenario", "apply", "example", "--file", "-", "--dry-run", "--json"],
+			{ TRAJ_HOME: scenarioHome() },
+			undefined,
+			JSON.stringify(document.schema.examples[0]),
+		)
+		expect(applied.code).toBe(0)
+		expect(JSON.parse(applied.out).status).toBe("created")
+	})
+})
+
+describe("what this version cannot do", () => {
+	it("is listed on the root, with the limit and the way around it", async () => {
+		const res = await capture(["schema", "--json"])
+		expect(res.code).toBe(0)
+		const entries = JSON.parse(res.out).notSupported as { feature: string; detail: string }[]
+		const features = entries.map((entry) => entry.feature).join(" ")
+		expect(features).toContain("currency other than THB")
+		expect(features).toContain("Monte Carlo")
+		expect(features).toContain("return shocks")
+		expect(features).toContain("retirement date")
+		for (const entry of entries) expect(entry.detail.length).toBeGreaterThan(20)
+	})
+
+	it("is not repeated on a group or a command, because it is a fact about the whole tool", async () => {
+		for (const path of [["scenario"], ["init"]]) {
+			const res = await capture(["schema", ...path, "--json"])
+			expect(JSON.parse(res.out).notSupported).toBeUndefined()
+		}
 	})
 })

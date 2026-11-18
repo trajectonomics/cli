@@ -9,6 +9,7 @@ import { fiView } from "../projection/fi-view"
 import {
 	asOfFlag,
 	carryInFlag,
+	carryInFlagDocument,
 	horizonFlag,
 	PROJECTION_ERROR_CODES,
 	scenarioFlag,
@@ -27,6 +28,7 @@ export const fi: Leaf = defineCommand({
 		set: setFlag,
 		carryIn: carryInFlag,
 	}),
+	flagDocuments: [carryInFlagDocument],
 	output: fiView,
 	examples: [
 		{

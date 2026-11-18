@@ -45,14 +45,38 @@ const recordForm: z.ZodType<CarryInRecordForm> = z.strictObject({
 	levy: z.string().min(1).describe("The Levy's id, as the Scenario spells it."),
 	periodStart: z.string().min(1).describe("The period's first day, as YYYY-MM-DD."),
 	tallies: z.array(tallyForm).describe("What that period tallied, class by class."),
-	prepaid: amount.describe("What that period had already prepaid."),
+	prepaid: amount.describe(
+		"What that period had already prepaid, as a decimal string at the currency's scale.",
+	),
 	rest: amount
 		.optional()
-		.describe('Asserts every class the record does not name tallied zero, as "0.00".'),
+		.describe(
+			'Asserts every class the record does not name tallied zero, as a decimal string "0.00".',
+		),
 })
 
+/**
+ * The one record `traj schema` publishes as the example, so the shape is read from one place. It
+ * is a document `carryInDocument` accepts, which a test proves: an example the tool would refuse
+ * teaches the wrong shape.
+ */
+export const CARRY_IN_EXAMPLE: readonly CarryInRecordForm[] = [
+	{
+		scenario: "base",
+		levy: "th-2026",
+		periodStart: "2025-01-01",
+		tallies: [{ label: "income.section40_1", basis: "gross", amount: "780000.00" }],
+		prepaid: "0.00",
+		rest: "0.00",
+	},
+]
+
 /** The `--carry-in` document: a flat list of records, one per Scenario, Levy and period. */
-export const carryInDocument: z.ZodType<readonly CarryInRecordForm[]> = z.array(recordForm)
+export const carryInDocument: z.ZodType<readonly CarryInRecordForm[]> = z.array(recordForm).meta({
+	description:
+		"A JSON array of records, one per Scenario, Levy and period, each stating what that period had already tallied and prepaid before the As-of.",
+	examples: [CARRY_IN_EXAMPLE],
+})
 
 /** Reads and validates the flag's document, before the Store opens (ADR-0020, ADR-0030). */
 export async function readCarryIn(

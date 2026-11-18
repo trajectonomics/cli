@@ -17,7 +17,9 @@ describe("tx show", () => {
 		expect(data.transaction).toMatchObject({
 			id: added.id,
 			date: "2026-03-01",
+			memo: null,
 			linkedTo: null,
+			externalRef: null,
 			postings: [
 				{
 					ordinal: 0,
@@ -36,6 +38,32 @@ describe("tx show", () => {
 			],
 		})
 		expect(data.links).toEqual({ corrects: null, correction: null, correctedBy: [] })
+	})
+
+	it("shows the external reference a bank row is matched by", async () => {
+		const traj = cli(tempHome())
+		await accounts(traj, [
+			["Cash", "asset"],
+			["Food", "expense"],
+		])
+		const added = await traj([
+			"tx",
+			"add",
+			"--from",
+			"Cash",
+			"--to",
+			"Food",
+			"--amount",
+			"12.00",
+			"--date",
+			"2026-03-01",
+			"--external-ref",
+			"kbank:2026-03-01:0001",
+			"--json",
+		])
+		expect(added.code).toBe(0)
+		const res = await traj(["tx", "show", JSON.parse(added.out).transaction.id, "--json"])
+		expect(JSON.parse(res.out).transaction.externalRef).toBe("kbank:2026-03-01:0001")
 	})
 
 	it("reports links in both directions", async () => {

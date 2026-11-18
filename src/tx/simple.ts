@@ -39,6 +39,6 @@ export function buildSimple(
 		)
 		return written(built, input)
 	} catch (error) {
-		return rewrite(error, { debit: path("to"), credit: path("from") }, path)
+		return rewrite(error, { debit: path("to"), credit: path("from") }, path, input.amount)
 	}
 }

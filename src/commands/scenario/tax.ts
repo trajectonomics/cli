@@ -1,7 +1,7 @@
 import { z } from "zod"
 import type { Leaf } from "../../command"
 import { defineCommand } from "../../command"
-import { FILING_STATUSES, writeTax } from "../../scenario/tax"
+import { FILING_STATUSES, labelFlagDescription, writeTax } from "../../scenario/tax"
 import { writtenScenario } from "../../scenario/view"
 
 export const tax: Leaf = defineCommand({
@@ -32,12 +32,7 @@ export const tax: Leaf = defineCommand({
 			.describe(
 				"Children born 2018 or later, allowed at the higher rate; a subset of --children and needs --tax.",
 			),
-		label: z
-			.array(z.string())
-			.optional()
-			.describe(
-				"Classify one Flow for tax as <flow>=<label>, such as salary=income.section40_1; repeatable and needs --tax.",
-			),
+		label: z.array(z.string()).optional().describe(labelFlagDescription()),
 		none: z.boolean().optional().describe("Remove the tax Levy instead of writing one."),
 		dryRun: z.boolean().optional().describe("Report the row and roll the write back."),
 	}),

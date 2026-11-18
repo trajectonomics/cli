@@ -40,6 +40,16 @@ export type DocumentSpec<D extends z.ZodType = z.ZodType> = {
 	required?: readonly RequiredDocumentField[]
 }
 
+/**
+ * A document a flag names beside the other flags, such as `--carry-in <path>` (ADR-0030). It is
+ * not the document form: the flag may be combined with the rest, so it is published under its own
+ * key instead of replacing the input schema the way `DocumentSpec` does.
+ */
+export type FlagDocument = {
+	flag: string
+	schema: z.ZodType
+}
+
 type Outcome<T> = Result<T> | AppError | Promise<Result<T> | AppError>
 
 /** A command's run arguments: the document is present only when the leaf declares one. */
@@ -72,6 +82,8 @@ export type Command<
 	 * stays the single source of flags, `required` and usage.
 	 */
 	document?: DocumentSpec<NonNullable<D>>
+	/** Documents a flag names beside the other flags, published by `traj schema` (ADR-0030). */
+	flagDocuments?: readonly FlagDocument[]
 	output: O
 	examples: readonly Example[]
 	/** How a table-shaped result renders in the human Format; JSON ignores it. */
@@ -90,6 +102,7 @@ export type Leaf = {
 	positionals: readonly string[]
 	input: z.ZodObject
 	document?: DocumentSpec
+	flagDocuments?: readonly FlagDocument[]
 	output: z.ZodType
 	flags: readonly FlagSpec[]
 	examples: readonly Example[]

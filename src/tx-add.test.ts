@@ -106,3 +106,30 @@ describe("tx add", () => {
 		])
 	})
 })
+
+describe("tx add amount refusals", () => {
+	it("echoes the amount the person typed, never the core's minor units", async () => {
+		const traj = cli(tempHome())
+		await accounts(traj, [
+			["Cash", "asset"],
+			["Food", "expense"],
+		])
+		const res = await traj([
+			"tx",
+			"add",
+			"--from",
+			"Cash",
+			"--to",
+			"Food",
+			"--amount",
+			"-500.00",
+			"--date",
+			"2026-03-01",
+			"--json",
+		])
+		expect(res.code).toBe(3)
+		const error = JSON.parse(res.err).error
+		expect(error.code).toBe("NEGATIVE_AMOUNT")
+		expect(error.details.value).toBe("-500.00")
+	})
+})

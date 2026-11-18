@@ -34,12 +34,23 @@ export function postingsOf(tx: Transaction): NewPosting[] {
 	}))
 }
 
-/** The core's `debit`/`credit` are its own words; the envelope names the caller's fields. */
-export function rewrite(error: unknown, names: Record<string, string>, path: FieldPath): AppError {
+/**
+ * The core's `debit`/`credit` are its own words; the envelope names the caller's fields. A
+ * rejection about the amount carries the text the caller typed instead of the core's parsed minor
+ * units, because a person typed `-500.00` and `-50000` is a unit nobody states (ADR-0009).
+ */
+export function rewrite(
+	error: unknown,
+	names: Record<string, string>,
+	path: FieldPath,
+	typedAmount?: string,
+): AppError {
 	if (!(error instanceof LedgerValidationError)) throw error
 	const [head = "", ...rest] = error.field.split(".")
 	const field = [names[head] ?? path(head), ...rest].filter(Boolean).join(".")
-	return fromLedgerError(new LedgerValidationError(error.code, field, error.value, error.reason))
+	const aboutAmount = field === "amount" || field.endsWith(".amount")
+	const value = typedAmount !== undefined && aboutAmount ? typedAmount : error.value
+	return fromLedgerError(new LedgerValidationError(error.code, field, value, error.reason))
 }
 
 /** The row to write: what the core built, plus the fields the core does not carry. */

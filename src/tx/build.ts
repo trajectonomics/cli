@@ -66,7 +66,7 @@ export function buildFlags(input: FlagInput, store: Store): NewTransaction | App
 		if (refused !== null) return refused
 		return written(built, input)
 	} catch (error) {
-		return rewrite(error, { account: "to", contra: "from" }, identity)
+		return rewrite(error, { account: "to", contra: "from" }, identity, input.amount)
 	}
 }
 

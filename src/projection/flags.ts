@@ -1,6 +1,8 @@
 import { z } from "zod"
+import type { FlagDocument } from "../command"
 import type { ErrorCode } from "../errors"
 import { LEDGER_READ_CODES } from "../store"
+import { carryInDocument } from "./carryin"
 
 /** Every code the projection leaves raise: flags, the Baseline and the engine (ADR-0030). */
 export const PROJECTION_ERROR_CODES: readonly ErrorCode[] = [
@@ -34,6 +36,9 @@ export const carryInFlag: z.ZodOptional<z.ZodString> = z
 	.describe(
 		"Read what each Levy's period already tallied and prepaid from this JSON path, or - for stdin.",
 	)
+
+/** The document `--carry-in` names, published under `flagDocuments` so its shape is not guessed. */
+export const carryInFlagDocument: FlagDocument = { flag: "carryIn", schema: carryInDocument }
 
 /** `--set`, one transient Override, repeatable and in command-line order (ADR-0024). */
 export const setFlag: z.ZodOptional<z.ZodArray<z.ZodString>> = z

@@ -174,15 +174,21 @@ describe("scenario apply", () => {
 			schema: {
 				required: string[]
 				description: string
-				properties: { schemaVersion: unknown }
+				properties: Record<string, { const?: number }>
 			}
 		}
 		expect(document.flag).toBe("file")
 		expect(document.required).toEqual(["name"])
-		expect(document.schema.required).toEqual(["schemaVersion"])
-		expect(document.schema.properties.schemaVersion).toEqual({
-			const: acceptedScenarioSchemaVersion(),
-		})
+		expect(document.schema.required).toEqual([
+			"schemaVersion",
+			"currency",
+			"economy",
+			"accounts",
+			"flows",
+			"cashflow",
+		])
+		expect(document.schema.properties["schemaVersion"]?.const).toBe(acceptedScenarioSchemaVersion())
+		expect(Object.keys(document.schema.properties)).toContain("flows")
 		expect(document.schema.description).toContain(`@trajectonomics/sim@${simPackage.version}`)
 		expect(document.schema.description).toContain("check()")
 		expect(described.errorCodes).toContain("invalid_input")
