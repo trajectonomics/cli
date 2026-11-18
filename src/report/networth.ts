@@ -1,4 +1,4 @@
-import { netWorth } from "@trajectonomics/ledger"
+import { netWorth, type Transaction } from "@trajectonomics/ledger"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
 import type { Ledger } from "../store"
@@ -19,8 +19,21 @@ const fieldOf: FieldMap = (field) =>
 /** `traj report networth`: the asset and liability rows behind net worth, and the total per currency. */
 export type NetWorthResult = {
 	asOf: string
+	/** The earliest date the Ledger records, or null when it records none (ADR-0029). */
+	firstTransactionDate: string | null
+	/** True when the As-of precedes every Transaction, so a zero states no record, not no money. */
+	noTransactionsBefore: boolean
 	rows: ReportRow[]
 	totals: TotalView[]
+}
+
+/** The earliest dated Transaction, whatever order the store returned them in. */
+function firstTransactionDateOf(transactions: readonly Transaction[]): string | null {
+	let first: string | null = null
+	for (const transaction of transactions) {
+		if (first === null || transaction.date < first) first = transaction.date
+	}
+	return first
 }
 
 /** Assembles net worth from one assembled read; the Command only renders it. */
@@ -28,8 +41,11 @@ export function netWorthOf(ledger: Ledger, asOf: string): NetWorthResult | AppEr
 	const index = accountIndex(ledger.accounts)
 	const result = query(() => netWorth(ledger.transactions, asOf, ledger.chart), fieldOf)
 	if (isAppError(result)) return result
+	const firstTransactionDate = firstTransactionDateOf(ledger.transactions)
 	return {
 		asOf,
+		firstTransactionDate,
+		noTransactionsBefore: firstTransactionDate !== null && firstTransactionDate > asOf,
 		rows: reportRowsOf(result.rows, index),
 		totals: totalsOf(result.totals),
 	}

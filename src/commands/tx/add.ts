@@ -20,7 +20,10 @@ export const add: Leaf = defineCommand({
 			.describe(
 				"The transaction's YYYY-MM-DD date; the core rejects an impossible date as INVALID_DATE.",
 			),
-		opening: z.boolean().optional().describe("Read --from as equity and --amount as signed."),
+		opening: z
+			.boolean()
+			.optional()
+			.describe("Read --from as equity and --amount as signed: enter a debt as a negative amount."),
 		project: z.string().min(1).optional().describe("Tag every posting with this project."),
 		memo: z
 			.string()
@@ -72,6 +75,7 @@ export const add: Leaf = defineCommand({
 		"database_busy",
 		"external_ref_conflict",
 		"invalid_input",
+		"liability_opening_positive",
 		"unsupported_currency",
 	],
 	run: (input, document, ctx) =>
