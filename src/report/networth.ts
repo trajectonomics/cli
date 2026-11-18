@@ -2,9 +2,10 @@ import { netWorth, type Transaction } from "@trajectonomics/ledger"
 import { checkedDate } from "../date"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
-import { hintField, hintOf } from "../hint"
+import { hintField } from "../hint"
 import type { Ledger } from "../store"
 import { type FieldMap, type FieldRules, query, respell } from "./errors"
+import { reportHint } from "./hint"
 import { accountIndex, reportRowsOf, totalsOf } from "./rows"
 import type { ReportRow, TotalView } from "./view"
 
@@ -48,10 +49,7 @@ export function netWorthOf(ledger: Ledger, asOf: string): NetWorthResult | AppEr
 	if (isAppError(result)) return result
 	const firstTransactionDate = firstTransactionDateOf(ledger.transactions)
 	const rows = reportRowsOf(result.rows, index)
-	const hint =
-		rows.length === 0
-			? hintOf({ accounts: ledger.accounts.length, transactions: ledger.transactions.length })
-			: undefined
+	const hint = reportHint(ledger, rows)
 	return {
 		asOf,
 		firstTransactionDate,

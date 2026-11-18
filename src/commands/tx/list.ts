@@ -32,7 +32,9 @@ export const list: Leaf = defineCommand({
 		hint: z
 			.string()
 			.optional()
-			.describe("The command that fills the empty answer, present only while there is none."),
+			.describe(
+				"The command that fills the empty answer, present only when the Ledger is why it is empty.",
+			),
 	}),
 	examples: [
 		{ command: "traj tx list --json", description: "Read the whole ledger as JSON." },

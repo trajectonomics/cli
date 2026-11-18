@@ -17,7 +17,7 @@ export const list: Leaf = defineCommand({
 			.string()
 			.optional()
 			.describe(
-				"The command that creates the first account, present only while the chart is empty.",
+				"The command that fills the empty answer, present only when the Ledger is why it is empty.",
 			),
 	}),
 	examples: [{ command: "traj account list --json", description: "Show the chart as JSON." }],

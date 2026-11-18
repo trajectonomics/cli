@@ -24,7 +24,7 @@ const resultSchema: z.ZodType<PnlResult> = z.strictObject({
 		.string()
 		.optional()
 		.describe(
-			"The command that creates the first account, present only while the Ledger holds none.",
+			"The command that fills the empty answer, present only when the Ledger is why it is empty.",
 		),
 })
 
