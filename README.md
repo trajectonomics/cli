@@ -117,14 +117,14 @@ and where it came from, and one that starts on a period boundary needs nothing:
 ## Keeping a backup, and removing the data
 
 > **Ships in 0.3.0.**
-> The release you installed has `traj export` only: `doctor`, `backup`, `restore` and
-> `data remove` reach the install channels with `0.3.0`.
+> The release you installed has no `doctor`, `backup`, `restore` or `data remove`: they are on
+> `main` and reach the install channels with `0.3.0`.
 
 Four commands keep the ledger recoverable. `traj doctor` checks the data directory, the
 database and every stored transaction and says what is wrong without changing anything;
-`--as-of` adds the trial balance at a date. It exits 0 with `"ok": false` when a check found
-a problem, because the finding is the answer, and its exit code stays for what the command
-could not do.
+`--as-of` adds the trial balance at a date. It exits 0 when its checks ran, with `"ok": false`
+when one found a problem, because the finding is the answer; a non-zero exit is for what the
+command could not do at all.
 
 `traj backup --out backup` writes `traj.jsonl`, the canonical dump, into a directory that must
 not exist yet, and `traj restore backup` writes it into an empty data directory byte for byte.
