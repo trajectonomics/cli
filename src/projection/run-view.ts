@@ -2,6 +2,7 @@ import { z } from "zod"
 import { carryInField } from "./carryin-view"
 import { dateField } from "./money"
 import { type AnnualRow, annualRow, type MonthlyRow, monthlyRow } from "./rows-view"
+import { type TaxYearView, taxYearsField } from "./tax-view"
 import {
 	asOfField,
 	type Echo,
@@ -15,6 +16,7 @@ import {
 } from "./view"
 
 export type { AnnualRow, MonthlyRow } from "./rows-view"
+export type { TaxYearView } from "./tax-view"
 
 /** The Projection's annual roll-up, or its monthly rows with `--monthly`. */
 export type ProjectionTable =
@@ -26,6 +28,7 @@ export type ProjectionRunView = Echo & {
 	horizon: string
 	currency: string
 	runsOut: RunsOutView | null
+	taxYears: TaxYearView[]
 	tables: ProjectionTable[]
 }
 
@@ -55,6 +58,7 @@ export const projectionRunView: z.ZodType<ProjectionRunView> = z.strictObject({
 	runsOut: runsOut
 		.nullable()
 		.describe("The month the Projection ran out of money, or null when it never does."),
+	taxYears: taxYearsField,
 	tables: z
 		.array(projectionTable)
 		.describe("The annual roll-up, and the monthly rows when --monthly was given."),

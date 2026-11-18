@@ -9,6 +9,7 @@ import { refusal, SIM_PACKAGE, SIM_VERSION } from "./engine"
 import { fiAnswerOf } from "./fi"
 import { NO_TAX } from "./levies"
 import { moneyOf } from "./money"
+import { taxYearsOf } from "./tax-view"
 import type { TaxStatus } from "./view"
 
 /** The same sentence twice is one sentence: two sides can share a Levy, a period or a year. */
@@ -64,6 +65,7 @@ function dataOf(prepared: Placed, birthdays: readonly Birthday[]): SideData | Ap
 		prepared,
 		fi: solution,
 		runsOut,
+		taxYears: taxYearsOf(result.projection.levies, prepared.currency),
 		final,
 		atAges: birthdays.map(({ age, birthday }) => ({
 			age,

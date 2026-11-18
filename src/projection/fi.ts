@@ -1,6 +1,7 @@
 import {
 	type FiBestCase,
 	financialIndependence,
+	project,
 	type RuleOfThumbReference,
 } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
@@ -10,6 +11,7 @@ import { echoOf } from "./echo"
 import { refusal } from "./engine"
 import type { BestCaseView, FiAnswer, FiView, RuleOfThumbView } from "./fi-view"
 import { moneyOf } from "./money"
+import { taxYearsOf } from "./tax-view"
 
 function referenceView(reference: RuleOfThumbReference, currency: string): RuleOfThumbView {
 	const money = moneyOf(currency)
@@ -91,6 +93,10 @@ export function fiAnswerOf(prepared: Placed): FiSolution | AppError {
 export function independenceOf(prepared: Placed): FiView | AppError {
 	const solution = fiAnswerOf(prepared)
 	if (isAppError(solution)) return solution
+	// The FI answer does not carry a Projection, so the tax it implies is read from one run of the
+	// same inputs the survival scan used (ADR-0036).
+	const result = project(prepared.baseline, prepared.document, prepared.timeline)
+	if (!result.ok) return refusal(result.problems)
 	return {
 		...echoOf(prepared),
 		horizon: prepared.timeline.horizon,
@@ -98,5 +104,6 @@ export function independenceOf(prepared: Placed): FiView | AppError {
 		method: solution.definition.method,
 		definition: solution.definition,
 		fi: solution.fi,
+		taxYears: taxYearsOf(result.projection.levies, prepared.currency),
 	}
 }

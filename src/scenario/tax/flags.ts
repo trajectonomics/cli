@@ -1,5 +1,6 @@
 import type { ThFilingStatus } from "@trajectonomics/tax/th"
 import { type AppError, fail } from "../../errors"
+import { ALLOWANCE_FLAGS, allowancesOf, type TaxAllowances } from "./allowances"
 import { labelSetsSentence } from "./labels"
 
 export type { ThFilingStatus }
@@ -13,6 +14,16 @@ export type TaxFlags = {
 	filingStatus?: ThFilingStatus | undefined
 	children?: number | undefined
 	childrenAtHigherRate?: number | undefined
+	parents?: number | undefined
+	disabledCare?: number | undefined
+	socialSecurity?: number | undefined
+	lifeInsurance?: number | undefined
+	healthInsurance?: number | undefined
+	parentHealthInsurance?: number | undefined
+	spouseLifeInsurance?: number | undefined
+	mortgageInterest?: number | undefined
+	donation2x?: number | undefined
+	donation1x?: number | undefined
 	/** `scenario tax --none` removes the Levy instead of writing one. */
 	none?: boolean | undefined
 }
@@ -23,6 +34,7 @@ export type TaxRequest = {
 	filingStatus: ThFilingStatus
 	children: number
 	childrenAtHigherRate: number
+	allowances: TaxAllowances
 }
 
 /** A filing status a caller may name; the values are tax-core's own enum. */
@@ -53,7 +65,8 @@ function noneConflict(flags: TaxFlags): AppError | null {
 		flags.tax !== undefined ||
 		flags.filingStatus !== undefined ||
 		flags.children !== undefined ||
-		flags.childrenAtHigherRate !== undefined
+		flags.childrenAtHigherRate !== undefined ||
+		ALLOWANCE_FLAGS.some((field) => flags[field] !== undefined)
 	if (!writer) return null
 	return fail("invalid_input", {
 		message: "--none removes the tax, so it cannot be combined with the flags that write one.",
@@ -64,17 +77,20 @@ function noneConflict(flags: TaxFlags): AppError | null {
 /** A profile flag with no `--tax`: it would be ignored, so it is refused instead. */
 function missingTax(flags: TaxFlags): AppError | null {
 	if (flags.tax !== undefined) return null
+	const profile = flags.filingStatus !== undefined
+	const allowance = ALLOWANCE_FLAGS.find((field) => flags[field] !== undefined)
 	if (
-		flags.filingStatus === undefined &&
+		!profile &&
 		flags.children === undefined &&
-		flags.childrenAtHigherRate === undefined
+		flags.childrenAtHigherRate === undefined &&
+		allowance === undefined
 	) {
 		return null
 	}
-	const profile = flags.filingStatus !== undefined
+	const field = profile ? "filingStatus" : (allowance ?? "children")
 	return fail("invalid_input", {
-		message: `${profile ? "--filing-status" : "--children"} needs --tax: without it no Levy is written and the flag would be ignored.`,
-		path: profile ? "filingStatus" : "children",
+		message: `${flagOf(field)} needs --tax: without it no Levy is written and the flag would be ignored.`,
+		path: field,
 	})
 }
 
@@ -88,6 +104,11 @@ function higherRateConflict(flags: TaxFlags): AppError | null {
 	})
 }
 
+/** The caller's spelling of one field, so a refusal names the flag rather than the schema key. */
+function flagOf(field: string): string {
+	return `--${field.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`
+}
+
 /** The caller's flags as one request, `null` when none was given, or why they cannot be honoured. */
 export function taxRequestOf(flags: TaxFlags): TaxRequest | AppError | null {
 	const refused = noneConflict(flags) ?? missingTax(flags) ?? higherRateConflict(flags)
@@ -98,5 +119,6 @@ export function taxRequestOf(flags: TaxFlags): TaxRequest | AppError | null {
 		filingStatus: flags.filingStatus ?? "single",
 		children: flags.children ?? 0,
 		childrenAtHigherRate: flags.childrenAtHigherRate ?? 0,
+		allowances: allowancesOf(flags),
 	}
 }

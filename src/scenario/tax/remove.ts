@@ -1,5 +1,5 @@
 import type { ScenarioDocument } from "../document"
-import { type JsonRecord, records } from "./json"
+import { isRecord, type JsonRecord, records } from "./json"
 import { TAX_CONTRIBUTION_LABELS, TAX_INCOME_LABELS } from "./labels"
 import { leviesOf, TAX_LEVY_ID } from "./levy"
 
@@ -25,6 +25,26 @@ function unlabelled(flow: JsonRecord, stillRead: Set<string>, taxLabels: Set<str
 }
 
 /**
+ * A Flow without the Prepayments that named the removed Levy. A Prepayment is only legal beside
+ * the Levy it pays into, so removing the Levy without them leaves a document the engine refuses
+ * with `LEVY_REQUIRED` (cli#150).
+ */
+function unPrepaid(flow: JsonRecord, removed: string): JsonRecord {
+	const prepayments = flow["prepayments"]
+	const capped = flow["cappedPrepayment"]
+	const keepsCapped = !(isRecord(capped) && capped["levy"] === removed)
+	const listed: readonly unknown[] = Array.isArray(prepayments) ? prepayments : []
+	const kept = listed.filter((it) => !(isRecord(it) && it["levy"] === removed))
+	if (kept.length === listed.length && keepsCapped) return flow
+	const { prepayments: _prepayments, cappedPrepayment: _capped, ...rest } = flow
+	return {
+		...rest,
+		...(kept.length === 0 ? {} : { prepayments: kept }),
+		...(keepsCapped && capped !== undefined ? { cappedPrepayment: capped } : {}),
+	}
+}
+
+/**
  * The document without this build's tax Levy and without the tax labels it made legal, `null` when
  * it held none. A label another Levy still tallies is left in place: a Flow cannot keep a label no
  * Levy reads, and must not lose one that another Levy does.
@@ -37,7 +57,9 @@ export function withoutTaxLevy(document: ScenarioDocument): ScenarioDocument | n
 	const taxLabels = new Set([...TAX_INCOME_LABELS, ...TAX_CONTRIBUTION_LABELS])
 	const next: ScenarioDocument = {
 		...document,
-		flows: records(document["flows"]).map((flow) => unlabelled(flow, stillRead, taxLabels)),
+		flows: records(document["flows"]).map((flow) =>
+			unPrepaid(unlabelled(flow, stillRead, taxLabels), TAX_LEVY_ID),
+		),
 	}
 	if (kept.length === 0) delete next["levies"]
 	else next["levies"] = kept

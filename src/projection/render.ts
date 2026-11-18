@@ -5,8 +5,9 @@ const column = (key: string, align?: ColumnHint["align"]): ColumnHint =>
 	align === undefined ? { key, label: key } : { key, label: key, align }
 
 /**
- * `projection run`'s human view: the annual roll-up, the monthly rows when asked, and the notes
- * under them. Only the human Format reads it; `--json` keeps the output schema as the contract.
+ * `projection run`'s human view: the annual roll-up, the monthly rows when asked, the tax years the
+ * Scenario's Levies settle, and the notes under them. Only the human Format reads it; `--json`
+ * keeps the output schema as the contract.
  *
  * Every field of a row is a column, headed by its own key, so the table neither drops nor renames
  * a value (ADR-0027). The nested `realNetWorth` reads as its compact JSON.
@@ -39,4 +40,21 @@ export const projectionHint: RenderHint = {
 		],
 	},
 	note: "notes",
+	extra: [
+		{
+			field: "taxYears",
+			name: "taxYears",
+			columns: [
+				column("levy"),
+				column("from"),
+				column("to"),
+				column("settlementDate"),
+				column("due", "right"),
+				column("prepaid", "right"),
+				column("owed", "right"),
+				column("settled"),
+				column("partial"),
+			],
+		},
+	],
 }

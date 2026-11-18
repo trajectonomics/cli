@@ -36,6 +36,16 @@ function levyOf(request: TaxRequest): JsonRecord | AppError {
 					totalCount: request.children,
 					secondPlusBorn2018OrLaterCount: request.childrenAtHigherRate,
 				},
+				parents: request.allowances.parents,
+				disabledCareCount: request.allowances.disabledCare,
+				socialSecurity: request.allowances.socialSecurity,
+				lifeInsurance: request.allowances.lifeInsurance,
+				healthInsurance: request.allowances.healthInsurance,
+				parentHealthInsurance: request.allowances.parentHealthInsurance,
+				spouseLifeInsurance: request.allowances.spouseLifeInsurance,
+				mortgageInterest: request.allowances.mortgageInterest,
+				donation2x: request.allowances.donation2x,
+				donation1x: request.allowances.donation1x,
 			},
 			levy: { id: TAX_LEVY_ID },
 		})
@@ -43,7 +53,7 @@ function levyOf(request: TaxRequest): JsonRecord | AppError {
 	} catch (error) {
 		return fail("invalid_input", {
 			message: error instanceof Error ? error.message : "--tax could not build this profile.",
-			path: "children",
+			path: "tax",
 		})
 	}
 }

@@ -2,8 +2,8 @@ import type { Baseline } from "@trajectonomics/sim"
 import { baselineOf } from "../baseline/mapping"
 import type { Context, Result } from "../command"
 import { ok } from "../command"
-import { checkedAsOf } from "../date"
-import { type AppError, isAppError } from "../errors"
+import { checkedAsOf, unsupportedYear, unsupportedYearMessage } from "../date"
+import { type AppError, fail, isAppError } from "../errors"
 import { withStore } from "../with-store"
 import type { Prepared } from "./prepare"
 import { prepareProjection } from "./prepare"
@@ -33,6 +33,15 @@ export function withProjection<T>(
 	ctx: Context,
 	work: (prepare: Prepare) => T | AppError,
 ): Result<T> | AppError {
+	// The Horizon is the engine's Timeline, so a year outside the range is invalid input at its
+	// flag rather than the Ledger's INVALID_DATE (ADR-0030, ADR-0036).
+	const horizonYear = unsupportedYear(input.horizon)
+	if (horizonYear !== undefined) {
+		return fail("invalid_input", {
+			path: "horizon",
+			message: unsupportedYearMessage(horizonYear),
+		})
+	}
 	const asOf = checkedAsOf(input.asOf)
 	if (isAppError(asOf)) return asOf
 	return withStore(ctx, (store) => {

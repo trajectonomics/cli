@@ -1,7 +1,13 @@
 import { z } from "zod"
 import type { Leaf } from "../../command"
 import { defineCommand } from "../../command"
-import { FILING_STATUSES, labelFlagDescription, writeTax } from "../../scenario/tax"
+import {
+	FILING_STATUSES,
+	labelFlagDescription,
+	TAX_ALLOWANCE_CLASSES,
+	writeTax,
+} from "../../scenario/tax"
+import { deductionFlags } from "../../scenario/tax/deduction-flags"
 import { writtenScenario } from "../../scenario/view"
 
 export const tax: Leaf = defineCommand({
@@ -32,6 +38,7 @@ export const tax: Leaf = defineCommand({
 			.describe(
 				"Children born 2018 or later, allowed at the higher rate; a subset of --children and needs --tax.",
 			),
+		...deductionFlags,
 		label: z.array(z.string()).optional().describe(labelFlagDescription()),
 		none: z.boolean().optional().describe("Remove the tax Levy instead of writing one."),
 		dryRun: z.boolean().optional().describe("Report the row and roll the write back."),
@@ -41,6 +48,19 @@ export const tax: Leaf = defineCommand({
 		status: z
 			.enum(["created", "updated", "unchanged"])
 			.describe("Whether the document changed; `created` is never returned here."),
+		allowances: z
+			.strictObject({
+				modelled: z
+					.array(z.enum(TAX_ALLOWANCE_CLASSES))
+					.describe("The allowance classes the written Levy reads."),
+				notModelled: z
+					.array(z.enum(TAX_ALLOWANCE_CLASSES))
+					.describe(
+						"The allowance classes this build supports but the flags did not state; the Levy leaves them out.",
+					),
+			})
+			.optional()
+			.describe("What the written Levy models; absent when --none wrote no Levy."),
 		scenario: writtenScenario,
 	}),
 	examples: [
@@ -52,6 +72,11 @@ export const tax: Leaf = defineCommand({
 			command:
 				"traj scenario tax base --tax th-2026 --filing-status married_joint --children 1 --label salary=income.section40_1",
 			description: "The same Levy under a married-joint profile with one child.",
+		},
+		{
+			command:
+				"traj scenario tax base --tax th-2026 --filing-status married_no_income_spouse --life-insurance 20000 --mortgage-interest 30000 --social-security 9000 --donation1x 5000 --label salary=income.section40_1",
+			description: "The same Levy with the deductions a Thai employee usually has.",
 		},
 		{
 			command: "traj scenario tax base --none",

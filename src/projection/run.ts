@@ -6,6 +6,7 @@ import { echoOf } from "./echo"
 import { refusal } from "./engine"
 import { annualRow, monthlyRow, runsOutView } from "./rows"
 import type { ProjectionRunView, ProjectionTable } from "./run-view"
+import { taxYearsOf } from "./tax-view"
 
 /**
  * `traj projection run`: the engine's Projection in the CLI's money, annual by default and with
@@ -35,6 +36,7 @@ export function projectionOf(prepared: Placed, monthly: boolean): ProjectionRunV
 		horizon: timeline.horizon,
 		currency,
 		runsOut: runsOutView(projection.runsOut, currency),
+		taxYears: taxYearsOf(projection.levies, currency),
 		tables,
 	}
 }

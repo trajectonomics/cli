@@ -1,3 +1,4 @@
+export { ALLOWANCE_FLAGS, allowancesOf, type TaxAllowances } from "./allowances"
 export {
 	FILING_STATUSES,
 	labelFlagDescription,
@@ -15,5 +16,11 @@ export {
 	TAX_INCOME_LABELS,
 } from "./labels"
 export { leviesOf, TAX_LEVY_ID, withTaxLevy } from "./levy"
+export {
+	TAX_ALLOWANCE_CLASSES,
+	type TaxAllowanceClass,
+	type TaxProfileView,
+	taxProfileOf,
+} from "./profile"
 export { withoutTaxLevy } from "./remove"
 export { type TaxWritten, writeTax } from "./write"

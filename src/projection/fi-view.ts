@@ -9,6 +9,7 @@ import {
 	SURVIVAL_BINDINGS,
 	type SurvivalBinding,
 } from "./reference-view"
+import { type TaxYearView, taxYearsField } from "./tax-view"
 import {
 	asOfField,
 	type Echo,
@@ -24,6 +25,7 @@ export type {
 	RuleOfThumbView,
 	SurvivalBinding,
 } from "./reference-view"
+export type { TaxYearView } from "./tax-view"
 
 /** The survival answer, in the engine's own three shapes (ADR-0008). */
 export type FiAnswer =
@@ -38,6 +40,7 @@ export type FiView = Echo & {
 	method: "survival"
 	definition: { method: "survival"; definitionVersion: number }
 	fi: FiAnswer
+	taxYears: TaxYearView[]
 }
 
 export const fiAnswer: z.ZodType<FiAnswer> = z.union([
@@ -77,4 +80,5 @@ export const fiView: z.ZodType<FiView> = z.strictObject({
 		definitionVersion: z.number().int().describe("The engine's version of that definition."),
 	}),
 	fi: fiAnswer,
+	taxYears: taxYearsField,
 })
