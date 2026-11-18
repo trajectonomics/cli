@@ -81,7 +81,7 @@ describe("scenario tax deductions", () => {
 		])
 	})
 
-	it("reports the allowances it modelled and the ones the flags left out", async () => {
+	it("reports the allowance classes the flags stated and the ones they left out", async () => {
 		const home = await projectionHome()
 		const res = await tax(home, [
 			"base",
@@ -94,15 +94,15 @@ describe("scenario tax deductions", () => {
 		])
 		expect(res.code).toBe(0)
 		const allowances = (JSON.parse(res.out) as { allowances: Record<string, string[]> }).allowances
-		expect(allowances["modelled"]).toEqual(["personal", "lifeInsurance"])
+		expect(allowances["stated"]).toEqual(["lifeInsurance"])
 		// The complaint that started this: nothing said these were missing.
-		expect(allowances["notModelled"]).toContain("socialSecurity")
-		expect(allowances["notModelled"]).toContain("mortgageInterest")
-		expect(allowances["notModelled"]).toContain("donation2x")
-		expect(allowances["notModelled"]).toContain("donation1x")
+		expect(allowances["notStated"]).toContain("socialSecurity")
+		expect(allowances["notStated"]).toContain("mortgageInterest")
+		expect(allowances["notStated"]).toContain("donation2x")
+		expect(allowances["notStated"]).toContain("donation1x")
 	})
 
-	it("prints the not-modelled list in the human format, so a missing deduction is visible", async () => {
+	it("prints the not-stated list in the human format, so a missing deduction is visible", async () => {
 		const home = await projectionHome()
 		const res = await capture(
 			[
@@ -119,13 +119,13 @@ describe("scenario tax deductions", () => {
 			{ TRAJ_HOME: home },
 		)
 		expect(res.code).toBe(0)
-		expect(res.out).toContain("modelled:")
-		expect(res.out).toContain("notModelled:")
+		expect(res.out).toContain("stated:")
+		expect(res.out).toContain("notStated:")
 		expect(res.out).toContain("socialSecurity")
 		expect(res.out).toContain("mortgageInterest")
 	})
 
-	it("counts retirement contributions as modelled only when a Flow carries their label", async () => {
+	it("states retirement contributions only when a Flow carries a label the Levy reads", async () => {
 		const home = await projectionHome()
 		const res = await tax(home, [
 			"base",
@@ -138,8 +138,8 @@ describe("scenario tax deductions", () => {
 		])
 		expect(res.code).toBe(0)
 		const allowances = (JSON.parse(res.out) as { allowances: Record<string, string[]> }).allowances
-		expect(allowances["modelled"]).toContain("retirementContributions")
-		expect(allowances["notModelled"]).not.toContain("retirementContributions")
+		expect(allowances["stated"]).toContain("retirementContributions")
+		expect(allowances["notStated"]).not.toContain("retirementContributions")
 	})
 
 	it("lowers the tax a Projection owes when a deduction is stated", async () => {

@@ -110,15 +110,17 @@ A real employee's profile goes in on the same command: `--filing-status`,
 `--spouse-life-insurance`, `--mortgage-interest`, `--donation2x` and
 `--donation1x`, each in THB except the counts. `@trajectonomics/tax` applies
 every statutory ceiling; the CLI holds no amount of its own. The write reports
-which allowance classes the Levy models and which it leaves out, so a deduction
-nobody stated is visible rather than assumed to be zero:
+which deduction classes the flags stated and which they left out, so a
+deduction nobody stated is visible rather than assumed to be zero. It states
+what the flags said, never what tax-core applied: a premium the statute does
+not allow for the filing status is still stated, and the Levy zeroes it.
 
 ```json
 {
   "status": "updated",
   "allowances": {
-    "modelled": ["personal", "lifeInsurance"],
-    "notModelled": ["spouse", "children", "socialSecurity", "mortgageInterest", "donation1x"]
+    "stated": ["lifeInsurance"],
+    "notStated": ["children", "socialSecurity", "mortgageInterest", "donation1x"]
   }
 }
 ```

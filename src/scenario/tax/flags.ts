@@ -8,25 +8,18 @@ export type { ThFilingStatus }
 /** The tax the CLI can apply today; a second jurisdiction adds a value, not a flag (ADR-0032). */
 export type TaxJurisdiction = "th-2026"
 
-/** The flags that ask for tax; without `tax` the others are refused rather than ignored. */
+/**
+ * The flags that ask for tax; without `tax` the others are refused rather than ignored. The
+ * allowance fields are the shared `TaxAllowances` keys, so a new deduction has one list to join.
+ */
 export type TaxFlags = {
 	tax?: TaxJurisdiction | undefined
 	filingStatus?: ThFilingStatus | undefined
 	children?: number | undefined
 	childrenAtHigherRate?: number | undefined
-	parents?: number | undefined
-	disabledCare?: number | undefined
-	socialSecurity?: number | undefined
-	lifeInsurance?: number | undefined
-	healthInsurance?: number | undefined
-	parentHealthInsurance?: number | undefined
-	spouseLifeInsurance?: number | undefined
-	mortgageInterest?: number | undefined
-	donation2x?: number | undefined
-	donation1x?: number | undefined
 	/** `scenario tax --none` removes the Levy instead of writing one. */
 	none?: boolean | undefined
-}
+} & { readonly [K in keyof TaxAllowances]?: number | undefined }
 
 /** What the caller asked the CLI to write, with every default resolved. */
 export type TaxRequest = {

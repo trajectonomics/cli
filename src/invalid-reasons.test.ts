@@ -80,7 +80,7 @@ describe("one case per validation reason", () => {
 		const error = errorOf(await runProbe(["choice", "--kind", "c"]))
 		expect(error).toMatchObject({
 			path: "--kind",
-			message: `${SENTENCES.choice.slice(0, -1)}: a, b.`,
+			message: "The value is not one of the allowed choices: a, b.",
 		})
 	})
 

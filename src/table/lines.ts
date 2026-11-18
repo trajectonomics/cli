@@ -13,7 +13,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
-export function cellsOf(row: unknown, columns: readonly ColumnHint[]): readonly string[] {
+function cellsOf(row: unknown, columns: readonly ColumnHint[]): readonly string[] {
 	const record = isRecord(row) ? row : {}
 	return columns.map((column) => cell(record[column.key]))
 }

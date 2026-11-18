@@ -50,17 +50,19 @@ export const tax: Leaf = defineCommand({
 			.describe("Whether the document changed; `created` is never returned here."),
 		allowances: z
 			.strictObject({
-				modelled: z
+				stated: z
 					.array(z.enum(TAX_ALLOWANCE_CLASSES))
-					.describe("The allowance classes the written Levy reads."),
-				notModelled: z
+					.describe("The deduction classes the flags stated."),
+				notStated: z
 					.array(z.enum(TAX_ALLOWANCE_CLASSES))
 					.describe(
-						"The allowance classes this build supports but the flags did not state; the Levy leaves them out.",
+						"The deduction classes this build supports but the flags left out, so the figure leaves them out.",
 					),
 			})
 			.optional()
-			.describe("What the written Levy models; absent when --none wrote no Levy."),
+			.describe(
+				"The deduction classes the write stated; absent when --none wrote no Levy. It says what the flags said, not what tax-core applied.",
+			),
 		scenario: writtenScenario,
 	}),
 	examples: [

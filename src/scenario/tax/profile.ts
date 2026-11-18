@@ -2,16 +2,17 @@ import { ThLevyContributionLabel } from "@trajectonomics/tax/th"
 import type { ScenarioDocument } from "../document"
 import { ALLOWANCE_FLAGS } from "./allowances"
 import type { TaxRequest } from "./flags"
+import { records } from "./json"
 import { flowsOf } from "./labels"
+import { leviesOf, TAX_LEVY_ID } from "./levy"
 
 /**
- * The allowance classes this build can model, in the order a `scenario tax` result lists them.
- * `retirementContributions` and `thaiEsg` are not flags: they arrive as labelled contribution
- * Flows, which the Levy tallies instead (ADR-0032).
+ * The deduction classes a `scenario tax` write can state, in the order the result lists them.
+ * `personal` and `spouse` are not here: they follow the statute and the filing status, so there is
+ * no flag a caller could leave out. `retirementContributions` and `thaiEsg` are not flags either:
+ * they arrive as labelled contribution Flows, which the Levy tallies instead (ADR-0032).
  */
 export const TAX_ALLOWANCE_CLASSES = [
-	"personal",
-	"spouse",
 	"children",
 	"parents",
 	"disabledCare",
@@ -29,50 +30,60 @@ export const TAX_ALLOWANCE_CLASSES = [
 
 export type TaxAllowanceClass = (typeof TAX_ALLOWANCE_CLASSES)[number]
 
-/** What a written Levy models, and what this build supports but the caller did not state. */
+/**
+ * The classes the flags stated and the ones this build supports but the write left out. It is not
+ * an eligibility claim: `@trajectonomics/tax` applies every statutory ceiling and eligibility rule
+ * (a spouse life insurance premium stated by a single filer is read and clamped to zero), and the
+ * CLI would have to reimplement those rules to say what the Levy applied (ADR-0036).
+ */
 export type TaxProfileView = {
-	modelled: TaxAllowanceClass[]
-	notModelled: TaxAllowanceClass[]
+	stated: TaxAllowanceClass[]
+	notStated: TaxAllowanceClass[]
 }
 
-/** Whether a contribution Flow in the document carries any of these tally labels. */
-function carriesLabel(document: ScenarioDocument, labels: readonly string[]): boolean {
-	const carried = new Set(labels)
-	return flowsOf(document).some(
-		(flow) => flow["kind"] === "contribution" && carried.has(String(flow["label"] ?? "")),
-	)
+/** The contribution labels the CLI's Levy reads, from the Levy's own tally measures. */
+function fundedLabelsOf(document: ScenarioDocument): Set<string> {
+	const levy = leviesOf(document).find((it) => it["id"] === TAX_LEVY_ID)
+	const labels = new Set<string>()
+	for (const measure of records(levy?.["measures"])) {
+		if (measure["op"] === "tally" && measure["basis"] === "funded") {
+			labels.add(String(measure["label"] ?? ""))
+		}
+	}
+	return labels
 }
 
-const RETIREMENT_LABELS: readonly string[] = [
-	ThLevyContributionLabel.Rmf,
-	ThLevyContributionLabel.Ssf,
-	ThLevyContributionLabel.Pvd,
-	ThLevyContributionLabel.Gpf,
-	ThLevyContributionLabel.Nsf,
-	ThLevyContributionLabel.PensionLifeInsurance,
-]
+/** The labels the document's contribution Flows carry. */
+function contributionLabelsOf(document: ScenarioDocument): Set<string> {
+	const labels = new Set<string>()
+	for (const flow of flowsOf(document)) {
+		const label = flow["label"]
+		if (flow["kind"] === "contribution" && typeof label === "string") labels.add(label)
+	}
+	return labels
+}
 
 /**
- * The allowances one written Levy models. A class is modelled when the Levy reads it from the
- * profile or from a labelled contribution Flow, so a caller who has life insurance but did not
- * state it is told the figure leaves it out rather than left to assume a zero.
+ * The allowance classes one written Levy states. A contribution class is stated only when the
+ * Levy reads its label and a Flow carries it, which is read from the emitted graph rather than
+ * restated here. A flag-stated amount is "stated" even where tax-core then clamps or, for an
+ * ineligible filer, zeroes it: this reports what the write was told, never what it applied.
  */
 export function taxProfileOf(request: TaxRequest, document: ScenarioDocument): TaxProfileView {
-	const stated = new Set<TaxAllowanceClass>(["personal"])
-	if (
-		request.filingStatus === "married_no_income_spouse" ||
-		request.filingStatus === "married_joint"
-	) {
-		stated.add("spouse")
-	}
+	const stated = new Set<TaxAllowanceClass>()
 	if (request.children > 0) stated.add("children")
 	for (const field of ALLOWANCE_FLAGS) {
 		if (request.allowances[field] > 0) stated.add(field as TaxAllowanceClass)
 	}
-	if (carriesLabel(document, RETIREMENT_LABELS)) stated.add("retirementContributions")
-	if (carriesLabel(document, [ThLevyContributionLabel.ThaiEsg])) stated.add("thaiEsg")
+	const read = fundedLabelsOf(document)
+	const carried = contributionLabelsOf(document)
+	for (const label of carried) {
+		if (!read.has(label)) continue
+		if (label === ThLevyContributionLabel.ThaiEsg) stated.add("thaiEsg")
+		else stated.add("retirementContributions")
+	}
 	return {
-		modelled: TAX_ALLOWANCE_CLASSES.filter((it) => stated.has(it)),
-		notModelled: TAX_ALLOWANCE_CLASSES.filter((it) => !stated.has(it)),
+		stated: TAX_ALLOWANCE_CLASSES.filter((it) => stated.has(it)),
+		notStated: TAX_ALLOWANCE_CLASSES.filter((it) => !stated.has(it)),
 	}
 }

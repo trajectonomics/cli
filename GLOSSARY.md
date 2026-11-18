@@ -178,9 +178,9 @@ _Avoid_: Withholding tax, advance payment
 The amount a Tax year settles: its due less its Prepayment. A negative figure is a refund.
 _Avoid_: Tax bill, balance due, refund amount
 
-**Modelled allowance**:
-A deduction class a written Tax Levy reads, such as life insurance or home-loan interest. `scenario tax` reports the classes it modelled and the ones it left out, so a deduction nobody stated is visible instead of read as zero.
-_Avoid_: Supported deduction, applied allowance, tax relief
+**Stated allowance**:
+A deduction class the flags of a tax write named, such as life insurance or home-loan interest. `scenario tax` reports the classes it stated and the ones it left out, so a deduction nobody named is visible instead of read as zero; what the Levy then allows is tax-core's rule, not the CLI's.
+_Avoid_: Modelled allowance, applied allowance, tax relief
 
 ### Packages
 

@@ -14,7 +14,7 @@ import { withoutTaxLevy } from "./remove"
 export type TaxWritten = {
 	dryRun: boolean
 	status: "created" | "updated" | "unchanged"
-	/** The allowances the written Levy models; absent when --none wrote no Levy. */
+	/** The allowance classes the flags stated; absent when --none wrote no Levy. */
 	allowances?: TaxProfileView | undefined
 	scenario: WrittenScenario
 }
