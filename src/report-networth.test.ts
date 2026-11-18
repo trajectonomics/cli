@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { ACCOUNT_HINT } from "./hint"
 import { FIXTURE_AS_OF, fixtureHome, overflowRows, seededHome } from "./ledger-fixture"
 import { golden } from "./report/testing"
 import { ledgerHome } from "./store/testing"
@@ -59,6 +60,7 @@ describe("report networth", () => {
 			noTransactionsBefore: false,
 			rows: [],
 			totals: [],
+			hint: ACCOUNT_HINT,
 		})
 	})
 

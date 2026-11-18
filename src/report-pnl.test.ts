@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { ACCOUNT_HINT } from "./hint"
 import {
 	FIXTURE_ACCOUNTS,
 	FIXTURE_AS_OF,
@@ -89,6 +90,7 @@ describe("report pnl", () => {
 			project: null,
 			rows: [],
 			totals: [],
+			hint: ACCOUNT_HINT,
 		})
 	})
 

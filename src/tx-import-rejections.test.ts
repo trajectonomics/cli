@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { UNKNOWN_ACCOUNT_HINT } from "./hint"
 import {
 	cli,
 	csv,
@@ -126,6 +127,10 @@ describe("tx import rejections", () => {
 			expect(res.code).toBe(entry.exit)
 			const error = errorOf(res)
 			expect(error).toMatchObject({ code: entry.code, exitCode: entry.exit, path: entry.path })
+			// Only the row that named a missing account has a next command to offer.
+			expect(error.details.rows[0]?.reason.hint).toBe(
+				entry.code === "UNKNOWN_ACCOUNT" ? UNKNOWN_ACCOUNT_HINT : undefined,
+			)
 			expect(await ledgerSize(traj)).toEqual({ transactions: 0, postings: 0 })
 		}
 	})

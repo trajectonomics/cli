@@ -2,8 +2,10 @@ import { netWorth, type Transaction } from "@trajectonomics/ledger"
 import { checkedDate } from "../date"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
+import { hintField } from "../hint"
 import type { Ledger } from "../store"
 import { type FieldMap, type FieldRules, query, respell } from "./errors"
+import { reportHint } from "./hint"
 import { accountIndex, reportRowsOf, totalsOf } from "./rows"
 import type { ReportRow, TotalView } from "./view"
 
@@ -26,6 +28,7 @@ export type NetWorthResult = {
 	noTransactionsBefore: boolean
 	rows: ReportRow[]
 	totals: TotalView[]
+	hint?: string | undefined
 }
 
 /** The earliest dated Transaction, whatever order the store returned them in. */
@@ -45,11 +48,14 @@ export function netWorthOf(ledger: Ledger, asOf: string): NetWorthResult | AppEr
 	const result = query(() => netWorth(ledger.transactions, asOf, ledger.chart), fieldOf)
 	if (isAppError(result)) return result
 	const firstTransactionDate = firstTransactionDateOf(ledger.transactions)
+	const rows = reportRowsOf(result.rows, index)
+	const hint = reportHint(ledger, rows)
 	return {
 		asOf,
 		firstTransactionDate,
 		noTransactionsBefore: firstTransactionDate !== null && firstTransactionDate > asOf,
-		rows: reportRowsOf(result.rows, index),
+		rows,
 		totals: totalsOf(result.totals),
+		...hintField(hint),
 	}
 }

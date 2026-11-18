@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { UNKNOWN_ACCOUNT_HINT } from "./hint"
 import { amend, cli, json, ledgerHome, ledgerSize, lunch } from "./tx-test-support"
 
 describe("tx amend corrections", () => {
@@ -77,7 +78,10 @@ describe("tx amend corrections", () => {
 		const { original } = await lunch(traj)
 		const res = await amend(traj, original.id, ["--to", "Nope"])
 		expect(res.code).toBe(3)
-		expect(JSON.parse(res.err).error).toMatchObject({ code: "UNKNOWN_ACCOUNT" })
+		expect(JSON.parse(res.err).error).toMatchObject({
+			code: "UNKNOWN_ACCOUNT",
+			hint: UNKNOWN_ACCOUNT_HINT,
+		})
 		expect(await ledgerSize(traj)).toEqual({ transactions: 1, postings: 2 })
 	})
 

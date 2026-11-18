@@ -3,8 +3,10 @@ import { profitAndLoss } from "@trajectonomics/ledger"
 import { checkedDate } from "../date"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
+import { hintField } from "../hint"
 import type { Ledger } from "../store"
 import { type FieldMap, type FieldRules, query, respell } from "./errors"
+import { reportHint } from "./hint"
 import { accountIndex, reportRowsOf, totalsOf } from "./rows"
 import type { ReportRow, TotalView } from "./view"
 
@@ -25,6 +27,7 @@ export type PnlResult = {
 	project: string | null
 	rows: ReportRow[]
 	totals: TotalView[]
+	hint?: string | undefined
 }
 
 function optionsOf(input: {
@@ -54,11 +57,14 @@ export function pnlOf(
 		fields,
 	)
 	if (isAppError(result)) return result
+	const rows = reportRowsOf(result.rows, index)
+	const hint = reportHint(ledger, rows)
 	return {
 		since: input.since ?? null,
 		until: input.until,
 		project: input.project ?? null,
-		rows: reportRowsOf(result.rows, index),
+		rows,
 		totals: totalsOf(result.totals),
+		...hintField(hint),
 	}
 }

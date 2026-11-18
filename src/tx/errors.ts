@@ -1,4 +1,5 @@
 import { type AppError, fail } from "../errors"
+import { UNKNOWN_ACCOUNT_HINT } from "../hint"
 
 /**
  * A posting names an account outside the chart. It is the core's `UNKNOWN_ACCOUNT` at exit 3,
@@ -9,6 +10,7 @@ export function unknownAccount(ref: string, path: string): AppError {
 	return fail("UNKNOWN_ACCOUNT", {
 		path,
 		message: `${path}: no account matches "${ref}"`,
+		hint: UNKNOWN_ACCOUNT_HINT,
 		details: { field: path, value: ref, reason },
 	})
 }

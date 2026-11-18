@@ -2,8 +2,10 @@ import { balances, netWorth, trialBalance } from "@trajectonomics/ledger"
 import { checkedDate } from "../date"
 import type { AppError } from "../errors"
 import { fail, isAppError } from "../errors"
+import { hintField } from "../hint"
 import type { Ledger } from "../store"
 import { type FieldMap, type FieldRules, query, respell } from "./errors"
+import { reportHint } from "./hint"
 import {
 	accountIndex,
 	inAccountOrder,
@@ -29,6 +31,7 @@ export type BalanceResult = {
 	rows: ReportRow[]
 	netWorth: TotalView[]
 	trialBalance?: TrialBalanceView | undefined
+	hint?: string | undefined
 }
 
 function readings(ledger: Ledger, asOf: string) {
@@ -81,10 +84,13 @@ export function balanceOf(
 	if (isAppError(read)) return read
 	const trial = input.trialBalance === true ? trialOf(ledger, input.asOf) : undefined
 	if (isAppError(trial)) return trial
+	const rows = reportRowsOf(read.rows, index)
+	const hint = reportHint(ledger, rows)
 	return {
 		asOf: input.asOf,
-		rows: reportRowsOf(read.rows, index),
+		rows,
 		netWorth: totalsOf(read.totals),
 		...(trial === undefined ? {} : { trialBalance: trial }),
+		...hintField(hint),
 	}
 }

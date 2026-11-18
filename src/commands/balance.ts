@@ -13,6 +13,12 @@ const resultSchema: z.ZodType<BalanceResult> = z.strictObject({
 	trialBalance: trialBalanceView
 		.optional()
 		.describe("The Trial Balance, present only when --trial-balance is given."),
+	hint: z
+		.string()
+		.optional()
+		.describe(
+			"The command that fills the empty answer, present only when the Ledger is why it is empty.",
+		),
 })
 
 export const balance: Leaf = defineCommand({

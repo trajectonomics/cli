@@ -120,10 +120,13 @@ describe("transactions", () => {
 		for (const accountId of [gone, "nope"]) {
 			// A single posting would be the core's SINGLE_POSTING; the store answers first.
 			const one = { date: "2026-03-01", postings: [{ accountId, amount: 1, currency: "THB" }] }
-			expect(rejection(store.addTransaction(one))).toMatchObject({
+			const body = rejection(store.addTransaction(one))
+			expect(body).toMatchObject({
 				code: "UNKNOWN_ACCOUNT",
 				path: "postings.0.accountId",
 			})
+			// The account is a stored id, not a name the caller typed: `account add` is not its fix.
+			expect(body.hint).toBeUndefined()
 		}
 		const empty = { date: "2026-03-01", postings: [] }
 		expect(rejection(store.addTransaction(empty)).code).toBe("SINGLE_POSTING")

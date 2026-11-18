@@ -2,6 +2,7 @@ import { z } from "zod"
 import type { Leaf } from "../command"
 import { defineCommand, ok } from "../command"
 import { isAppError } from "../errors"
+import { ACCOUNT_HINT, hintField } from "../hint"
 import { createLedger } from "../store/ledger-file"
 
 export const init: Leaf = defineCommand({
@@ -13,6 +14,12 @@ export const init: Leaf = defineCommand({
 		directory: z.string().describe("The data directory, created 0700."),
 		database: z.string().describe("The path of traj.db, created 0600."),
 		created: z.boolean().describe("True when this run created the database."),
+		hint: z
+			.string()
+			.optional()
+			.describe(
+				"The command that creates the first account, present only when this run created the ledger.",
+			),
 	}),
 	examples: [
 		{ command: "traj init", description: "Create ~/.traj/traj.db if it does not exist." },
@@ -21,6 +28,7 @@ export const init: Leaf = defineCommand({
 	errorCodes: ["database_corrupt", "disk_full", "not_a_directory", "permission_denied"],
 	run: (_input, ctx) => {
 		const ledger = createLedger(ctx.env)
-		return isAppError(ledger) ? ledger : ok(ledger)
+		if (isAppError(ledger)) return ledger
+		return ok({ ...ledger, ...hintField(ledger.created ? ACCOUNT_HINT : undefined) })
 	},
 })
