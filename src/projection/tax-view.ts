@@ -4,7 +4,7 @@ import { dateField, moneyField, moneyOf } from "./money"
 
 /**
  * One Levy period as a Projection reports it: what the period owed, what was prepaid, and what
- * settles. The engine states the first two; the CLI subtracts them and adds no rule of its own.
+ * settles. Every figure is the engine's own `SettlementPeriod`; the CLI only formats it (ADR-0036).
  */
 export type TaxYearView = {
 	levy: string
@@ -46,8 +46,8 @@ export const taxYearsField: z.ZodType<TaxYearView[]> = z
 	)
 
 /**
- * The Projection's Levy periods in the CLI's money. `owed` is the engine's own `settlement`
- * (ADR-0032); the CLI computes nothing here, it only names the figure the engine reports.
+ * The Projection's Levy periods in the CLI's money. `owed` is the engine's own `settlement`, which
+ * it already computes as due minus prepaid (ADR-0032); the CLI subtracts nothing.
  */
 export function taxYearsOf(
 	levies: readonly LevyReport[] | undefined,

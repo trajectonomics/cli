@@ -4,6 +4,7 @@ import { isAppError } from "../errors"
 import type { Placed } from "./carryin-apply"
 import { echoOf } from "./echo"
 import { refusal } from "./engine"
+import { fundingNotes } from "./funding"
 import { annualRow, monthlyRow, runsOutView } from "./rows"
 import type { ProjectionRunView, ProjectionTable } from "./run-view"
 import { taxYearsOf } from "./tax-view"
@@ -33,6 +34,7 @@ export function projectionOf(prepared: Placed, monthly: boolean): ProjectionRunV
 	}
 	return {
 		...echoOf(prepared),
+		notes: [...prepared.notes, ...fundingNotes(projection.unfundedContributions, currency)],
 		horizon: timeline.horizon,
 		currency,
 		runsOut: runsOutView(projection.runsOut, currency),

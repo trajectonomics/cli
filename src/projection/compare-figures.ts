@@ -1,4 +1,4 @@
-import type { ProjectionRow, RunsOut } from "@trajectonomics/sim"
+import type { AccountAmount, ProjectionRow, RunsOut } from "@trajectonomics/sim"
 import type { Placed } from "./carryin-apply"
 import type { CompareSide } from "./compare-side"
 import type { CompareDeltas } from "./compare-view"
@@ -13,6 +13,8 @@ export type SideData = {
 	fi: FiSolution
 	runsOut: RunsOut | undefined
 	taxYears: TaxYearView[]
+	/** The Contributions the engine could not fund, per Account. */
+	unfunded: readonly AccountAmount[]
 	final: ProjectionRow
 	atAges: { age: number; row: ProjectionRow | undefined }[]
 }

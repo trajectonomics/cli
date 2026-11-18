@@ -7,6 +7,7 @@ import type { CompareView } from "./compare-view"
 import { birthdayAt, rowAt } from "./dates"
 import { refusal, SIM_PACKAGE, SIM_VERSION } from "./engine"
 import { fiAnswerOf } from "./fi"
+import { fundingNotes } from "./funding"
 import { NO_TAX } from "./levies"
 import { moneyOf } from "./money"
 import { taxYearsOf } from "./tax-view"
@@ -66,6 +67,7 @@ function dataOf(prepared: Placed, birthdays: readonly Birthday[]): SideData | Ap
 		fi: solution,
 		runsOut,
 		taxYears: taxYearsOf(result.projection.levies, prepared.currency),
+		unfunded: result.projection.unfundedContributions,
 		final,
 		atAges: birthdays.map(({ age, birthday }) => ({
 			age,
@@ -90,6 +92,7 @@ export function compareOf(input: CompareInput): CompareView | AppError {
 	const dataB = dataOf(b, birthdays)
 	if (isAppError(dataB)) return dataB
 	const money = moneyOf(a.currency)
+	const tax = taxOf(input)
 	return {
 		asOf: a.timeline.start,
 		horizon: a.timeline.horizon,
@@ -98,6 +101,11 @@ export function compareOf(input: CompareInput): CompareView | AppError {
 		birthDate: input.birthDate,
 		sides: { a: sideView(dataA, money), b: sideView(dataB, money) },
 		deltas: deltasOf(dataA, dataB, money),
-		...taxOf(input),
+		tax: tax.tax,
+		notes: [
+			...tax.notes,
+			...fundingNotes(dataA.unfunded, a.currency, "A"),
+			...fundingNotes(dataB.unfunded, b.currency, "B"),
+		],
 	}
 }

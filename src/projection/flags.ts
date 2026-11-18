@@ -34,7 +34,7 @@ export const carryInFlag: z.ZodOptional<z.ZodString> = z
 	.string()
 	.optional()
 	.describe(
-		"Read what each Levy's period already tallied and prepaid from this JSON path, or - for stdin.",
+		'Read what each Levy\'s period already tallied and prepaid from this JSON path, or - for stdin: one record per Scenario, Levy and period, {"scenario", "levy", "periodStart", "tallies": [{"label", "basis", "amount"}], "prepaid", and "rest" instead of the classes left at zero}.',
 	)
 
 /** The document `--carry-in` names, published under `flagDocuments` so its shape is not guessed. */
