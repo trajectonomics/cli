@@ -1,4 +1,4 @@
-import { formatMinorUnits, type RestoreRows, type TxCorrection } from "../store"
+import { formatMinorUnits, type RestoreCounts, type RestoreRows, type TxCorrection } from "../store"
 
 /**
  * What a person sees of one stored row: the store's row with money as the currency's decimal
@@ -78,6 +78,17 @@ export type DumpTable = (typeof DUMP_TABLES)[number]
 
 export function isDumpTable(value: string): value is DumpTable {
 	return DUMP_TABLES.some((table) => table === value)
+}
+
+/** Every table's row count in the dump just read, tombstones included. */
+export function countsOf(rows: RestoreRows): RestoreCounts {
+	return {
+		entity: rows.entity.length,
+		account: rows.account.length,
+		tx: rows.tx.length,
+		posting: rows.posting.length,
+		scenario: rows.scenario.length,
+	}
 }
 
 /** The dump as every surface shows it: one row view, built once from the one dump read. */

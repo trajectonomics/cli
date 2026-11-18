@@ -4,7 +4,6 @@ import { fail, isAppError } from "../errors"
 import type { Ledger } from "../store"
 import { type FieldMap, type FieldRules, query, respell } from "./errors"
 import {
-	type AccountIndex,
 	accountIndex,
 	inAccountOrder,
 	reportRowsOf,
@@ -40,22 +39,33 @@ function readings(ledger: Ledger, asOf: string) {
 }
 
 /**
- * The Trial Balance, asserting the one thing it exists to say: each currency's debits equal its
- * credits. The core re-validates every stored Transaction, so a tampered Posting fails earlier
- * with UNBALANCED_TRANSACTION; this guards a core arithmetic bug and is not a declared code.
+ * The Trial Balance at a date, asserting nothing: each caller decides what a disagreement means.
+ * `balance` treats one as a core bug; `doctor` reports it as the finding it went looking for.
  */
-function trialOf(ledger: Ledger, asOf: string, index: AccountIndex) {
+export function trialBalanceAt(ledger: Ledger, asOf: string): TrialBalanceView | AppError {
+	const index = accountIndex(ledger.accounts)
 	const result = query(
 		() => trialBalance(ledger.transactions, asOf, ledger.chart),
 		(field) => respell(field, []),
 	)
 	if (isAppError(result)) return result
-	// ADR-0013 keeps the catch-all's bytes fixed, so the guard states nothing of its own.
-	if (result.totals.some((row) => row.debit !== row.credit)) return fail("internal")
 	return {
 		rows: inAccountOrder(result.rows, index).map((row) => trialRowOf(row, index)),
 		totals: result.totals.map(trialTotalOf),
 	}
+}
+
+/**
+ * The Trial Balance, asserting the one thing it exists to say: each currency's debits equal its
+ * credits. The core re-validates every stored Transaction, so a tampered Posting fails earlier
+ * with UNBALANCED_TRANSACTION; this guards a core arithmetic bug and is not a declared code.
+ */
+function trialOf(ledger: Ledger, asOf: string): TrialBalanceView | AppError {
+	const trial = trialBalanceAt(ledger, asOf)
+	if (isAppError(trial)) return trial
+	// ADR-0013 keeps the catch-all's bytes fixed, so the guard states nothing of its own.
+	if (trial.totals.some((row) => row.debit !== row.credit)) return fail("internal")
+	return trial
 }
 
 /** Assembles the balance result from one assembled read; the Command only renders it. */
@@ -66,7 +76,7 @@ export function balanceOf(
 	const index = accountIndex(ledger.accounts)
 	const read = readings(ledger, input.asOf)
 	if (isAppError(read)) return read
-	const trial = input.trialBalance === true ? trialOf(ledger, input.asOf, index) : undefined
+	const trial = input.trialBalance === true ? trialOf(ledger, input.asOf) : undefined
 	if (isAppError(trial)) return trial
 	return {
 		asOf: input.asOf,

@@ -19,7 +19,11 @@ function notEmpty(ctx: Ctx): AppError | null {
 		.get(ctx.entityId)!
 	if (rows === 0) return null
 	const message = "The target database already holds data; restore only into a new database."
-	return fail("invalid_input", { message, details: { rows } })
+	return fail("restore_target_not_empty", {
+		message,
+		hint: 'Restore into an empty data directory (TRAJ_HOME=<dir>), or remove the stored data first with "traj data remove".',
+		details: { rows },
+	})
 }
 
 function insertAll<T extends Table>(ctx: Ctx, table: T, rows: RestoreRows[T]): void {

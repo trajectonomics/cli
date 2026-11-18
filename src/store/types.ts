@@ -140,6 +140,8 @@ export interface Store {
 	dump(): RestoreRows | AppError
 	/** Each table's tombstone-inclusive row count, equal to the dump's own counts. */
 	counts(): RestoreCounts | AppError
+	/** `PRAGMA integrity_check`: `["ok"]` on a healthy database, else SQLite's own findings. */
+	integrity(): string[] | AppError
 	/**
 	 * Writes `rows` verbatim (ids, versions, timestamps, tombstones) into a database holding only
 	 * the seeded personal entity, in one transaction that reads no clock. References may point

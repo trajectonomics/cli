@@ -6,8 +6,9 @@ import { z } from "zod"
 import { defineCommand, defineGroup } from "./command"
 import { type ErrorCode, isAppError, registry } from "./errors"
 import { FIXTURE_AS_OF, fixtureHome } from "./ledger-fixture"
-import { type StoreRaised, storeTriggers, type Trigger } from "./store/store-triggers"
+import { type StoreRaised, storeTriggers } from "./store/store-triggers"
 import { SCENARIO_DOCUMENT, tempHome } from "./store/testing"
+import type { Trigger } from "./store/trigger-setup"
 import { type Captured, capture } from "./test-support"
 import { throwingRoot } from "./test-tree"
 
@@ -116,6 +117,26 @@ describe("contract", () => {
 			const file = join(mkdtempSync(join(tmpdir(), "traj-test-")), "afile")
 			writeFileSync(file, "")
 			return capture(["export", "--out", join(file, "out"), "--json"], { TRAJ_HOME: tempHome() })
+		},
+		backup_unreadable: async () => {
+			// A directory where the backup file should be: the read fails however the mode is set.
+			const dir = mkdtempSync(join(tmpdir(), "traj-test-"))
+			mkdirSync(join(dir, "traj.jsonl"))
+			return capture(["restore", dir, "--json"], { TRAJ_HOME: tempHome() })
+		},
+		backup_stale: async () => {
+			const home = tempHome()
+			const out = join(mkdtempSync(join(tmpdir(), "traj-test-")), "out")
+			const add = (name: string) =>
+				capture(["account", "add", name, "--type", "asset", "--currency", "THB", "--json"], {
+					TRAJ_HOME: home,
+				})
+			await add("Cash")
+			await capture(["backup", "--out", out, "--json"], { TRAJ_HOME: home })
+			await add("Bank")
+			return capture(["data", "remove", "--confirm", home, "--backup", out, "--json"], {
+				TRAJ_HOME: home,
+			})
 		},
 		scenario_name_taken: async () => {
 			const home = tempHome()

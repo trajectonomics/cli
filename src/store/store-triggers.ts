@@ -14,8 +14,6 @@ import {
 } from "./trigger-setup"
 import type { NewPosting, NewTransaction } from "./types"
 
-export type { Trigger } from "./trigger-setup"
-
 /** Every code the store raises itself; adding one fails typecheck until it has a trigger. */
 export type StoreRaised = Exclude<
 	ErrorCode,
@@ -31,6 +29,8 @@ export type StoreRaised = Exclude<
 	// Raised by the export command, which is the only writer outside the data directory.
 	| "output_exists"
 	| "export_failed"
+	| "backup_stale"
+	| "backup_unreadable"
 	// Raised by the projection commands, from the engine's own problems.
 	| "projection_refused"
 	// Raised by tx add's opening form, before the store is asked to write anything.
@@ -70,6 +70,7 @@ export const storeTriggers: Record<StoreRaised, Trigger> = {
 		return add([postingTo(food, 2), postingTo(cash, -2)], { externalRef: "r" })
 	}),
 	database_busy: busy,
+	restore_target_not_empty: posting(({ store }) => store.restore(must(store.dump()))),
 	database_corrupt: corruptHome,
 	database_too_new: openAt((db) => db.run(`PRAGMA user_version = ${HEAD + 1}`)),
 	disk_full: fullDisk,

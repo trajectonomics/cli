@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import type { Env } from "../command"
-import { dataDirectory } from "../data-directory"
+import { DATABASE_FILE, dataDirectory } from "../data-directory"
 import { type AppError, isAppError } from "../errors"
 import { connect } from "./connection"
 import { PERSONAL_ENTITY_ID } from "./ids"
@@ -36,7 +36,7 @@ export function openStore(options: StoreOptions): Store | AppError {
 	const directory = dataDirectory(options.env)
 	const made = directoryStep(directory, () => mkdirSync(directory, { recursive: true }))
 	if (isAppError(made)) return made
-	const path = join(directory, "traj.db")
+	const path = join(directory, DATABASE_FILE)
 	const db = connect(path, options.busyTimeoutMs ?? 5000)
 	if (isAppError(db)) return db
 	return storeOver(path, { db, clock: options.clock, entityId: PERSONAL_ENTITY_ID })

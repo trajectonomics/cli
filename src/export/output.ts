@@ -1,17 +1,10 @@
 import { z } from "zod"
-import type { RestoreCounts } from "../store"
+import { countsSchema } from "../counts"
 import { EXPORT_FORMATS, type ExportFormat } from "./files"
+import type { DumpWritten } from "./run"
 
-/** What `traj export` describes after writing: the format, the path, the files and the counts. */
-export type ExportResult = {
-	format: ExportFormat
-	directory: string
-	schemaVersion: number
-	files: string[]
-	rows: RestoreCounts
-}
-
-const count = (table: string) => z.number().int().describe(`Rows written to the ${table} file.`)
+/** What `traj export` describes after writing: the format beside the dump it wrote. */
+export type ExportResult = DumpWritten & { format: ExportFormat }
 
 export const exportOutput: z.ZodType<ExportResult> = z.strictObject({
 	format: z
@@ -22,13 +15,5 @@ export const exportOutput: z.ZodType<ExportResult> = z.strictObject({
 	files: z
 		.array(z.string())
 		.describe("The files written, relative to directory, in the export's record order."),
-	rows: z
-		.strictObject({
-			entity: count("entity"),
-			account: count("account"),
-			tx: count("tx"),
-			posting: count("posting"),
-			scenario: count("scenario"),
-		})
-		.describe("Rows written per table, tombstones included."),
+	rows: countsSchema,
 })

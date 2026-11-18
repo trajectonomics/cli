@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { capture } from "./test-support"
 import { fixtureRoot } from "./test-tree"
+import { leavesOf } from "./tree"
 
 const demo = (argv: string[], env: Record<string, string | undefined> = {}) =>
 	capture(argv, env, fixtureRoot)
@@ -155,40 +156,10 @@ describe("schema addresses commands by path", () => {
 	it("lists every leaf by its full path", async () => {
 		const data = JSON.parse((await demo(["schema", "--json"])).out)
 		const names = data.commands.map((c: { name: string }) => c.name)
-		expect(names).toEqual([
-			"account add",
-			"account close",
-			"account list",
-			"account show",
-			"balance",
-			"baseline show",
-			"demo doc",
-			"demo echo",
-			"export",
-			"fi",
-			"help",
-			"init",
-			"inspect",
-			"projection compare",
-			"projection run",
-			"report networth",
-			"report pnl",
-			"scenario apply",
-			"scenario diff",
-			"scenario fork",
-			"scenario list",
-			"scenario rm",
-			"scenario show",
-			"scenario tax",
-			"schema",
-			"tx add",
-			"tx amend",
-			"tx import",
-			"tx list",
-			"tx show",
-			"tx void",
-			"version",
-		])
+		// Every leaf the fixture tree holds, once, at its full path; schema.test.ts pins the list.
+		const placed = leavesOf(fixtureRoot).map(({ path }) => path.join(" "))
+		expect(names).toEqual(placed)
+		expect(names).toContain("demo echo")
 		expect(data.errors.length).toBeGreaterThan(0)
 	})
 

@@ -5,6 +5,7 @@ import type { Ctx } from "./context"
 import { dumpCounts, dumpRows } from "./dump"
 import { listEntities } from "./entities"
 import { read } from "./guard"
+import { integrityOf } from "./integrity"
 import { readLedger } from "./ledger"
 import { userVersion } from "./migrations"
 import { restore } from "./restore"
@@ -47,6 +48,7 @@ export function storeOver(path: string, ctx: Ctx): Store {
 		listScenarios: (options) => listScenarios(ctx, options),
 		dump: () => dumpRows(ctx),
 		counts: () => dumpCounts(ctx),
+		integrity: () => integrityOf(ctx),
 		restore: (rows) => restore(ctx, rows),
 		close: () => ctx.db.close(),
 	}

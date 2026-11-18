@@ -114,6 +114,35 @@ and where it came from, and one that starts on a period boundary needs nothing:
 ]
 ```
 
+## Keeping a backup, and removing the data
+
+> **Ships in 0.3.0.**
+> The release you installed has no `doctor`, `backup`, `restore` or `data remove`: they are on
+> `main` and reach the install channels with `0.3.0`.
+
+Four commands keep the ledger recoverable. `traj doctor` checks the data directory, the
+database and every stored transaction and says what is wrong without changing anything;
+`--as-of` adds the trial balance at a date. It exits 0 when its checks ran, with `"ok": false`
+when one found a problem, because the finding is the answer; a non-zero exit is for what the
+command could not do at all.
+
+`traj backup --out backup` writes `traj.jsonl`, the canonical dump, into a directory that must
+not exist yet, and `traj restore backup` writes it into an empty data directory byte for byte.
+A restore refuses a database that already holds data: to replace live data, remove it first,
+or restore into a second `TRAJ_HOME`. CSV and Markdown exports are for people; only the JSONL
+restores.
+
+`traj data remove` deletes `traj.db` and nothing else, so the launcher's `bin/` cache beside it
+survives. It prints what would be lost, and it refuses unless `--confirm` names the data
+directory's own path and `--backup` names a backup whose bytes are the data's, so a removal
+cannot outrun the last write:
+
+```bash
+traj doctor --as-of 2026-11-30
+traj backup --out ~/traj-backup-2026-11-30
+traj data remove --confirm ~/.traj --backup ~/traj-backup-2026-11-30
+```
+
 ## Docs
 
 - [`GLOSSARY.md`](GLOSSARY.md): the project's vocabulary.

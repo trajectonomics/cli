@@ -234,6 +234,24 @@ _Avoid_: Home, config dir, state dir
 The one CSV header `date,from,to,amount,memo,external_ref,project` that `tx import` reads. It is not a bank export and not the canonical JSONL restore.
 _Avoid_: Format, schema, bank export
 
+### Data
+
+**Backup**:
+A directory holding `traj.jsonl`, the canonical JSONL Dump, written by `traj backup` and read by `traj restore`. Two backups of the same database are byte-identical, so a backup is compared by its bytes and never by a timestamp.
+_Avoid_: Snapshot, Copy (a Backup is the directory that holds a Dump; the Dump is the rows)
+
+**Restore**:
+Writing a Backup's rows into an empty database, verbatim. It never merges and never overwrites.
+_Avoid_: Import (an Import writes new Ledger facts through the write path), load, sync
+
+**Stored data**:
+The database file in the Data directory, and nothing else there. `traj data remove` deletes it; the launcher's `bin/` cache and anything else in the directory stay.
+_Avoid_: Home, state, everything under `~/.traj`
+
+**Doctor**:
+The health check over the Data directory, the database and the Ledger. It reports and writes no row, and its `ok` is false when a check found a problem.
+_Avoid_: Verify, repair, fix (a Doctor never changes what it reports on)
+
 ### Release
 
 **Release**:

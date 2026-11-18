@@ -19,9 +19,10 @@ function rowsOf(details: unknown): { path?: string; message?: string }[] {
 	)
 }
 
-/** The 8 leaves that succeed with no arguments; a new failing leaf has to be added to the test. */
+/** The leaves that succeed with no arguments; a new failing leaf has to be added to the test. */
 const SUCCEEDING = new Set([
 	"account list",
+	"doctor",
 	"help",
 	"init",
 	"inspect",
@@ -30,6 +31,15 @@ const SUCCEEDING = new Set([
 	"tx list",
 	"version",
 ])
+
+/**
+ * Leaves whose first no-argument answer is about what is on disk rather than about the command
+ * line. `data remove` reads the ledger before it asks for `--confirm`, so it can print what the
+ * removal would lose; with no database there is nothing to confirm and nothing to lose.
+ */
+const STATE_FIRST: Record<string, { code: string; exit: number }> = {
+	"data remove": { code: "not_found", exit: 4 },
+}
 
 /** A command may raise its own CLI sentence for a missing input, outside the table. */
 const OWN_SENTENCES: Record<string, string> = {
@@ -75,6 +85,11 @@ describe("every leaf with no arguments", () => {
 				continue
 			}
 			const error = errorOf(res)
+			const stateFirst = STATE_FIRST[name]
+			if (stateFirst !== undefined) {
+				expect({ name, code: error.code, exit: error.exitCode }).toEqual({ name, ...stateFirst })
+				continue
+			}
 			expect({ name, code: error.code, exit: error.exitCode }).toEqual({
 				name,
 				code: "invalid_input",

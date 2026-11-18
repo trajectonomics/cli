@@ -7,10 +7,14 @@ describe("writeExport", () => {
 	it("removes the directory it created when a later write fails", async () => {
 		const out = outPath()
 		// A name no filesystem accepts fails the second write, after the directory exists.
-		const failure = await writeExport(out, [
-			{ name: "traj.jsonl", contents: "header\n" },
-			{ name: "x".repeat(300), contents: "x" },
-		])
+		const failure = await writeExport(
+			out,
+			[
+				{ name: "traj.jsonl", contents: "header\n" },
+				{ name: "x".repeat(300), contents: "x" },
+			],
+			"export",
+		)
 		expect(failure?.body).toMatchObject({
 			code: "export_failed",
 			exitCode: 1,
