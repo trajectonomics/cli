@@ -32,12 +32,12 @@ export const accountShape: Record<string, unknown> = {
 		returnLabel: {
 			type: "string",
 			description:
-				"The Tally label the Account's accrued growth is reported under; omit to report none. Needs a Levy.",
+				"Assets only: the Tally label the Account's accrued growth is reported under; omit to report none. Needs a Levy.",
 		},
 		gainLabel: {
 			type: "string",
 			description:
-				"The Tally label the Account's realised gains are reported under; omit to report none. Needs a Levy.",
+				"Assets only: the Tally label the Account's realised gains are reported under; omit to report none. Needs a Levy.",
 		},
 	},
 	required: ["id", "kind", "rate"],

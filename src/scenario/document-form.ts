@@ -13,7 +13,7 @@ import {
  * and defers to `sim-core`, so `NOT_AN_OBJECT` and `UNSUPPORTED_SCHEMA_VERSION` are the core's
  * codes and this layer never rejects a document first. Its JSON Schema states the shape the core
  * accepts, with its units and closed values, plus one worked example: it is documentation, never a
- * second validator (ADR-0024), and `shape.test.ts` proves every path of it against the pin.
+ * second validator (ADR-0024), and the tests beside `shape/` probe every path of it against the pin.
  */
 const version = acceptedScenarioSchemaVersion()
 
