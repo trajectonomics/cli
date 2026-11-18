@@ -6,7 +6,7 @@ import { BASIS_POINTS, DATE, FREQUENCIES, MINOR_UNITS } from "./terms"
 export const flowShape: Record<string, unknown> = {
 	type: "object",
 	description:
-		"One Stream, Event or Contribution. `earned` is required on an income Flow and `target` on a contribution Flow; `label`, `prepayments` and `cappedPrepayment` apply to the kinds they name; and exactly one of `amount` and `derive` is required.",
+		"One Stream, Event or Contribution. `earned` is required on an income Flow and `target` on a contribution Flow; `label`, `prepayments` and `cappedPrepayment` apply to the kinds they name; and exactly one of `amount` and `derive` is required, the first bringing `growth` with it.",
 	properties: {
 		id: {
 			type: "string",
@@ -29,7 +29,7 @@ export const flowShape: Record<string, unknown> = {
 		},
 		amount: {
 			type: "integer",
-			description: `${MINOR_UNITS} The same figure every occurrence, grown from \`start\` by \`growth\`.`,
+			description: `${MINOR_UNITS} The same figure every occurrence, grown from \`start\` by \`growth\`. Required unless the Flow states \`derive\`.`,
 		},
 		growth: {
 			anyOf: [
@@ -47,7 +47,7 @@ export const flowShape: Record<string, unknown> = {
 				},
 			],
 			description:
-				'The yearly step applied to `amount` from `start`. Required on every Flow, a `once` one included, where `{ "bps": 0 }` means no step.',
+				'The yearly step applied to `amount` from `start`. Required wherever `amount` is stated, a `once` Flow included, where `{ "bps": 0 }` means no step; a Flow that states `derive` forbids it.',
 		},
 		earned: {
 			type: "boolean",
@@ -65,8 +65,11 @@ export const flowShape: Record<string, unknown> = {
 			description:
 				"Contribution only: the Account the money moves into. A liability target is a debt payment, capped at the amount owed; an asset target is funded from `cashflow.contribute`.",
 		},
-		derive: deriveShape,
+		derive: {
+			...deriveShape,
+			description: `${deriveShape["description"]} Required unless the Flow states \`amount\`, which it replaces along with \`growth\`.`,
+		},
 	},
-	required: ["id", "kind", "frequency", "start", "growth"],
+	required: ["id", "kind", "frequency", "start"],
 	additionalProperties: false,
 }

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test"
-import { SCENARIO_SHAPE_REQUIRED, scenarioExample } from "./index"
+import { scenarioExample } from "./index"
 import { documented, PROPERTIES, refusalsOf, replaceAt, resolves, VERSION } from "./testing"
 
 /*
  * The structure the published document shape states, proved against the pinned core: every path it
- * documents is one a document carries, every field it calls required is one the core refuses to go
- * without, and every object it closes is one the core refuses an unknown key in.
+ * documents is one a document carries and every object it closes is one the core refuses an
+ * unknown key in. The required fields have their own file, `required.test.ts`.
  */
 
 const FULL: Record<string, unknown> = {
@@ -141,24 +141,6 @@ describe("the published Scenario document shape", () => {
 		expect(refusalsOf({ ...FULL, schemaVersion: (VERSION ?? 0) + 1 })).toEqual([
 			{ code: "UNSUPPORTED_SCHEMA_VERSION", path: "schemaVersion" },
 		])
-	})
-
-	it("states as required every field the core refuses to go without", () => {
-		expect(SCENARIO_SHAPE_REQUIRED).toEqual([
-			"schemaVersion",
-			"currency",
-			"economy",
-			"accounts",
-			"flows",
-			"cashflow",
-		])
-		for (const key of SCENARIO_SHAPE_REQUIRED) {
-			const without: Record<string, unknown> = { ...FULL }
-			delete without[key]
-			// A missing version is the core's own UNSUPPORTED_SCHEMA_VERSION, not MISSING_KEY.
-			const code = key === "schemaVersion" ? "UNSUPPORTED_SCHEMA_VERSION" : "MISSING_KEY"
-			expect(refusalsOf(without)).toContainEqual({ code, path: key })
-		}
 	})
 
 	it("closes every object it documents, as the core does", () => {
