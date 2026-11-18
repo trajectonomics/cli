@@ -29,7 +29,7 @@ function recordOf(schema: JsonSchema): {
 
 describe("the --carry-in document in traj schema", () => {
 	it("publishes the record shape on every leaf that reads one", async () => {
-		for (const path of [["projection", "run"], ["fi"]]) {
+		for (const path of [["projection", "run"], ["projection", "compare"], ["fi"]]) {
 			const record = recordOf(await flagDocumentOf(path, "carryIn"))
 			expect(Object.keys(record.properties)).toEqual([
 				"scenario",

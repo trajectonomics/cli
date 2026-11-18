@@ -25,9 +25,9 @@ export const FREQUENCIES = [
 	"annual",
 ] as const
 export const DAY_RULES = ["exact", "next"] as const
-export const MEASURE_OPS = [
+/** The operations a Flow's own Measure graph may hold; `tally` belongs to a Levy (ADR-0032). */
+export const DERIVE_MEASURE_OPS = [
 	"const",
-	"tally",
 	"add",
 	"sub",
 	"min",

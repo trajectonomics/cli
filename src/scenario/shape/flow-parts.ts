@@ -1,4 +1,4 @@
-import { BASIS_POINTS, MEASURE_OPS } from "./terms"
+import { BASIS_POINTS, DERIVE_MEASURE_OPS } from "./terms"
 
 /*
  * The three parts of a Flow whose keys are not simply a name and a unit: the two shapes a Levy reads
@@ -46,7 +46,11 @@ const measureShape = {
 		"One Measure: `const` reads `value` (with `asOf` and `growth`, or `steps`), `add`/`sub`/`min`/`max` read `a` and `b`, `scale` reads `of`, `num`, `den` and `rounding`, `mul` reads `a`, `b`, `den` and `rounding`, `pick` reads `a`, `b`, `then` and `else`, and `flow` reads another Flow's landed amount. A `tally` Measure belongs to a Levy, not to a Flow.",
 	properties: {
 		id: { type: "string", description: "The Measure's id, local to this graph." },
-		op: { enum: [...MEASURE_OPS], description: "Which operation it is." },
+		op: {
+			enum: [...DERIVE_MEASURE_OPS],
+			description:
+				"Which operation it is. A `tally` Measure belongs to a Levy, so it is not one of these.",
+		},
 	},
 	required: ["id", "op"],
 }

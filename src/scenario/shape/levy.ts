@@ -1,3 +1,17 @@
+/** A recurring date without a year, as the Levy's period and its settlement both state one. */
+const monthDay = {
+	type: "object",
+	properties: {
+		month: { type: "integer", description: "1 to 12." },
+		day: {
+			type: "integer",
+			description: "A day that exists in that month, and never 29 February.",
+		},
+	},
+	required: ["month", "day"],
+	additionalProperties: false,
+}
+
 /** One Tax Levy, which `traj scenario tax` writes rather than a person (ADR-0032). */
 export const levyShape: Record<string, unknown> = {
 	type: "object",
@@ -9,30 +23,12 @@ export const levyShape: Record<string, unknown> = {
 			description: "The Levy's id, which a Flow's `label` and `--carry-in` name.",
 		},
 		period: {
-			type: "object",
+			...monthDay,
 			description: "The first day of each Settlement period it tallies, as a month and a day.",
-			properties: {
-				month: { type: "integer", description: "1 to 12." },
-				day: {
-					type: "integer",
-					description: "A day that exists in that month, and never 29 February.",
-				},
-			},
-			required: ["month", "day"],
-			additionalProperties: false,
 		},
 		settlement: {
-			type: "object",
+			...monthDay,
 			description: "The day the period's tax is due: the first such date after the period ends.",
-			properties: {
-				month: { type: "integer", description: "1 to 12." },
-				day: {
-					type: "integer",
-					description: "A day that exists in that month, and never 29 February.",
-				},
-			},
-			required: ["month", "day"],
-			additionalProperties: false,
 		},
 		measures: {
 			type: "array",

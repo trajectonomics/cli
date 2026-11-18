@@ -14,19 +14,6 @@ import { type JsonRecord, records } from "./json"
 export const TAX_INCOME_LABELS: readonly string[] = TH_LEVY_INCOME_LABELS
 export const TAX_CONTRIBUTION_LABELS: readonly string[] = TH_LEVY_CONTRIBUTION_LABELS
 
-/**
- * The `--label` flag's one description, so usage and `traj schema` publish the same closed sets
- * (ADR-0010). Both lists are `@trajectonomics/tax`'s own exports: a pin bump that changes them
- * changes what this says, and no label is restated here (ADR-0032).
- */
-export function labelFlagDescription(): string {
-	return [
-		"Classify one Flow for tax as <flow>=<label>, such as salary=income.section40_1; repeatable and needs --tax.",
-		`An income Flow takes one of ${TAX_INCOME_LABELS.join(", ")}.`,
-		`A contribution Flow takes one of ${TAX_CONTRIBUTION_LABELS.join(", ")}.`,
-	].join(" ")
-}
-
 /** One `--label flow=label`, the classification the Levy tallies this Flow under. */
 export type FlowLabel = { flow: string; label: string }
 
