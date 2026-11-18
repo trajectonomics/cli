@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { accounts, cli, type Traj, tempHome } from "./tx-test-support"
+import { accounts, cli, ledgerHome, type Traj } from "./tx-test-support"
 
 type Posting = { account: string; amount: string; currency: string }
 
@@ -26,7 +26,7 @@ function errorOf(res: { err: string }) {
 
 describe("tx add document errors", () => {
 	it("rejects unbalanced postings with the core's code and writes nothing", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seed(traj)
 		const unbalanced = doc(
@@ -62,7 +62,7 @@ describe("tx add document errors", () => {
 	})
 
 	it("refuses to mix the document form with flag-form fields", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await seed(traj)
 		for (const extra of [
 			["--from", "Bank"],
@@ -79,7 +79,7 @@ describe("tx add document errors", () => {
 	})
 
 	it("rejects empty, malformed and unreadable documents", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seed(traj)
 		const empty = await cli(home, "")(["tx", "add", "--postings", "-", "--json"])
@@ -95,7 +95,7 @@ describe("tx add document errors", () => {
 	})
 
 	it("names a document schema error under the document root", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		await seed(cli(home))
 		const missingDate = {
 			postings: [
@@ -116,7 +116,7 @@ describe("tx add document errors", () => {
 	})
 
 	it("keeps the posting index in a document schema path", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		await seed(cli(home))
 		const missingAmount = {
 			date: "2026-03-31",
@@ -138,7 +138,7 @@ describe("tx add document errors", () => {
 	})
 
 	it("names a missing posting account as UNKNOWN_ACCOUNT at exit 3", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seed(traj)
 		const bad = doc([
@@ -155,7 +155,7 @@ describe("tx add document errors", () => {
 	})
 
 	it("rejects a document amount above the safe-integer range", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seed(traj)
 		const tooLarge = doc([
@@ -175,7 +175,7 @@ describe("tx add document errors", () => {
 	})
 
 	it("rejects a document posting in an unsupported currency", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seed(traj)
 		const dollars = doc([

@@ -1,11 +1,10 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "bun:test"
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { type Artifact, compiledArtifact } from "./compiled-artifact-test-support"
 import {
-	type Artifact,
 	assetFor,
 	cleanup,
-	compiledArtifact,
 	digest,
 	type Package,
 	packageCopy,

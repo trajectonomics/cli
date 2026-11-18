@@ -13,7 +13,8 @@ function permissionDenied(path: string, kind: "directory" | "database"): AppErro
 	})
 }
 
-function notADirectory(path: string): AppError {
+/** The typed failure for a data directory path that exists as something other than a directory. */
+export function notADirectory(path: string): AppError {
 	return fail("not_a_directory", {
 		message: `The path is not a directory: ${path}`,
 		hint: "Move the file, or set TRAJ_HOME to a directory.",
@@ -37,19 +38,34 @@ function diskFull(path: string): AppError {
 	})
 }
 
+/** A refusal or a full disk, whichever hint the path kind calls for. */
+function permissionOrFull(
+	path: string,
+	code: string | undefined,
+	kind: "directory" | "database",
+): AppError | undefined {
+	switch (code) {
+		case "EACCES":
+		case "EPERM":
+		case "EROFS":
+			return permissionDenied(path, kind)
+		case "ENOSPC":
+		case "EDQUOT":
+			return diskFull(path)
+		default:
+			return undefined
+	}
+}
+
 /**
  * One filesystem failure in the data directory as a typed failure, or `undefined` when the
  * error is not one this module knows: anything else stays a programming error (`internal`).
  */
 export function directoryFailure(directory: string, error: unknown): AppError | undefined {
-	switch (errorCodeOf(error)) {
-		case "EACCES":
-		case "EPERM":
-		case "EROFS":
-			return permissionDenied(directory, "directory")
-		case "ENOSPC":
-		case "EDQUOT":
-			return diskFull(directory)
+	const code = errorCodeOf(error)
+	const refused = permissionOrFull(directory, code, "directory")
+	if (refused !== undefined) return refused
+	switch (code) {
 		case "EEXIST":
 		case "ENOTDIR":
 		case "EISDIR":
@@ -66,6 +82,7 @@ export function databaseFailure(path: string, error: unknown): AppError | undefi
 		case "SQLITE_PERM":
 		case "SQLITE_AUTH":
 		case "SQLITE_READONLY":
+		case "SQLITE_READONLY_DIRECTORY":
 			return permissionDenied(path, "database")
 		case "SQLITE_NOTADB":
 		case "SQLITE_CORRUPT":
@@ -77,26 +94,13 @@ export function databaseFailure(path: string, error: unknown): AppError | undefi
 	}
 }
 
-/** Runs one filesystem step and returns its typed failure instead of throwing it. */
-export function directoryStep<T>(directory: string, work: () => T): T | AppError {
-	try {
-		return work()
-	} catch (error) {
-		const failure = directoryFailure(directory, error)
-		if (failure !== undefined) return failure
-		throw error
-	}
-}
-
-/** Runs one database-file step and returns its typed failure instead of throwing it. */
-export function databaseStep<T>(path: string, work: () => T): T | AppError {
-	try {
-		return work()
-	} catch (error) {
-		const failure = databaseFailure(path, error)
-		if (failure !== undefined) return failure
-		throw error
-	}
+/**
+ * One `node:fs` failure on a ledger file as a typed failure, or `undefined` when it is not one
+ * this module knows. `databaseFailure` reads `bun:sqlite`'s codes and `chmodSync` throws POSIX
+ * errno, so a file step cannot use that mapping.
+ */
+export function fileFailure(path: string, error: unknown): AppError | undefined {
+	return permissionOrFull(path, errorCodeOf(error), "database")
 }
 
 /** True when the mapping names this filesystem failure, not a programming error. */

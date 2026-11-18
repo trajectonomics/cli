@@ -7,7 +7,7 @@ import {
 	seededHome,
 } from "./ledger-fixture"
 import { golden } from "./report/testing"
-import { tempHome } from "./store/testing"
+import { ledgerHome } from "./store/testing"
 import { capture } from "./test-support"
 
 function cli(home: string) {
@@ -81,7 +81,7 @@ describe("report pnl", () => {
 	})
 
 	it("renders an empty Ledger as empty arrays at exit 0", async () => {
-		const res = await pnl(tempHome(), "--until", FIXTURE_AS_OF)
+		const res = await pnl(ledgerHome(), "--until", FIXTURE_AS_OF)
 		expect(res.code).toBe(0)
 		expect(JSON.parse(res.out)).toEqual({
 			since: null,
@@ -164,12 +164,12 @@ describe("report pnl", () => {
 	})
 
 	it("rejects a bare report and names an unknown leaf", async () => {
-		const bare = await cli(tempHome())(["report"])
+		const bare = await cli(ledgerHome())(["report"])
 		expect(bare.code).toBe(2)
 		expect(bare.out).toBe("")
 		expect(bare.err).toContain("error: invalid_input: Missing command: report")
 		expect(bare.err).toContain('hint: Run "traj help report" to list its commands.')
-		const missing = await cli(tempHome())(["report", "nope", "--json"])
+		const missing = await cli(ledgerHome())(["report", "nope", "--json"])
 		expect(missing.code).toBe(2)
 		expect(JSON.parse(missing.err).error).toMatchObject({
 			code: "unknown_command",
@@ -178,14 +178,14 @@ describe("report pnl", () => {
 	})
 
 	it("describes the leaf through the schema command", async () => {
-		const data = JSON.parse((await cli(tempHome())(["schema", "report", "pnl", "--json"])).out)
+		const data = JSON.parse((await cli(ledgerHome())(["schema", "report", "pnl", "--json"])).out)
 		expect(data.name).toBe("report pnl")
 		expect(data.input.required).toEqual(["until"])
 		expect(data.errorCodes).toContain("INVALID_PERIOD")
 	})
 
 	it("states the sign convention where the schema describes the result", async () => {
-		const data = JSON.parse((await cli(tempHome())(["schema", "report", "pnl", "--json"])).out)
+		const data = JSON.parse((await cli(ledgerHome())(["schema", "report", "pnl", "--json"])).out)
 		expect(data.output.properties.rows.description).toContain("income is negative")
 		expect(data.output.properties.rows.description).toContain("expense")
 		expect(data.output.properties.totals.description).toContain("negated sum of the rows")

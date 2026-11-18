@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 import { goldenHome, goldenJsonl } from "../interchange/testing"
-import { tempHome } from "../store/testing"
+import { ledgerHome } from "../store/testing"
 import { capture } from "../test-support"
 
 /** A directory path that does not exist yet, so the command is the one that creates it. */
@@ -39,7 +39,7 @@ describe("export --format jsonl", () => {
 
 	it("exports a fresh database as the header and the seeded entity", async () => {
 		const out = outPath()
-		const res = await capture(["export", "--out", out, "--json"], { TRAJ_HOME: tempHome() })
+		const res = await capture(["export", "--out", out, "--json"], { TRAJ_HOME: ledgerHome() })
 		expect(res.code).toBe(0)
 		expect(await Bun.file(join(out, "traj.jsonl")).text()).toBe(
 			`{"record":"header","formatVersion":1,"schemaVersion":2}\n${SEEDED}\n`,
@@ -79,7 +79,7 @@ describe("export --format jsonl", () => {
 
 describe("export's refusals", () => {
 	it("requires --out, naming the flag", async () => {
-		const res = await capture(["export", "--json"], { TRAJ_HOME: tempHome() })
+		const res = await capture(["export", "--json"], { TRAJ_HOME: ledgerHome() })
 		expect(res.code).toBe(2)
 		expect(res.out).toBe("")
 		expect(JSON.parse(res.err).error).toMatchObject({
@@ -121,7 +121,7 @@ describe("export's refusals", () => {
 
 	it("refuses a --format it does not know", async () => {
 		const res = await capture(["export", "--out", outPath(), "--format", "xlsx", "--json"], {
-			TRAJ_HOME: tempHome(),
+			TRAJ_HOME: ledgerHome(),
 		})
 		expect(res.code).toBe(2)
 		expect(JSON.parse(res.err).error).toMatchObject({

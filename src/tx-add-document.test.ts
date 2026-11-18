@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { accounts, cli, tempHome } from "./tx-test-support"
+import { accounts, cli, ledgerHome } from "./tx-test-support"
 
 const salary = {
 	date: "2026-03-31",
@@ -43,7 +43,7 @@ const loan = {
 
 describe("tx add document", () => {
 	it("adds a four-posting salary from stdin with every dimension and sign intact", async () => {
-		const traj = cli(tempHome(), JSON.stringify(salary))
+		const traj = cli(ledgerHome(), JSON.stringify(salary))
 		const opened = await accounts(traj, [
 			["Bank", "asset"],
 			["Salary", "income"],
@@ -91,7 +91,7 @@ describe("tx add document", () => {
 	})
 
 	it("adds a loan split from a file", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const opened = await accounts(traj, [
 			["Bank", "asset"],
 			["Loan", "liability"],
@@ -128,7 +128,7 @@ describe("tx add document", () => {
 	})
 
 	it("adds the loan split from stdin too", async () => {
-		const traj = cli(tempHome(), JSON.stringify(loan))
+		const traj = cli(ledgerHome(), JSON.stringify(loan))
 		const opened = await accounts(traj, [
 			["Bank", "asset"],
 			["Loan", "liability"],

@@ -1,12 +1,6 @@
 import { describe, expect, it } from "bun:test"
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { ledgerHome } from "./store/testing"
 import { capture } from "./test-support"
-
-function tempHome(): string {
-	return join(mkdtempSync(join(tmpdir(), "traj-account-")), "home")
-}
 
 function cli(home: string) {
 	return (argv: string[]) => capture(argv, { TRAJ_HOME: home })
@@ -34,7 +28,7 @@ async function add(
 
 describe("account show", () => {
 	it("returns the same account when addressed by name and by id", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const added = await add(traj, "Cash")
 		const byName = await traj(["account", "show", "Cash", "--json"])
 		const byId = await traj(["account", "show", added.id, "--json"])
@@ -45,7 +39,7 @@ describe("account show", () => {
 	})
 
 	it("reports an unknown account as not_found", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await traj(["account", "show", "Nope", "--json"])
 		expect(res.code).toBe(4)
 		expect(JSON.parse(res.err).error).toMatchObject({
@@ -56,7 +50,7 @@ describe("account show", () => {
 	})
 
 	it("lists a child's parent by name", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const bank = await add(traj, "Bank")
 		const savings = await add(traj, "Savings", "Bank")
 		const shown = JSON.parse((await traj(["account", "show", "Savings", "--json"])).out)
@@ -67,7 +61,7 @@ describe("account show", () => {
 	})
 
 	it("lists a parent's direct children by name and no grandchild", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const bank = await add(traj, "Bank")
 		const savings = await add(traj, "Savings", "Bank")
 		const checking = await add(traj, "Checking", "Bank")
@@ -82,7 +76,7 @@ describe("account show", () => {
 	})
 
 	it("has no balances: the result is the row, its parent and its children only", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await add(traj, "Bank")
 		const shown = JSON.parse((await traj(["account", "show", "Bank", "--json"])).out)
 		expect(Object.keys(shown).sort()).toEqual(["account", "children", "parent"])

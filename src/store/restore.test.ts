@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { isAppError } from "../errors"
 import { PERSONAL_ENTITY_ID } from "./ids"
-import { mustOpen, tempHome } from "./testing"
+import { ledgerHome, mustOpen } from "./testing"
 import type { AccountRow, EntityRow, RestoreRows } from "./types"
 
 const AT = "2026-01-01T00:00:00.000Z"
@@ -35,7 +35,7 @@ const ROWS: RestoreRows = {
 }
 
 function refusedBody(rows: RestoreRows) {
-	const store = mustOpen(tempHome())
+	const store = mustOpen(ledgerHome())
 	const outcome = store.restore(rows)
 	if (!isAppError(outcome)) throw new Error("the restore was accepted")
 	expect(store.listAccounts({ sort: "id", includeDeleted: true })).toEqual([])
@@ -44,7 +44,7 @@ function refusedBody(rows: RestoreRows) {
 
 describe("restore", () => {
 	it("restores exactly one personal entity and its rows", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		expect(store.restore(ROWS)).toEqual({ entity: 1, account: 1, tx: 0, posting: 0, scenario: 0 })
 	})
 

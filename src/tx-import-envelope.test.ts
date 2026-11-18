@@ -5,16 +5,16 @@ import {
 	errorOf,
 	HEADER,
 	imported,
+	ledgerHome,
 	ledgerSize,
 	row,
 	seeded,
-	tempHome,
 } from "./tx-import-test-support"
 import { account } from "./tx-test-support"
 
 describe("tx import rejections", () => {
 	it("writes nothing when one row is rejected, and picks the highest Exit class", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "mixed.csv", [
@@ -41,7 +41,7 @@ describe("tx import rejections", () => {
 	})
 
 	it("breaks an Exit-class tie on the earliest line", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const seed = await traj([
@@ -93,7 +93,7 @@ describe("tx import rejections", () => {
 	})
 
 	it("reports a store-level rejection even when another row fails to build", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		await account(traj, "Old", "expense")
@@ -115,7 +115,7 @@ describe("tx import rejections", () => {
 	})
 
 	it("rejects a repeated reference when the earlier row was itself rejected", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "repeat.csv", [
@@ -135,7 +135,7 @@ describe("tx import rejections", () => {
 	})
 
 	it("reports the same-file duplicate as a duplicate, not a rejection", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "same.csv", [

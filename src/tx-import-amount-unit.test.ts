@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { cli, csv, errorOf, HEADER, row, seeded, tempHome } from "./tx-import-test-support"
+import { cli, csv, errorOf, HEADER, ledgerHome, row, seeded } from "./tx-import-test-support"
 
 describe("the unit a rejected amount is reported in", () => {
 	it("echoes the amount the person typed, never the core's minor units", async () => {
@@ -8,7 +8,7 @@ describe("the unit a rejected amount is reported in", () => {
 			{ amount: "0.00", code: "ZERO_AMOUNT_POSTING" },
 		]
 		for (const entry of cases) {
-			const home = tempHome()
+			const home = ledgerHome()
 			const traj = cli(home)
 			await seeded(traj)
 			const res = await traj([

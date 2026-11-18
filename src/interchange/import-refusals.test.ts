@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { acceptedScenarioSchemaVersion } from "../scenario/document"
-import { mustOpen, tempHome } from "../store/testing"
+import { ledgerHome, mustOpen } from "../store/testing"
 import { edit, goldenJsonl, refused } from "./testing"
 
 const LUNCH = "0194b000-0004-7000-8000-000000000004"
@@ -45,7 +45,7 @@ describe("importJsonl refusals", () => {
 	})
 
 	it("refuses a target that holds more than the seeded personal entity", async () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		store.createAccount({ name: "Cash", type: "asset", currency: "THB" })
 		const body = refused(await goldenJsonl(), store)
 		expect(body).toMatchObject({ code: "restore_target_not_empty", details: { rows: 1 } })

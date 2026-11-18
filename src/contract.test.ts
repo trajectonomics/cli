@@ -7,7 +7,7 @@ import { defineCommand, defineGroup } from "./command"
 import { type ErrorCode, isAppError, registry } from "./errors"
 import { FIXTURE_AS_OF, fixtureHome } from "./ledger-fixture"
 import { type StoreRaised, storeTriggers } from "./store/store-triggers"
-import { SCENARIO_DOCUMENT, tempHome } from "./store/testing"
+import { ledgerHome, SCENARIO_DOCUMENT, tempHome } from "./store/testing"
 import type { Trigger } from "./store/trigger-setup"
 import { type Captured, capture } from "./test-support"
 import { throwingRoot } from "./test-tree"
@@ -51,14 +51,16 @@ describe("contract", () => {
 		// An unknown format is reported in text by design, so read the code from the text.
 		unknown_format: () => capture(["version"], { TRAJ_FORMAT: "yaml" }),
 		account_name_taken: async () => {
-			const home = tempHome()
+			const home = ledgerHome()
 			const argv = ["account", "add", "Cash", "--type", "asset", "--currency", "THB", "--json"]
 			await capture(argv, { TRAJ_HOME: home })
 			return capture(argv, { TRAJ_HOME: home })
 		},
-		not_found: () => capture(["account", "show", "Nope", "--json"], { TRAJ_HOME: tempHome() }),
+		not_found: () => capture(["account", "show", "Nope", "--json"], { TRAJ_HOME: fixtureHome() }),
+		// The one code raised before a connection exists: a read against a home with no ledger.
+		ledger_missing: () => capture(["account", "list", "--json"], { TRAJ_HOME: tempHome() }),
 		liability_opening_positive: async () => {
-			const home = tempHome()
+			const home = ledgerHome()
 			for (const [name, type] of [
 				["Opening", "equity"],
 				["Loan", "liability"],
@@ -111,12 +113,14 @@ describe("contract", () => {
 		output_exists: async () => {
 			const out = join(mkdtempSync(join(tmpdir(), "traj-test-")), "out")
 			mkdirSync(out)
-			return capture(["export", "--out", out, "--json"], { TRAJ_HOME: tempHome() })
+			const home = fixtureHome()
+			return capture(["export", "--out", out, "--json"], { TRAJ_HOME: home })
 		},
 		export_failed: async () => {
 			const file = join(mkdtempSync(join(tmpdir(), "traj-test-")), "afile")
 			writeFileSync(file, "")
-			return capture(["export", "--out", join(file, "out"), "--json"], { TRAJ_HOME: tempHome() })
+			const home = fixtureHome()
+			return capture(["export", "--out", join(file, "out"), "--json"], { TRAJ_HOME: home })
 		},
 		backup_unreadable: async () => {
 			// A directory where the backup file should be: the read fails however the mode is set.
@@ -125,7 +129,7 @@ describe("contract", () => {
 			return capture(["restore", dir, "--json"], { TRAJ_HOME: tempHome() })
 		},
 		backup_stale: async () => {
-			const home = tempHome()
+			const home = ledgerHome()
 			const out = join(mkdtempSync(join(tmpdir(), "traj-test-")), "out")
 			const add = (name: string) =>
 				capture(["account", "add", name, "--type", "asset", "--currency", "THB", "--json"], {
@@ -139,7 +143,7 @@ describe("contract", () => {
 			})
 		},
 		scenario_name_taken: async () => {
-			const home = tempHome()
+			const home = ledgerHome()
 			const apply = ["scenario", "apply", "base", "--file", "-", "--json"]
 			await capture(apply, { TRAJ_HOME: home }, undefined, JSON.stringify(SCENARIO_DOCUMENT))
 			return capture(["scenario", "fork", "base", "base", "--json"], { TRAJ_HOME: home })

@@ -3,7 +3,7 @@ import { z } from "zod"
 import { defineCommand, defineGroup, ok } from "./command"
 import { SENTENCES } from "./sentences"
 import { capture, errorOf } from "./test-support"
-import { tempHome } from "./tx-test-support"
+import { ledgerHome } from "./tx-test-support"
 
 const probeLeaf = (name: string, input: z.ZodObject, positionals: readonly string[] = []) =>
 	defineCommand({
@@ -104,7 +104,7 @@ describe("one case per validation reason", () => {
 					"1.5",
 					"--json",
 				],
-				{ TRAJ_HOME: tempHome() },
+				{ TRAJ_HOME: ledgerHome() },
 			),
 		)
 		expect(error).toMatchObject({ path: "--age", message: SENTENCES.wholeNumber })
@@ -115,14 +115,14 @@ describe("one case per validation reason", () => {
 describe("parser failures name only a leaf's own flag", () => {
 	it("gives a flag missing its value the flag's path", async () => {
 		const error = errorOf(
-			await capture(["balance", "--as-of", "--json"], { TRAJ_HOME: tempHome() }),
+			await capture(["balance", "--as-of", "--json"], { TRAJ_HOME: ledgerHome() }),
 		)
 		expect(error).toMatchObject({ path: "--as-of", message: "Flag --as-of needs a value." })
 	})
 
 	it("leaves a global flag path-less", async () => {
 		const error = errorOf(
-			await capture(["balance", "--json=yes"], { TRAJ_HOME: tempHome(), TRAJ_FORMAT: "json" }),
+			await capture(["balance", "--json=yes"], { TRAJ_HOME: ledgerHome(), TRAJ_FORMAT: "json" }),
 		)
 		expect(error.path).toBeUndefined()
 		expect(error.message).toBe("Flag --json takes no value.")
@@ -130,7 +130,7 @@ describe("parser failures name only a leaf's own flag", () => {
 
 	it("leaves a group parse path-less", async () => {
 		const error = errorOf(
-			await capture(["tx", "--json=yes"], { TRAJ_HOME: tempHome(), TRAJ_FORMAT: "json" }),
+			await capture(["tx", "--json=yes"], { TRAJ_HOME: ledgerHome(), TRAJ_FORMAT: "json" }),
 		)
 		expect(error.path).toBeUndefined()
 	})
@@ -138,7 +138,7 @@ describe("parser failures name only a leaf's own flag", () => {
 	it("keeps an extra word path-less, with its own hint", async () => {
 		const error = errorOf(
 			await capture(["balance", "--as-of", "2026-03-31", "extra", "--json"], {
-				TRAJ_HOME: tempHome(),
+				TRAJ_HOME: ledgerHome(),
 			}),
 		)
 		expect(error).toMatchObject({

@@ -2,16 +2,9 @@
 import type { ErrorCode } from "../errors"
 import { coreOnly } from "./core-triggers"
 import { HEAD } from "./migrations"
-import { must, mustOpen, tempHome } from "./testing"
-import {
-	busy,
-	corruptHome,
-	fileHome,
-	fullDisk,
-	openAt,
-	readonlyHome,
-	type Trigger,
-} from "./trigger-setup"
+import { ledgerHome, must, mustOpen } from "./testing"
+import type { Trigger } from "./trigger-setup"
+import { busy, corruptHome, fileHome, fullDisk, openAt, readonlyHome } from "./trigger-setup"
 import type { NewPosting, NewTransaction } from "./types"
 
 /** Every code the store raises itself; adding one fails typecheck until it has a trigger. */
@@ -26,6 +19,7 @@ export type StoreRaised = Exclude<
 	| "account_name_taken"
 	| "scenario_name_taken"
 	| "not_found"
+	| "ledger_missing"
 	// Raised by the export command, which is the only writer outside the data directory.
 	| "output_exists"
 	| "export_failed"
@@ -38,7 +32,7 @@ export type StoreRaised = Exclude<
 >
 
 function fixture() {
-	const store = mustOpen(tempHome())
+	const store = mustOpen(ledgerHome())
 	const open = (name: string, type: "asset" | "expense", parentId?: string) =>
 		must(store.createAccount({ name, type, currency: "THB", ...(parentId ? { parentId } : {}) }))
 			.account.id

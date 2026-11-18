@@ -1,13 +1,26 @@
-import { mkdtempSync } from "node:fs"
+import { mkdtempSync, statSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { type AppError, isAppError } from "../errors"
 import { openStore } from "./index"
+import { createLedger } from "./ledger-file"
 import type { Clock, Store } from "./types"
+
+/** A file's permission bits, such as `0o600`: the modes the ledger and its side files carry. */
+export function fileMode(path: string): number {
+	return statSync(path).mode & 0o777
+}
 
 /** A data directory that does not exist yet, inside a fresh temporary folder. */
 export function tempHome(): string {
 	return join(mkdtempSync(join(tmpdir(), "traj-store-")), "home")
+}
+
+/** A data directory holding an empty ledger, the way `traj init` leaves one. */
+export function ledgerHome(): string {
+	const home = tempHome()
+	createLedger({ TRAJ_HOME: home })
+	return home
 }
 
 /** A clock that starts at a fixed instant and advances one second per reading. */
@@ -20,7 +33,7 @@ export function steppingClock(start = "2026-01-01T00:00:00.000Z"): Clock {
 	}
 }
 
-/** Opens a store or fails the test with the error envelope. */
+/** Opens a store on a home that holds a ledger, or fails the test with the error envelope. */
 export function mustOpen(home: string, clock: Clock = steppingClock()): Store {
 	const store = openStore({ env: { TRAJ_HOME: home }, clock })
 	if (isAppError(store)) throw new Error(JSON.stringify(store.body))

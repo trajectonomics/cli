@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test"
 import { must, mustOpen } from "./store/testing"
 import { addTx } from "./tx-read-test-support"
-import { accounts, cli, tempHome } from "./tx-test-support"
+import { accounts, cli, ledgerHome } from "./tx-test-support"
 
 describe("tx list", () => {
 	it("lists a transaction once with both accounts named", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const opened = await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -41,7 +41,7 @@ describe("tx list", () => {
 	})
 
 	it("shows each transaction's external reference, so a row ties back to its bank row", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -68,7 +68,7 @@ describe("tx list", () => {
 	})
 
 	it("orders by date and then by id, whatever the insertion order", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const store = mustOpen(home)
 		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		const food = must(store.createAccount({ name: "Food", type: "expense", currency: "THB" }))
@@ -98,7 +98,7 @@ describe("tx list", () => {
 	})
 
 	it("includes the days --since and --until name", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -123,7 +123,7 @@ describe("tx list", () => {
 	})
 
 	it("finds a transaction from either side with --account", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const opened = await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -141,7 +141,7 @@ describe("tx list", () => {
 	})
 
 	it("reports an unknown --account as not_found, not UNKNOWN_ACCOUNT", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -156,7 +156,7 @@ describe("tx list", () => {
 	})
 
 	it("keeps a missing account on a posting as UNKNOWN_ACCOUNT", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [["Cash", "asset"]])
 		const res = await traj([
 			"tx",

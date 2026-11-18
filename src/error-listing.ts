@@ -1,4 +1,4 @@
-import { type ErrorCode, type ExitCode, RETRYABLE_CODES, registry } from "./registry"
+import { type ErrorCode, type ExitCode, RETRYABLE_CODES, registry } from "./errors"
 
 export type RegistryEntry = {
 	code: ErrorCode

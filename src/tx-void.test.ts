@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { accounts, cli, tempHome, UUID_V7 } from "./tx-test-support"
+import { accounts, cli, ledgerHome, UUID_V7 } from "./tx-test-support"
 
 async function lunch(traj: ReturnType<typeof cli>) {
 	const opened = await accounts(traj, [
@@ -31,7 +31,7 @@ async function lunch(traj: ReturnType<typeof cli>) {
 
 describe("tx void", () => {
 	it("writes the original's postings in order with every sign flipped, linked to it", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { opened, original } = await lunch(traj)
 		const res = await traj(["tx", "void", original.id, "--date", "2026-03-02", "--json"])
 		expect(res.code).toBe(0)
@@ -70,7 +70,7 @@ describe("tx void", () => {
 	})
 
 	it("reports an uncancelled correction as already_corrected and writes nothing", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const first = await traj(["tx", "void", original.id, "--date", "2026-03-02", "--json"])
 		expect(first.code).toBe(0)
@@ -92,7 +92,7 @@ describe("tx void", () => {
 	})
 
 	it("shows the reversal on the original", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const first = await traj(["tx", "void", original.id, "--date", "2026-03-02", "--json"])
 		const reversal = JSON.parse(first.out).transaction
@@ -106,7 +106,7 @@ describe("tx void", () => {
 	})
 
 	it("reports the existing correction before checking a retry's date", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const first = await traj(["tx", "void", original.id, "--date", "2026-03-02", "--json"])
 		const reversal = JSON.parse(first.out).transaction
@@ -121,7 +121,7 @@ describe("tx void", () => {
 	})
 
 	it("restores the original when its reversal is voided, so it accepts a void again", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const first = await traj(["tx", "void", original.id, "--date", "2026-03-02", "--json"])
 		const reversal = JSON.parse(first.out).transaction
@@ -141,7 +141,7 @@ describe("tx void", () => {
 	})
 
 	it("rejects a reversal dated before its original as REVERSAL_BEFORE_ORIGINAL", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const res = await traj(["tx", "void", original.id, "--date", "2026-02-28", "--json"])
 		expect(res.code).toBe(3)
@@ -153,7 +153,7 @@ describe("tx void", () => {
 	})
 
 	it("returns the reversal with a null id under --dry-run and writes nothing", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const dry = await traj([
 			"tx",
@@ -180,7 +180,7 @@ describe("tx void", () => {
 	})
 
 	it("reports an unknown transaction as not_found", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await lunch(traj)
 		const res = await traj(["tx", "void", "nope", "--date", "2026-03-02", "--json"])
 		expect(res.code).toBe(4)

@@ -1,12 +1,6 @@
 import { describe, expect, it } from "bun:test"
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { ledgerHome } from "./store/testing"
 import { capture } from "./test-support"
-
-function tempHome(): string {
-	return join(mkdtempSync(join(tmpdir(), "traj-account-")), "home")
-}
 
 function cli(home: string) {
 	return (argv: string[]) => capture(argv, { TRAJ_HOME: home })
@@ -28,7 +22,7 @@ async function seed(traj: (argv: string[]) => Promise<{ code: number; out: strin
 
 describe("account close", () => {
 	it("archives by name, and closing again exits 0 as already_archived", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const account = await seed(traj)
 		const first = await traj(["account", "close", "Cash", "--json"])
 		expect(first.code).toBe(0)
@@ -47,7 +41,7 @@ describe("account close", () => {
 	})
 
 	it("keeps an archived account in the chart and in show", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const account = await seed(traj)
 		await traj(["account", "close", "Cash", "--json"])
 		const listed = JSON.parse((await traj(["account", "list", "--json"])).out).accounts
@@ -60,7 +54,7 @@ describe("account close", () => {
 	})
 
 	it("reports an unknown account as not_found", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await traj(["account", "close", "Nope", "--json"])
 		expect(res.code).toBe(4)
 		expect(JSON.parse(res.err).error).toMatchObject({
@@ -76,7 +70,7 @@ describe("account close", () => {
 	})
 
 	it("returns the row it would archive under --dry-run and writes nothing", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await seed(traj)
 		const res = await traj(["account", "close", "Cash", "--dry-run", "--json"])
 		expect(res.code).toBe(0)

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { z } from "zod"
 import { defineCommand, defineGroup, ok } from "./command"
+import { root } from "./commands"
 import { checkReleaseDocs, type HelpNote, helpNotes, type ReleaseFacts } from "./release-docs"
 
 const LATEST = "0.1.0"
@@ -149,7 +150,17 @@ describe("help notes in a command tree", () => {
 	})
 
 	it("returns nothing for a tree without notes", () => {
-		const root = defineGroup({ name: "traj", summary: "traj", children: [] })
-		expect(helpNotes(root)).toEqual([])
+		const empty = defineGroup({ name: "traj", summary: "traj", children: [] })
+		expect(helpNotes(empty)).toEqual([])
+	})
+
+	it("keeps every note on this tree in the release-marker form the freshness run reads", () => {
+		// `note` is the release annotation only (ADR-0034): the freshness run flags any other text.
+		for (const { command, note } of helpNotes(root)) {
+			expect({ command, note }).toEqual({
+				command,
+				note: expect.stringMatching(/\bships in \d+\.\d+\.\d+\b/i),
+			})
+		}
 	})
 })

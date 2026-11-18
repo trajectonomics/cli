@@ -1,14 +1,8 @@
 import { describe, expect, it } from "bun:test"
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { ledgerHome } from "./store/testing"
 import { capture } from "./test-support"
 
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-
-function tempHome(): string {
-	return join(mkdtempSync(join(tmpdir(), "traj-account-")), "home")
-}
 
 function cli(home: string) {
 	return (argv: string[]) => capture(argv, { TRAJ_HOME: home })
@@ -24,7 +18,7 @@ async function add(
 
 describe("account add", () => {
 	it("creates an account and reports the row it wrote", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await add(traj, "Cash")
 		expect(res.code).toBe(0)
 		const data = JSON.parse(res.out)
@@ -41,7 +35,7 @@ describe("account add", () => {
 	})
 
 	it("rejects a duplicate name with account_name_taken and the existing account's id", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const first = JSON.parse((await add(traj, "Cash")).out).account
 		const again = await add(traj, "Cash")
 		expect(again.code).toBe(5)
@@ -53,7 +47,7 @@ describe("account add", () => {
 	})
 
 	it("rejects a duplicate under --dry-run too, and writes nothing", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await add(traj, "Cash")
 		const again = await add(traj, "Cash", ["--dry-run"])
 		expect(again.code).toBe(5)
@@ -63,7 +57,7 @@ describe("account add", () => {
 	})
 
 	it("reports a well-formed but unsupported currency as unsupported_currency", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await traj([
 			"account",
 			"add",
@@ -83,7 +77,7 @@ describe("account add", () => {
 	})
 
 	it("keeps a malformed currency as the core's INVALID_CURRENCY", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await traj([
 			"account",
 			"add",
@@ -103,7 +97,7 @@ describe("account add", () => {
 	})
 
 	it("rejects a name shaped like a UUID as invalid input", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await add(traj, "0194a000-0002-7000-8000-000000000002")
 		expect(res.code).toBe(2)
 		expect(JSON.parse(res.err).error).toMatchObject({
@@ -115,7 +109,7 @@ describe("account add", () => {
 	})
 
 	it("reports an unknown parent as not_found", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await add(traj, "Savings", ["--parent", "Nope"])
 		expect(res.code).toBe(4)
 		expect(JSON.parse(res.err).error).toMatchObject({
@@ -126,7 +120,7 @@ describe("account add", () => {
 	})
 
 	it("rejects a parent of another type with the core's hierarchy code", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await traj(["account", "add", "Food", "--type", "expense", "--currency", "THB", "--json"])
 		const res = await add(traj, "Lunch", ["--parent", "Food"])
 		expect(res.code).toBe(3)
@@ -137,7 +131,7 @@ describe("account add", () => {
 	})
 
 	it("treats names as exact and case-sensitive", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		expect((await add(traj, "Cash")).code).toBe(0)
 		expect((await add(traj, "cash")).code).toBe(0)
 		const listed = JSON.parse((await traj(["account", "list", "--json"])).out).accounts
@@ -145,7 +139,7 @@ describe("account add", () => {
 	})
 
 	it("keeps an archived account's name taken", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const first = JSON.parse((await add(traj, "Cash")).out).account
 		await traj(["account", "close", "Cash", "--json"])
 		const again = await add(traj, "Cash")
@@ -159,7 +153,7 @@ describe("account add", () => {
 
 describe("account add dry run", () => {
 	it("returns the row it would write with a null id and writes nothing", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await add(traj, "Cash", ["--dry-run"])
 		expect(res.code).toBe(0)
 		const data = JSON.parse(res.out)

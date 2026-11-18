@@ -3,7 +3,7 @@ import { describe, expect, it } from "bun:test"
 import { join } from "node:path"
 import { isAppError } from "../errors"
 import { HEAD, openStore } from "./index"
-import { must, mustOpen, steppingClock, tempHome } from "./testing"
+import { ledgerHome, must, mustOpen, steppingClock } from "./testing"
 
 const CHILD = join(import.meta.dir, "concurrent-writer.fixture.ts")
 
@@ -36,7 +36,7 @@ function health(home: string) {
 
 describe("concurrency", () => {
 	it("lets concurrent first-opens all end at head with one seeded entity", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const results = await spawnWriters(home, 8, 0)
 		expect(results).toEqual(results.map(() => ({ code: 0, err: "" })))
 		expect(health(home)).toEqual({
@@ -48,7 +48,7 @@ describe("concurrency", () => {
 	})
 
 	it("exits a writer process non-zero with the envelope when the store refuses it", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		mustOpen(home).close()
 		const db = new Database(join(home, "traj.db"))
 		db.run(`PRAGMA user_version = ${HEAD + 1}`)
@@ -59,7 +59,7 @@ describe("concurrency", () => {
 	})
 
 	it("loses no write when N processes write in parallel", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const setup = mustOpen(home)
 		must(setup.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		must(setup.createAccount({ name: "Food", type: "expense", currency: "THB" }))
@@ -80,7 +80,7 @@ describe("concurrency", () => {
 	}, 30_000)
 
 	it("reports contention that outlives the busy timeout as a retryable conflict", () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		mustOpen(home).close()
 		const holder = new Database(join(home, "traj.db"))
 		holder.run("BEGIN IMMEDIATE")

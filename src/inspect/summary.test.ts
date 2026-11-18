@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { goldenHome } from "../interchange/testing"
-import { tempHome } from "../store/testing"
+import { ledgerHome } from "../store/testing"
 import { capture } from "../test-support"
 
 describe("the bare summary", () => {
@@ -27,7 +27,7 @@ describe("the bare summary", () => {
 	})
 
 	it("shows the seeded Entity and empty tables on a fresh data directory", async () => {
-		const res = await capture(["inspect", "--json"], { TRAJ_HOME: tempHome() })
+		const res = await capture(["inspect", "--json"], { TRAJ_HOME: ledgerHome() })
 		expect(res.code).toBe(0)
 		expect(JSON.parse(res.out).tables).toEqual([
 			{ name: "entity", count: 1 },
@@ -37,7 +37,7 @@ describe("the bare summary", () => {
 			{ name: "scenario", count: 0 },
 		])
 
-		const detail = await capture(["inspect", "--all", "--json"], { TRAJ_HOME: tempHome() })
+		const detail = await capture(["inspect", "--all", "--json"], { TRAJ_HOME: ledgerHome() })
 		expect(detail.code).toBe(0)
 		const tables = JSON.parse(detail.out).tables
 		expect(tables[0].rows.map((row: { name: string }) => row.name)).toEqual(["Personal"])
@@ -48,7 +48,7 @@ describe("the bare summary", () => {
 			[],
 		])
 
-		const human = await capture(["inspect", "--all"], { TRAJ_HOME: tempHome() })
+		const human = await capture(["inspect", "--all"], { TRAJ_HOME: ledgerHome() })
 		expect(human.code).toBe(0)
 		expect(human.out).toContain("entity (1 row)")
 		expect(human.out).toContain("account (0 rows)")

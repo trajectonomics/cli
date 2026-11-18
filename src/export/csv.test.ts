@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { DUMP_TABLES } from "../dump/view"
 import { FIELDS } from "../interchange/format"
 import { goldenHome } from "../interchange/testing"
-import { tempHome } from "../store/testing"
+import { ledgerHome } from "../store/testing"
 import { capture } from "../test-support"
 import { edgeHome, outPath, parseCsv } from "./testing"
 
@@ -100,7 +100,7 @@ describe("export --format csv", () => {
 	})
 
 	it("writes an empty table as its header only", async () => {
-		const out = await exportCsv(tempHome())
+		const out = await exportCsv(ledgerHome())
 		const text = await Bun.file(join(out, "account.csv")).text()
 		expect(text.replace(/^\uFEFF/, "")).toBe(`${Object.keys(FIELDS.account).join(",")}\r\n`)
 		const entity = await Bun.file(join(out, "entity.csv")).text()

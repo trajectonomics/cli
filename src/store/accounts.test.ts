@@ -1,13 +1,13 @@
 import { describe, expect, it } from "bun:test"
 import { isAppError } from "../errors"
 import { PERSONAL_ENTITY_ID } from "./ids"
-import { must, mustOpen, tempHome } from "./testing"
+import { ledgerHome, must, mustOpen } from "./testing"
 
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
 describe("accounts", () => {
 	it("creates an account as a sync-ready row owned by the personal entity", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const made = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		expect(made.status).toBe("created")
 		expect(made.account).toMatchObject({
@@ -27,7 +27,7 @@ describe("accounts", () => {
 	})
 
 	it("lists in the order asked for, not insertion order", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		for (const name of ["Salary", "Cash", "Opening"]) {
 			must(store.createAccount({ name, type: "asset", currency: "THB" }))
 		}
@@ -38,7 +38,7 @@ describe("accounts", () => {
 	})
 
 	it("refuses a second live account with the same name in one entity", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const first = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		const second = must(store.createAccount({ name: "Cash", type: "expense", currency: "THB" }))
 		expect(second).toEqual({ status: "name_taken", account: first.account })
@@ -46,7 +46,7 @@ describe("accounts", () => {
 	})
 
 	it("frees a tombstoned account's name for reuse and keeps the tombstone for export", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const first = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		const deleted = must(store.deleteAccount(first.account.id))
 		expect(deleted.status).toBe("deleted")
@@ -61,7 +61,7 @@ describe("accounts", () => {
 	})
 
 	it("closes an account by archiving it and bumping its version", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const { account } = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		const closed = must(store.closeAccount(account.id))
 		expect(closed).toEqual({
@@ -79,7 +79,7 @@ describe("accounts", () => {
 	})
 
 	it("refuses to tombstone a parent that still has live children", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const parent = must(store.createAccount({ name: "Bank", type: "asset", currency: "THB" }))
 		const id = parent.account.id
 		must(store.createAccount({ name: "Savings", type: "asset", currency: "THB", parentId: id }))
@@ -88,7 +88,7 @@ describe("accounts", () => {
 	})
 
 	it("validates a new account through the core's chart of accounts", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const bad = store.createAccount({ name: "X", type: "asset", currency: "THB", parentId: "nope" })
 		if (!isAppError(bad)) throw new Error("expected a hierarchy error")
 		expect(bad.body.code).toBe("INVALID_ACCOUNT_HIERARCHY")
@@ -98,7 +98,7 @@ describe("accounts", () => {
 	})
 
 	it("points a rejection of the new account at the caller's own field", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		const money = store.createAccount({ name: "Y", type: "asset", currency: "thb" })
 		expect(isAppError(money) && money.body).toMatchObject({
@@ -109,7 +109,7 @@ describe("accounts", () => {
 		expect(isAppError(kind) && kind.body).toMatchObject({ code: "invalid_input", path: "type" })
 	})
 	it("accepts THB only in v1 (ADR-0005), after the core accepts the code", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const usd = store.createAccount({ name: "Dollars", type: "asset", currency: "USD" })
 		expect(isAppError(usd) && usd.body).toMatchObject({
 			code: "unsupported_currency",
@@ -123,7 +123,7 @@ describe("accounts", () => {
 
 describe("dry-run writes", () => {
 	it("creates and rolls back, so the chart stays empty", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const made = must(
 			store.createAccount({ name: "Cash", type: "asset", currency: "THB" }, { dryRun: true }),
 		)
@@ -136,7 +136,7 @@ describe("dry-run writes", () => {
 	})
 
 	it("reports a duplicate under a dry run instead of bypassing the rule", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		const again = must(
 			store.createAccount({ name: "Cash", type: "expense", currency: "THB" }, { dryRun: true }),
@@ -145,7 +145,7 @@ describe("dry-run writes", () => {
 	})
 
 	it("closes and rolls back, so the account stays open", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		const closed = must(store.closeAccount(cash.account.id, { dryRun: true }))
 		if (closed.status !== "archived") throw new Error("expected archived")
@@ -155,7 +155,7 @@ describe("dry-run writes", () => {
 	})
 
 	it("reports already_archived under a dry run", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		must(store.closeAccount(cash.account.id))
 		const again = must(store.closeAccount(cash.account.id, { dryRun: true }))

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { isAppError } from "../errors"
-import { must, mustOpen, SCENARIO_DOCUMENT, tempHome } from "./testing"
+import { ledgerHome, must, mustOpen, SCENARIO_DOCUMENT } from "./testing"
 
 const DOC = SCENARIO_DOCUMENT
 const CANONICAL =
@@ -10,7 +10,7 @@ const CHANGED = CANONICAL.replace('"economy":{"inflation":0}', '"economy":{"infl
 
 describe("scenarios", () => {
 	it("stores a new scenario as JCS canonical text with an algorithm-tagged hash", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const saved = must(store.saveScenario({ name: "base", document: DOC }))
 		expect(saved.status).toBe("created")
 		expect(saved.scenario).toMatchObject({
@@ -25,7 +25,7 @@ describe("scenarios", () => {
 	})
 
 	it("leaves an unchanged document alone and versions a changed one", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const first = must(store.saveScenario({ name: "base", document: DOC }))
 		const reordered = {
 			schemaVersion: DOC.schemaVersion,
@@ -55,7 +55,7 @@ describe("scenarios", () => {
 	})
 
 	it("refuses a document sim-core does not accept, at the failing document path", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const cases: [unknown, string][] = [
 			[[1], "document"],
 			[{ name: "x" }, "document.schemaVersion"],
@@ -71,7 +71,7 @@ describe("scenarios", () => {
 	})
 
 	it("forks a scenario into a new row that remembers its origin", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const base = must(store.saveScenario({ name: "base", document: DOC })).scenario
 		const fork = must(store.forkScenario(base.id, "early"))
 		expect(fork.status).toBe("forked")
@@ -92,7 +92,7 @@ describe("scenarios", () => {
 	})
 
 	it("tombstones a scenario, frees its name and keeps the tombstone for export", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const base = must(store.saveScenario({ name: "base", document: DOC })).scenario
 		const deleted = must(store.deleteScenario(base.id))
 		expect(deleted).toEqual({

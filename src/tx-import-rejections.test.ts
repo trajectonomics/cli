@@ -4,10 +4,10 @@ import {
 	csv,
 	errorOf,
 	HEADER,
+	ledgerHome,
 	ledgerSize,
 	row,
 	seeded,
-	tempHome,
 } from "./tx-import-test-support"
 import { account } from "./tx-test-support"
 
@@ -15,7 +15,7 @@ describe("tx import rejections", () => {
 	it("rejects a blank required cell at its column and names it in the hint", async () => {
 		const columns = ["date", "from", "to", "amount", "external_ref"] as const
 		for (const column of columns) {
-			const home = tempHome()
+			const home = ledgerHome()
 			const traj = cli(home)
 			await seeded(traj)
 			const cells: Record<string, string> = {
@@ -53,7 +53,7 @@ describe("tx import rejections", () => {
 	})
 
 	it("treats an only-commas row as seven blank cells, not a skipped line", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const res = await traj(["tx", "import", csv(home, "commas.csv", [HEADER, ",,,,,,"]), "--json"])
@@ -114,7 +114,7 @@ describe("tx import rejections", () => {
 			},
 		]
 		for (const entry of cases) {
-			const home = tempHome()
+			const home = ledgerHome()
 			const traj = cli(home)
 			await seeded(traj)
 			const res = await traj([
@@ -131,7 +131,7 @@ describe("tx import rejections", () => {
 	})
 
 	it("rejects an archived account and a header account at the row's column", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		await account(traj, "Bank")

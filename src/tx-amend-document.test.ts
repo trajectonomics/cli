@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { cli, lunch, tempHome } from "./tx-test-support"
+import { cli, ledgerHome, lunch } from "./tx-test-support"
 
 type Posting = { account: string; amount: string; currency: string }
 
@@ -24,7 +24,7 @@ function errorOf(res: { err: string }) {
 
 describe("tx amend document", () => {
 	it("reads the replacement from --postings, keeping its memo and reference", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		const { original } = await lunch(traj)
 		const amended = await cli(
@@ -54,7 +54,7 @@ describe("tx amend document", () => {
 	})
 
 	it("accepts --void-date and --dry-run beside the document", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		const { original } = await lunch(traj)
 		const res = await cli(
@@ -83,7 +83,7 @@ describe("tx amend document", () => {
 	})
 
 	it("refuses to mix the document form with flag-form fields", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		const { original } = await lunch(traj)
 		for (const extra of [
@@ -107,7 +107,7 @@ describe("tx amend document", () => {
 	})
 
 	it("rejects a malformed document before writing any row", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		const { original } = await lunch(traj)
 		const res = await cli(home, "{")(["tx", "amend", original.id, "--postings", "-", "--json"])

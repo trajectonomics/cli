@@ -1,11 +1,11 @@
 import { Database } from "bun:sqlite"
 import { describe, expect, it } from "bun:test"
 import { isAppError } from "../errors"
-import { must, mustOpen, tempHome } from "./testing"
+import { ledgerHome, must, mustOpen } from "./testing"
 import type { NewAmendment, NewTransaction, Store, TxAmended } from "./types"
 
 function setup() {
-	const store = mustOpen(tempHome())
+	const store = mustOpen(ledgerHome())
 	const open = (name: string, type: "asset" | "expense") =>
 		must(store.createAccount({ name, type, currency: "THB" })).account.id
 	const cash = open("Cash", "asset")

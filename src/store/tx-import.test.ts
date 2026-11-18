@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test"
 import { isAppError } from "../errors"
-import { must, mustOpen, steppingClock, tempHome } from "./testing"
+import { ledgerHome, must, mustOpen, steppingClock } from "./testing"
 import { importRejections } from "./tx-import"
 import type { NewTransaction, Store } from "./types"
 
 function setup() {
-	const store = mustOpen(tempHome(), steppingClock())
+	const store = mustOpen(ledgerHome(), steppingClock())
 	const open = (name: string, type: "asset" | "expense" | "equity") =>
 		must(store.createAccount({ name, type, currency: "THB" })).account.id
 	const cash = open("Cash", "asset")

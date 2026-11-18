@@ -1,16 +1,10 @@
 import { expect } from "bun:test"
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
 import { type Captured, capture } from "./test-support"
+
+export { ledgerHome } from "./store/testing"
 
 export const UUID_V7: RegExp =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-
-/** A data directory that does not exist yet, inside a fresh temporary folder. */
-export function tempHome(): string {
-	return join(mkdtempSync(join(tmpdir(), "traj-tx-")), "home")
-}
 
 export type Traj = (argv: string[]) => Promise<Captured>
 

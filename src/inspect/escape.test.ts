@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { tempHome } from "../store/testing"
+import { ledgerHome } from "../store/testing"
 import { capture } from "../test-support"
 
 const accounts: [string, string][] = [
@@ -9,7 +9,7 @@ const accounts: [string, string][] = [
 
 describe("inspect's human table", () => {
 	it("escapes a memo's newline, tab and terminal escape, and keeps it on one row", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		for (const [name, type] of accounts) {
 			await capture(["account", "add", name, "--type", type, "--currency", "THB"], {
 				TRAJ_HOME: home,

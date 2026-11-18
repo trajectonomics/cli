@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { FIXTURE_AS_OF, fixtureHome, overflowRows, seededHome } from "./ledger-fixture"
 import { golden } from "./report/testing"
-import { tempHome } from "./store/testing"
+import { ledgerHome } from "./store/testing"
 import { capture } from "./test-support"
 
 function cli(home: string) {
@@ -51,7 +51,7 @@ describe("report networth", () => {
 	})
 
 	it("renders an empty Ledger as empty arrays at exit 0", async () => {
-		const res = await networth(tempHome())
+		const res = await networth(ledgerHome())
 		expect(res.code).toBe(0)
 		expect(JSON.parse(res.out)).toEqual({
 			asOf: FIXTURE_AS_OF,
@@ -93,7 +93,7 @@ describe("report networth", () => {
 	})
 
 	it("takes the earliest dated Transaction, not the first one stored", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		for (const name of ["Cash", "Opening"]) {
 			const type = name === "Cash" ? "asset" : "equity"
@@ -133,7 +133,7 @@ describe("report networth", () => {
 	})
 
 	it("requires --as-of", async () => {
-		const res = await cli(tempHome())(["report", "networth", "--json"])
+		const res = await cli(ledgerHome())(["report", "networth", "--json"])
 		expect(res.code).toBe(2)
 		expect(JSON.parse(res.err).error).toMatchObject({
 			code: "invalid_input",
@@ -143,13 +143,13 @@ describe("report networth", () => {
 	})
 
 	it("rejects a bad date as INVALID_DATE at asOf", async () => {
-		const res = await cli(tempHome())(["report", "networth", "--as-of", "2026-02-30", "--json"])
+		const res = await cli(ledgerHome())(["report", "networth", "--as-of", "2026-02-30", "--json"])
 		expect(res.code).toBe(3)
 		expect(JSON.parse(res.err).error).toMatchObject({ code: "INVALID_DATE", path: "asOf" })
 	})
 
 	it("rejects every date-range and Dimension flag by name", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const cases = [
 			["--from", "Cash"],
 			["--to", "Cash"],
@@ -182,7 +182,9 @@ describe("report networth", () => {
 	})
 
 	it("describes the leaf through the schema command", async () => {
-		const data = JSON.parse((await cli(tempHome())(["schema", "report", "networth", "--json"])).out)
+		const data = JSON.parse(
+			(await cli(ledgerHome())(["schema", "report", "networth", "--json"])).out,
+		)
 		expect(data.name).toBe("report networth")
 		expect(data.input.required).toEqual(["asOf"])
 		expect(data.input.properties.project).toBeUndefined()

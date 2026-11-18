@@ -8,10 +8,10 @@ import {
 	csv,
 	errorOf,
 	HEADER,
+	ledgerHome,
 	ledgerSize,
 	row,
 	seeded,
-	tempHome,
 } from "./tx-import-test-support"
 
 describe("tx import schema, help and listing", () => {
@@ -60,7 +60,7 @@ describe("tx import schema, help and listing", () => {
 		const code = await run(
 			["tx", "import", "--json"],
 			{ out: (line) => out.push(line), err: (line) => err.push(line) },
-			{ TRAJ_HOME: tempHome() },
+			{ TRAJ_HOME: ledgerHome() },
 			undefined,
 			stdin,
 		)
@@ -70,8 +70,8 @@ describe("tx import schema, help and listing", () => {
 	})
 
 	it("prints one byte-identical template for every data directory", async () => {
-		const first = await cli(tempHome())(["tx", "import", "--template"])
-		const second = await cli(tempHome())(["tx", "import", "--template", "--json"])
+		const first = await cli(ledgerHome())(["tx", "import", "--template"])
+		const second = await cli(ledgerHome())(["tx", "import", "--template", "--json"])
 		expect(first.out).toBe(HEADER)
 		expect(JSON.parse(second.out)).toBe(HEADER)
 	})
@@ -89,7 +89,7 @@ describe("tx import schema, help and listing", () => {
 
 describe("tx import database_busy", () => {
 	it("exits 5 with database_busy and writes nothing while another writer holds the lock", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "busy.csv", [
@@ -112,7 +112,7 @@ describe("tx import database_busy", () => {
 
 describe("tx import human output", () => {
 	it("prints a counts line and lines for each row", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "human.csv", [
@@ -127,7 +127,7 @@ describe("tx import human output", () => {
 	})
 
 	it("prints the envelope's code and the line to fix", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "human-bad.csv", [

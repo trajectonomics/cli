@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test"
-import { accounts, cli, tempHome, UUID_V7 } from "./tx-test-support"
+import { accounts, cli, ledgerHome, UUID_V7 } from "./tx-test-support"
 
 describe("tx add", () => {
 	it("records a simple transfer between two accounts by name", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const opened = await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -56,7 +56,7 @@ describe("tx add", () => {
 	})
 
 	it("records an opening balance against equity, signed so an overdrawn asset opens negative", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const opened = await accounts(traj, [
 			["Cash", "asset"],
 			["Overdrawn", "asset"],
@@ -109,7 +109,7 @@ describe("tx add", () => {
 
 describe("tx add amount refusals", () => {
 	it("echoes the amount the person typed, never the core's minor units", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],

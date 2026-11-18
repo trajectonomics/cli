@@ -1,12 +1,12 @@
 import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { tempHome } from "./store/testing"
+import { ledgerHome } from "./store/testing"
 import { type Captured, capture } from "./test-support"
 
 /** A fresh data directory for one Scenario test. */
 export function scenarioHome(): string {
-	return tempHome()
+	return ledgerHome()
 }
 
 /** Runs `traj scenario ...` against one data directory, with optional stdin. */

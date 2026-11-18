@@ -3,16 +3,16 @@ import {
 	amend,
 	cli,
 	json,
+	ledgerHome,
 	ledgerSize,
 	lunch,
-	tempHome,
 	UUID_V7,
 	type Written,
 } from "./tx-test-support"
 
 describe("tx amend", () => {
 	it("writes a reversal and a replacement in one write, both linked to the original", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const res = await amend(traj, original.id)
 		expect(res.code).toBe(0)
@@ -37,7 +37,7 @@ describe("tx amend", () => {
 	})
 
 	it("writes the original's postings with every sign flipped and the amended ones as given", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { opened, original } = await lunch(traj)
 		const data = json(await amend(traj, original.id))
 		expect(data.reversal?.postings).toEqual([
@@ -75,7 +75,7 @@ describe("tx amend", () => {
 	})
 
 	it("takes the reversal's date from --void-date, defaulting it to --date", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const defaulted = json(await amend(traj, original.id))
 		expect(defaulted.reversal?.date).toBe("2026-03-02")
@@ -100,7 +100,7 @@ describe("tx amend", () => {
 	})
 
 	it("returns both rows with a null id under --dry-run and writes nothing", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const dry = await amend(traj, original.id, ["--dry-run"])
 		expect(dry.code).toBe(0)
@@ -118,7 +118,7 @@ describe("tx amend", () => {
 	})
 
 	it("shows the amendment's rows as ordinary transactions in the list", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const data = json(await amend(traj, original.id))
 		const listed = JSON.parse((await traj(["tx", "list", "--json"])).out) as {
@@ -129,7 +129,7 @@ describe("tx amend", () => {
 	})
 
 	it("reports an unknown transaction as not_found", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await lunch(traj)
 		const res = await amend(traj, "01940000-0000-7000-8000-000000000000")
 		expect(res.code).toBe(4)

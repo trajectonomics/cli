@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { join } from "node:path"
 import { goldenStore } from "../interchange/testing"
-import { must, mustOpen, tempHome } from "./testing"
+import { ledgerHome, must, mustOpen } from "./testing"
 
 const WRITER = join(import.meta.dir, "concurrent-writer.fixture.ts")
 
@@ -48,7 +48,7 @@ describe("dump", () => {
 	})
 
 	it("dumps the seeded entity and no rows on a fresh database", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		expect(must(store.dump())).toEqual({
 			entity: [
 				{
@@ -68,7 +68,7 @@ describe("dump", () => {
 	})
 
 	it("cannot see a posting whose transaction is missing while another process writes", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const setup = mustOpen(home)
 		must(setup.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		must(setup.createAccount({ name: "Food", type: "expense", currency: "THB" }))

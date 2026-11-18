@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test"
-import { account, accounts, cli, tempHome } from "./tx-test-support"
+import { account, accounts, cli, ledgerHome } from "./tx-test-support"
 
 describe("tx add flags", () => {
 	it("replays an identical external ref as a duplicate and a changed one as a conflict", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const opened = await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -47,7 +47,7 @@ describe("tx add flags", () => {
 	})
 
 	it("rolls a dry run back and returns the generated id as null", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await account(traj, "Cash")
 		await account(traj, "Food", "expense")
 		const argv = [
@@ -80,7 +80,7 @@ describe("tx add flags", () => {
 	})
 
 	it("rejects an amount above the safe-integer range instead of rounding it", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await account(traj, "Cash")
 		await account(traj, "Food", "expense")
 		const res = await traj([
@@ -105,7 +105,7 @@ describe("tx add flags", () => {
 	})
 
 	it("reports a posting account that is not in the chart as UNKNOWN_ACCOUNT", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await account(traj, "Cash")
 		const res = await traj([
 			"tx",
@@ -129,7 +129,7 @@ describe("tx add flags", () => {
 	})
 
 	it("leaves calendar validation to the core with INVALID_DATE", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await account(traj, "Cash")
 		await account(traj, "Food", "expense")
 		const res = await traj([
@@ -154,7 +154,7 @@ describe("tx add flags", () => {
 	})
 
 	it("requires the opening contra to be an equity account", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await account(traj, "Cash")
 		await account(traj, "Food", "expense")
 		const res = await traj([

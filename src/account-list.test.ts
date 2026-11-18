@@ -1,13 +1,6 @@
 import { describe, expect, it } from "bun:test"
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { must, mustOpen } from "./store/testing"
+import { ledgerHome, must, mustOpen } from "./store/testing"
 import { capture } from "./test-support"
-
-function tempHome(): string {
-	return join(mkdtempSync(join(tmpdir(), "traj-account-")), "home")
-}
 
 function cli(home: string) {
 	return (argv: string[]) => capture(argv, { TRAJ_HOME: home })
@@ -15,7 +8,7 @@ function cli(home: string) {
 
 describe("account list", () => {
 	it("shows the chart ordered by name", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		for (const name of ["Salary", "Cash", "Opening"]) {
 			const res = await traj([
 				"account",
@@ -39,7 +32,7 @@ describe("account list", () => {
 	})
 
 	it("keeps an archived account in its name's place", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		for (const name of ["Zebra", "Bank", "Cash"]) {
 			const res = await traj([
 				"account",
@@ -60,7 +53,7 @@ describe("account list", () => {
 	})
 
 	it("never lists a tombstoned account", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const store = mustOpen(home)
 		const kept = must(store.createAccount({ name: "Kept", type: "asset", currency: "THB" }))
 		const gone = must(store.createAccount({ name: "Gone", type: "asset", currency: "THB" }))

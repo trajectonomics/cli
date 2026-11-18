@@ -1,5 +1,5 @@
 import type { RestoreRows } from "../store"
-import { must, mustOpen, tempHome } from "../store/testing"
+import { ledgerHome, must, mustOpen } from "../store/testing"
 import { FIXTURE_ROWS } from "./data"
 import { FIXTURE_ACCOUNTS, posting, transaction } from "./rows"
 
@@ -30,7 +30,7 @@ export function overflowRows(): RestoreRows {
 
 /** A fresh data directory holding `rows`, written through `Store.restore` and read-only after. */
 export function seededHome(rows: RestoreRows): string {
-	const home = tempHome()
+	const home = ledgerHome()
 	const store = mustOpen(home)
 	must(store.restore(rows))
 	store.close()

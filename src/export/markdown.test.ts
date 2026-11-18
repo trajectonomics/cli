@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { goldenHome } from "../interchange/testing"
-import { tempHome } from "../store/testing"
+import { ledgerHome } from "../store/testing"
 import { capture } from "../test-support"
 import { edgeHome, outPath } from "./testing"
 
@@ -72,7 +72,7 @@ describe("export --format md", () => {
 	})
 
 	it("writes an empty table as a heading, a header and a separator", async () => {
-		const out = await exportMarkdown(tempHome())
+		const out = await exportMarkdown(ledgerHome())
 		const text = await Bun.file(join(out, "traj.md")).text()
 		const section = text.slice(text.indexOf("## account"), text.indexOf("## tx"))
 		const lines = section.split("\n").filter((line) => line !== "")

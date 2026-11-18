@@ -7,15 +7,15 @@ import {
 	errorOf,
 	HEADER,
 	imported,
+	ledgerHome,
 	ledgerSize,
 	row,
 	seeded,
-	tempHome,
 } from "./tx-import-test-support"
 
 describe("tx import file-level failures", () => {
 	it("rejects an unreadable path at file and writes nothing", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const res = await traj(["tx", "import", join(dirname(home), "missing.csv"), "--json"])
@@ -25,7 +25,7 @@ describe("tx import file-level failures", () => {
 	})
 
 	it("rejects invalid UTF-8 rather than storing a corrupted memo", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const path = join(dirname(home), "latin1.csv")
@@ -37,7 +37,7 @@ describe("tx import file-level failures", () => {
 	})
 
 	it("rejects an empty, whitespace-only or BOM-only file", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		for (const [name, text] of [
@@ -52,7 +52,7 @@ describe("tx import file-level failures", () => {
 	})
 
 	it("rejects a wrong header at header with the expected and actual text", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const res = await traj([
@@ -73,7 +73,7 @@ describe("tx import file-level failures", () => {
 	})
 
 	it("checks the header first, then reports the earliest malformed row", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const wrongHeader = await traj([
@@ -105,7 +105,7 @@ describe("tx import file-level failures", () => {
 			},
 		]
 		for (const entry of cases) {
-			const home = tempHome()
+			const home = ledgerHome()
 			const traj = cli(home)
 			await seeded(traj)
 			const res = await traj(["tx", "import", csv(home, "bad.csv", entry.lines), "--json"])
@@ -118,7 +118,7 @@ describe("tx import file-level failures", () => {
 
 describe("tx import stdin", () => {
 	it("reads the CSV from - and accepts a BOM and CRLF", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const text = `\uFEFF${HEADER}\r\n2026-03-01,Cash,Food,10,Lunch,stdin:1,\r\n`
@@ -131,7 +131,7 @@ describe("tx import stdin", () => {
 	})
 
 	it("rejects an empty stdin and a stdin holding a replacement character", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const empty = await cli(home, "")(["tx", "import", "-", "--json"])

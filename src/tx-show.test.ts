@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test"
 import { must, mustOpen } from "./store/testing"
 import { addTx } from "./tx-read-test-support"
-import { accounts, cli, tempHome } from "./tx-test-support"
+import { accounts, cli, ledgerHome } from "./tx-test-support"
 
 describe("tx show", () => {
 	it("shows a transaction with both accounts named and no links yet", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const opened = await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -41,7 +41,7 @@ describe("tx show", () => {
 	})
 
 	it("shows the external reference a bank row is matched by", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -67,7 +67,7 @@ describe("tx show", () => {
 	})
 
 	it("reports links in both directions", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const store = mustOpen(home)
 		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		const food = must(store.createAccount({ name: "Food", type: "expense", currency: "THB" }))
@@ -106,7 +106,7 @@ describe("tx show", () => {
 	})
 
 	it("reports an unknown transaction as not_found", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await traj(["tx", "show", "01940000-0000-7000-8000-000000000000", "--json"])
 		expect(res.code).toBe(4)
 		expect(JSON.parse(res.err).error).toMatchObject({

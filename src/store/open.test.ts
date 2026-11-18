@@ -6,7 +6,7 @@ import { isAppError } from "../errors"
 import { capture } from "../test-support"
 import { HEAD, openStore } from "./index"
 import { schemaV1 } from "./schema-v1"
-import { mustOpen, steppingClock, tempHome } from "./testing"
+import { ledgerHome, mustOpen, steppingClock, tempHome } from "./testing"
 
 /**
  * One builder per schema version below head, each producing what that version left on disk.
@@ -46,8 +46,8 @@ function inspect(home: string) {
 }
 
 describe("openStore", () => {
-	it("migrates a fresh directory to head with all five tables and their indexes", () => {
-		const home = tempHome()
+	it("migrates the empty ledger init leaves to head with all five tables and their indexes", () => {
+		const home = ledgerHome()
 		mustOpen(home).close()
 		const { version, objects } = inspect(home)
 		expect(version).toBe(HEAD)
@@ -84,7 +84,7 @@ describe("openStore", () => {
 	})
 
 	it("changes nothing when re-opened at head", () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		mustOpen(home).close()
 		const before = readFileSync(join(home, "traj.db"))
 		mustOpen(home).close()
@@ -119,8 +119,7 @@ describe("openStore", () => {
 	})
 
 	it("names a data directory it cannot write as permission denied", () => {
-		const home = tempHome()
-		mkdirSync(home, { recursive: true })
+		const home = ledgerHome()
 		chmodSync(home, 0o500)
 		try {
 			const store = openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
@@ -169,7 +168,7 @@ describe("openStore", () => {
 	})
 
 	it("names a read-only database when a write is refused", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		mustOpen(home).close()
 		chmodSync(join(home, "traj.db"), 0o444)
 		try {
