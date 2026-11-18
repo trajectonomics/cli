@@ -1,12 +1,10 @@
 import { describe, expect, it } from "bun:test"
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { backupPath } from "./backup/testing"
 import { goldenHome } from "./interchange/testing"
 import { tempHome } from "./store/testing"
 import { capture, errorOf } from "./test-support"
-
-const backupPath = () => join(mkdtempSync(join(tmpdir(), "traj-remove-")), "backup")
 
 /** A backup of `home`, taken the way a caller takes one before removing anything. */
 async function backupOf(home: string): Promise<string> {

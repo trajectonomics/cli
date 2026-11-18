@@ -1,13 +1,10 @@
 import { describe, expect, it } from "bun:test"
-import { mkdirSync, mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { mkdirSync } from "node:fs"
 import { join, resolve } from "node:path"
+import { backupPath as outPath } from "./backup/testing"
 import { goldenHome, goldenJsonl } from "./interchange/testing"
 import { tempHome } from "./store/testing"
 import { capture, errorOf } from "./test-support"
-
-/** A directory path that does not exist yet, so the command is the one that creates it. */
-const outPath = () => join(mkdtempSync(join(tmpdir(), "traj-backup-")), "out")
 
 const backup = async (home: string, out: string) =>
 	capture(["backup", "--out", out, "--json"], { TRAJ_HOME: home })

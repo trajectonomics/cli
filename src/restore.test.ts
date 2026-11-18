@@ -1,12 +1,10 @@
 import { describe, expect, it } from "bun:test"
-import { existsSync, mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { existsSync } from "node:fs"
 import { join } from "node:path"
+import { backupPath } from "./backup/testing"
 import { goldenHome, goldenJsonl } from "./interchange/testing"
 import { tempHome } from "./store/testing"
 import { capture, errorOf } from "./test-support"
-
-const backupPath = () => join(mkdtempSync(join(tmpdir(), "traj-restore-")), "backup")
 
 /** A backup of the golden home, taken through the command that a caller would use. */
 async function goldenBackup(): Promise<string> {
