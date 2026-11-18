@@ -1,7 +1,9 @@
 import { Database } from "bun:sqlite"
+import { chmodSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { capture } from "../test-support"
 import { openStore } from "./index"
+import { databaseFailure } from "./io-errors"
 import { mustOpen, steppingClock, tempHome } from "./testing"
 
 /** A trigger returns what the store returned; the contract test asserts it is an AppError. */
@@ -31,4 +33,39 @@ export function busy(): unknown {
 	holder.run("ROLLBACK")
 	holder.close()
 	return outcome
+}
+
+/** An `openStore` on a TRAJ_HOME that is a file, never a directory. */
+export function fileHome(): unknown {
+	const home = tempHome()
+	mkdirSync(join(home, ".."), { recursive: true })
+	writeFileSync(home, "")
+	return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+}
+
+/** An `openStore` on a data directory the user cannot write. */
+export function readonlyHome(): unknown {
+	const home = tempHome()
+	mkdirSync(home, { recursive: true })
+	chmodSync(home, 0o500)
+	try {
+		return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+	} finally {
+		chmodSync(home, 0o700)
+	}
+}
+
+/** An `openStore` on a file that is not a SQLite database. */
+export function corruptHome(): unknown {
+	const home = tempHome()
+	mkdirSync(home, { recursive: true })
+	writeFileSync(join(home, "traj.db"), "not a sqlite database")
+	return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+}
+
+/** The envelope the store returns on a full disk, without needing a full disk. */
+export function fullDisk(): unknown {
+	const failure = databaseFailure(join(tempHome(), "traj.db"), { code: "SQLITE_FULL" })
+	if (failure === undefined) throw new Error("expected disk_full")
+	return failure
 }

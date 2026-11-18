@@ -49,9 +49,29 @@ const doc = defineCommand({
 
 const demo = defineGroup({ name: "demo", summary: "A fixture group", children: [doc, echo] })
 
+const boom = defineCommand({
+	name: "boom",
+	summary: "Throw an unexpected error",
+	positionals: [],
+	input: z.strictObject({}),
+	output: z.null(),
+	examples: [],
+	errorCodes: [],
+	run: () => {
+		throw new Error("boom")
+	},
+})
+
 /** The real command tree plus a `demo` group, for tests that need nesting and flags. */
 export const fixtureRoot: Group = defineGroup({
 	name: "traj",
 	summary: "trajectonomics command line",
 	children: [...root.children, demo],
+})
+
+/** The real tree plus a command that throws, for the fixed `internal` envelope. */
+export const throwingRoot: Group = defineGroup({
+	name: "traj",
+	summary: "trajectonomics command line",
+	children: [...root.children, boom],
 })

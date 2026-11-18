@@ -62,3 +62,21 @@ export function exitStatus(code, signal) {
 export function releaseUrl(version, name, base = RELEASE_BASE) {
 	return `${base}/download/v${version}/${name}`
 }
+
+/**
+ * A failed write in plain words: the cause, the directory, and the next step. Node reports a
+ * full disk as a bare "UNKNOWN: unknown error, write", so a known code carries the sentence.
+ */
+export function writeProblem(error, directory) {
+	const code = error !== null && typeof error === "object" ? error.code : undefined
+	if (code === "ENOSPC" || code === "EDQUOT") {
+		return `disk full: needs about 100 MB in ${directory}; free space and retry.`
+	}
+	if (code === "EACCES" || code === "EPERM" || code === "EROFS") {
+		return `permission denied writing ${directory}; check its permissions or set TRAJ_HOME.`
+	}
+	if (code === "EEXIST" || code === "ENOTDIR" || code === "EISDIR") {
+		return `${directory} is not a directory; move the file or set TRAJ_HOME to a directory.`
+	}
+	return error instanceof Error ? error.message : String(error)
+}

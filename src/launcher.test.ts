@@ -6,6 +6,7 @@ import {
 	releaseUrl,
 	sha256,
 	verifyChecksum,
+	writeProblem,
 } from "../bin/launcher.js"
 
 describe("asset naming", () => {
@@ -81,5 +82,31 @@ describe("checksums", () => {
 		expect(() =>
 			verifyChecksum(`${digest}  traj-linux-x64\n`, "traj-linux-x64", new Uint8Array([1])),
 		).toThrow(/checksum mismatch for traj-linux-x64/)
+	})
+})
+
+describe("a failed install", () => {
+	it("says a full disk needs about 100 MB in the directory", () => {
+		expect(writeProblem({ code: "ENOSPC" }, "/h/.traj/bin")).toBe(
+			"disk full: needs about 100 MB in /h/.traj/bin; free space and retry.",
+		)
+	})
+
+	it("names permission denied and the directory", () => {
+		const message = writeProblem({ code: "EACCES" }, "/h/.traj/bin")
+		expect(message).toContain("permission denied")
+		expect(message).toContain("/h/.traj/bin")
+	})
+
+	it("names a path blocked by a file as not a directory", () => {
+		const message = writeProblem({ code: "ENOTDIR" }, "/h/.traj/bin")
+		expect(message).toContain("not a directory")
+		expect(message).toContain("/h/.traj/bin")
+	})
+
+	it("keeps the cause's own words when it knows none of them", () => {
+		expect(writeProblem(new Error("unknown error, write"), "/h/.traj/bin")).toContain(
+			"unknown error, write",
+		)
 	})
 })

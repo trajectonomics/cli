@@ -19,7 +19,11 @@ export type ErrorCode =
 	| "liability_opening_positive"
 	| "external_ref_conflict"
 	| "database_busy"
+	| "database_corrupt"
 	| "database_too_new"
+	| "disk_full"
+	| "not_a_directory"
+	| "permission_denied"
 	| "migration_failed"
 	| "output_exists"
 	| "export_failed"
@@ -43,6 +47,9 @@ export type ErrorCode =
 	| "AMOUNT_OVERFLOW"
 
 export type ErrorSpec = { exit: ExitCode; message: string }
+
+/** Codes a caller may retry unchanged; every other code is permanent. */
+export const RETRYABLE_CODES: readonly ErrorCode[] = ["database_busy", "disk_full"]
 
 /**
  * The single source of truth for failures. The envelope's `exitCode`, `run()`'s return value,
@@ -69,14 +76,15 @@ export const registry: Record<ErrorCode, ErrorSpec> = {
 		message: "A transaction with this external reference already exists with other content.",
 	},
 	database_busy: { exit: 5, message: "The database is busy; another writer holds it." },
+	database_corrupt: { exit: 1, message: "The database is not a SQLite database." },
 	database_too_new: { exit: 5, message: "The database was written by a newer traj." },
+	disk_full: { exit: 1, message: "The disk is full." },
+	not_a_directory: { exit: 1, message: "A path is not a directory." },
+	permission_denied: { exit: 1, message: "Permission is denied for a file." },
 	migration_failed: { exit: 1, message: "The database could not be migrated." },
 	output_exists: { exit: 5, message: "The output path already exists." },
 	export_failed: { exit: 1, message: "The export could not be written." },
-	projection_refused: {
-		exit: 3,
-		message: "The projection engine refused the Baseline, the Scenario or the Timeline.",
-	},
+	projection_refused: { exit: 3, message: "The projection engine refused its input." },
 	SINGLE_POSTING: { exit: 3, message: "A transaction needs at least two postings." },
 	INVALID_AMOUNT: { exit: 3, message: "The amount is not a safe integer of minor units." },
 	ZERO_AMOUNT_POSTING: { exit: 3, message: "A posting amount cannot be zero." },

@@ -9,6 +9,7 @@ import { FIXTURE_AS_OF, fixtureHome } from "./ledger-fixture"
 import { type StoreRaised, storeTriggers, type Trigger } from "./store/store-triggers"
 import { SCENARIO_DOCUMENT, tempHome } from "./store/testing"
 import { type Captured, capture } from "./test-support"
+import { throwingRoot } from "./test-tree"
 
 /**
  * Runs a store trigger and returns its AppError from a test-only `probe` command, so the envelope
@@ -42,11 +43,7 @@ function probed(
 describe("contract", () => {
 	// Typed over ErrorCode: registering a new code fails to compile until a trigger is added here.
 	const triggers: Record<ErrorCode, () => Promise<{ code: number; err: string }>> = {
-		internal: () => {
-			const file = join(mkdtempSync(join(tmpdir(), "traj-test-")), "afile")
-			writeFileSync(file, "")
-			return capture(["init", "--json"], { TRAJ_HOME: file })
-		},
+		internal: () => capture(["boom", "--json"], {}, throwingRoot),
 		invalid_input: () => capture(["version", "extra", "--json"]),
 		unknown_command: () => capture(["nope", "--json"]),
 		unknown_flag: () => capture(["--nope", "--json"]),
@@ -152,10 +149,8 @@ describe("contract", () => {
 	})
 
 	it("adds a diagnostic to stderr only when TRAJ_DEBUG=1 asks for it", async () => {
-		const file = join(mkdtempSync(join(tmpdir(), "traj-test-")), "afile")
-		writeFileSync(file, "")
-		const quiet = await capture(["init", "--json"], { TRAJ_HOME: file })
-		const loud = await capture(["init", "--json"], { TRAJ_HOME: file, TRAJ_DEBUG: "1" })
+		const quiet = await capture(["boom", "--json"], {}, throwingRoot)
+		const loud = await capture(["boom", "--json"], { TRAJ_DEBUG: "1" }, throwingRoot)
 		expect(quiet.err.split("\n")).toHaveLength(1)
 		expect(loud.err.split("\n").length).toBeGreaterThan(1)
 		expect(loud.err.split("\n").at(-1)).toBe(quiet.err)

@@ -5,6 +5,8 @@ import { z } from "zod"
 import type { Leaf } from "../command"
 import { defineCommand, ok } from "../command"
 import { dataDirectory } from "../data-directory"
+import { isAppError } from "../errors"
+import { databaseStep, directoryStep } from "../store/io-errors"
 
 export const init: Leaf = defineCommand({
 	name: "init",
@@ -20,18 +22,25 @@ export const init: Leaf = defineCommand({
 		{ command: "traj init", description: "Create ~/.traj/traj.db if it does not exist." },
 		{ command: "TRAJ_HOME=/tmp/traj traj init --json", description: "Use another directory." },
 	],
-	errorCodes: [],
+	errorCodes: ["database_corrupt", "disk_full", "not_a_directory", "permission_denied"],
 	run: (_input, ctx) => {
 		const directory = dataDirectory(ctx.env)
 		const database = join(directory, "traj.db")
 		const created = !existsSync(database)
-		mkdirSync(directory, { recursive: true })
+		const made = directoryStep(directory, () => mkdirSync(directory, { recursive: true }))
+		if (isAppError(made)) return made
 		// Deliberately an empty database at `user_version` 0: the first `openStore()` migrates it
 		// to head, so `init` never needs to know the schema. Setting WAL on a database that already
 		// has it is a no-op, so a half-finished earlier run is repaired.
-		const db = new Database(database, { create: true })
-		db.run("PRAGMA journal_mode = WAL")
-		db.close()
+		const opened = databaseStep(database, () => {
+			const db = new Database(database, { create: true })
+			try {
+				db.run("PRAGMA journal_mode = WAL")
+			} finally {
+				db.close()
+			}
+		})
+		if (isAppError(opened)) return opened
 		return ok({ directory, database, created })
 	},
 })

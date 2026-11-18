@@ -53,6 +53,20 @@ describe("usage", () => {
 	})
 })
 
+describe("the root usage", () => {
+	it("states every exit class and exactly which codes are retryable", async () => {
+		for (const argv of [["help"], ["--help"]]) {
+			const res = await capture(argv)
+			expect(res.code).toBe(0)
+			expect(res.out).toContain("Exit codes:")
+			expect(res.out).toContain("2  invalid input")
+			expect(res.out).toContain("5  conflict")
+			expect(res.out).toContain("Retryable codes: database_busy, disk_full")
+			expect(res.out).toContain("Every other failure is permanent.")
+		}
+	})
+})
+
 describe("a release note on a definition", () => {
 	it("prints the note under the summary on the group and its leaf, in human and JSON", async () => {
 		for (const argv of [

@@ -7,3 +7,4 @@ export declare function sha256(bytes: Uint8Array): string
 export declare function verifyChecksum(checksums: string, name: string, bytes: Uint8Array): string
 export declare function exitStatus(code: number | null, signal: string | null): number
 export declare function releaseUrl(version: string, name: string, base?: string): string
+export declare function writeProblem(error: unknown, directory: string): string

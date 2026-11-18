@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite"
 import { type AppError, isAppError } from "../errors"
 import { guard } from "./guard"
+import { databaseFailure } from "./io-errors"
 import { HEAD, migrate, tooNew, userVersion } from "./migrations"
 
 /**
@@ -8,18 +9,31 @@ import { HEAD, migrate, tooNew, userVersion } from "./migrations"
  * head before anything could write to it, then migrates to head.
  */
 export function connect(path: string, busyTimeoutMs: number): Database | AppError {
-	const db = new Database(path, { create: true })
-	const outcome = guard(() => {
-		db.run(`PRAGMA busy_timeout = ${busyTimeoutMs}`)
-		const version = userVersion(db)
-		if (version > HEAD) return tooNew(version)
-		db.run("PRAGMA journal_mode = WAL")
-		db.run("PRAGMA foreign_keys = ON")
-		return migrate(db)
-	})
-	if (isAppError(outcome)) {
-		db.close()
-		return outcome
+	let db: Database | undefined
+	try {
+		db = new Database(path, { create: true })
+		const opened = db
+		const outcome = guard(() => {
+			opened.run(`PRAGMA busy_timeout = ${busyTimeoutMs}`)
+			const version = userVersion(opened)
+			if (version > HEAD) return tooNew(version)
+			opened.run("PRAGMA journal_mode = WAL")
+			opened.run("PRAGMA foreign_keys = ON")
+			return migrate(opened, path)
+		})
+		if (isAppError(outcome)) {
+			opened.close()
+			return outcome
+		}
+		return opened
+	} catch (error) {
+		try {
+			db?.close()
+		} catch {
+			// The connection is being abandoned; a close that also fails changes nothing.
+		}
+		const failure = databaseFailure(path, error)
+		if (failure !== undefined) return failure
+		throw error
 	}
-	return db
 }

@@ -1,7 +1,8 @@
 import { z } from "zod"
 import type { Leaf } from "../command"
 import { defineCommand, ok } from "../command"
-import { type ErrorCode, fail, registry } from "../errors"
+import { registryListing } from "../error-listing"
+import { fail } from "../errors"
 import { findNode, leavesOf } from "../tree"
 
 const jsonSchema = z.record(z.string(), z.unknown())
@@ -14,6 +15,7 @@ const listing = z.strictObject({
 				code: z.string(),
 				exitCode: z.number().int().min(0).max(5),
 				message: z.string(),
+				retryable: z.boolean().describe("True when retrying the same command can succeed."),
 			}),
 		)
 		.optional()
@@ -41,15 +43,6 @@ const detail = z.strictObject({
 	examples: z.array(z.strictObject({ command: z.string(), description: z.string() })),
 	errorCodes: z.array(z.string()).describe("Registry codes this command raises."),
 })
-
-function registryListing() {
-	const codes = (Object.keys(registry) as ErrorCode[]).sort()
-	return codes.map((code) => ({
-		code,
-		exitCode: registry[code].exit,
-		message: registry[code].message,
-	}))
-}
 
 export const schema: Leaf = defineCommand({
 	name: "schema",

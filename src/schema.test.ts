@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { type ErrorCode, registry } from "./errors"
+import { RETRYABLE_CODES } from "./registry"
 import { capture } from "./test-support"
 
 describe("schema", () => {
@@ -49,7 +50,23 @@ describe("schema", () => {
 		}
 		for (const entry of data.errors) {
 			expect(entry.exitCode).toBe(registry[entry.code as ErrorCode].exit)
+			expect(entry.retryable).toBe(RETRYABLE_CODES.includes(entry.code as ErrorCode))
 		}
+		expect(
+			data.errors.find((entry: { code: string }) => entry.code === "database_busy"),
+		).toMatchObject({
+			retryable: true,
+		})
+		expect(data.errors.find((entry: { code: string }) => entry.code === "disk_full")).toMatchObject(
+			{
+				retryable: true,
+			},
+		)
+		expect(
+			data.errors.find((entry: { code: string }) => entry.code === "output_exists"),
+		).toMatchObject({
+			retryable: false,
+		})
 	})
 
 	it("describes one command: input, output, examples and error codes by reference", async () => {

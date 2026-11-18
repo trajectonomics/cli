@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import type { Leaf } from "./command"
 import { root } from "./commands"
+import type { RegistryEntry } from "./error-listing"
 import { SENTENCES } from "./sentences"
 import { capture, type ErrorBody, errorOf } from "./test-support"
 import { leavesOf } from "./tree"
@@ -87,11 +88,12 @@ describe("every leaf with no arguments", () => {
 
 	it("keeps one invalid_input row in the registry listing", async () => {
 		const res = await capture(["schema", "--json"], { TRAJ_HOME: tempHome() })
-		const errors = JSON.parse(res.out).errors as ErrorBody[]
+		const errors = JSON.parse(res.out).errors as RegistryEntry[]
 		expect(errors.find((entry) => entry.code === "invalid_input")).toEqual({
 			code: "invalid_input",
 			exitCode: 2,
 			message: "The input is invalid.",
+			retryable: false,
 		})
 	})
 })
