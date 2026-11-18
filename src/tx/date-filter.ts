@@ -1,17 +1,11 @@
-import { LedgerValidationError, parseISODate } from "@trajectonomics/ledger"
-import { type AppError, fail } from "../errors"
-import { fromLedgerError } from "../store"
+import { checkedDate } from "../date"
+import { type AppError, fail, isAppError } from "../errors"
 
-/** A real `YYYY-MM-DD` bound, as the core defines it; the caller's flag is the path. */
+/** A real `YYYY-MM-DD` bound inside the supported years; the caller's flag is the path. */
 export function dateError(value: string | undefined, field: string): AppError | undefined {
 	if (value === undefined) return undefined
-	try {
-		parseISODate(value, field)
-	} catch (error) {
-		if (error instanceof LedgerValidationError) return fromLedgerError(error)
-		throw error
-	}
-	return undefined
+	const checked = checkedDate(value, field)
+	return isAppError(checked) ? checked : undefined
 }
 
 /** A start after its end is the core's `INVALID_PERIOD`, reported at the start's flag. */

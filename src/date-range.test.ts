@@ -47,6 +47,11 @@ describe("a date outside the supported Gregorian years", () => {
 		})
 		expect(networth.code).toBe(3)
 		expect(errorOf(networth)).toMatchObject({ code: "INVALID_DATE", path: "asOf" })
+		const balance = await capture(["balance", "--as-of", "2569-03-31", "--json"], {
+			TRAJ_HOME: home,
+		})
+		expect(balance.code).toBe(3)
+		expect(errorOf(balance)).toMatchObject({ code: "INVALID_DATE", path: "asOf" })
 		const pnl = await capture(
 			["report", "pnl", "--since", "2568-01-01", "--until", "2569-12-31", "--json"],
 			{ TRAJ_HOME: home },
@@ -58,5 +63,14 @@ describe("a date outside the supported Gregorian years", () => {
 		})
 		expect(until.code).toBe(3)
 		expect(errorOf(until)).toMatchObject({ code: "INVALID_DATE", path: "until" })
+	})
+
+	it("refuses tx list's period bounds, which the filter reads itself", async () => {
+		const home = fixtureHome()
+		const res = await capture(["tx", "list", "--since", "2568-01-01", "--json"], {
+			TRAJ_HOME: home,
+		})
+		expect(res.code).toBe(3)
+		expect(errorOf(res)).toMatchObject({ code: "INVALID_DATE", path: "since" })
 	})
 })

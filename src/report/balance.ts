@@ -1,4 +1,5 @@
 import { balances, netWorth, trialBalance } from "@trajectonomics/ledger"
+import { checkedDate } from "../date"
 import type { AppError } from "../errors"
 import { fail, isAppError } from "../errors"
 import type { Ledger } from "../store"
@@ -73,6 +74,8 @@ export function balanceOf(
 	ledger: Ledger,
 	input: { asOf: string; trialBalance?: boolean | undefined },
 ): BalanceResult | AppError {
+	const date = checkedDate(input.asOf, "asOf")
+	if (isAppError(date)) return date
 	const index = accountIndex(ledger.accounts)
 	const read = readings(ledger, input.asOf)
 	if (isAppError(read)) return read
