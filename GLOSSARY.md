@@ -242,6 +242,10 @@ _Avoid_: Output, response, payload
 The block every result carries stating what it was computed from: the as-of, the engine and its version, the scenario with its hashes, the applied overrides, the tax status, the Carry-in it placed, and the sentences a person must read before the figures.
 _Avoid_: Metadata, header, provenance block
 
+**Hint**:
+The one sentence naming the command to run next. A failure carries it in the error envelope's `hint` (ADR-0013); a Result that has nothing to show carries it in its own `hint` field (ADR-0040). It is prose, and both places print it as a `hint:` line.
+_Avoid_: Next step, suggestion, tip
+
 **Data directory**:
 The single directory holding all state, `~/.traj` unless `TRAJ_HOME` says otherwise.
 _Avoid_: Home, config dir, state dir

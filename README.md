@@ -67,6 +67,26 @@ traj export --format jsonl --out backup
 `--out` names a directory that must not exist yet, and JSONL is the only lossless export
 format.
 
+## Your first commands
+
+The ledger is one record, and the first run builds it in order:
+
+```bash
+traj init
+traj account add Cash --type asset --currency THB
+traj account add Food --type expense --currency THB
+traj tx add --from Cash --to Food --amount 120.50 --date 2026-03-01
+traj balance --as-of 2026-03-31
+traj report networth --as-of 2026-03-31
+```
+
+`init` creates the data directory and an empty ledger. An account is a place money sits or
+comes from, and a transaction moves an amount from one to another. Every read states its own
+date and never reads the clock, so the same command always answers the same question.
+
+`traj help` lists every command, `traj help <command>` lists one command's flags, and
+`traj schema --json` prints the whole contract: every command's input, output and error codes.
+
 ## Development
 
 The sources are Bun-only; a released binary needs nothing.
