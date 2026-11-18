@@ -53,7 +53,19 @@ Bun and want one command. Pin a release with `TRAJ_VERSION=X.Y.Z` for the script
 `@X.Y.Z` for npm.
 
 Uninstall by deleting the one file: `~/.local/bin/traj`, `%LOCALAPPDATA%\traj\bin`,
-`~/.traj/bin` (the download cache), or nothing at all for `npx`.
+`~/.traj/bin` (the download cache only; your ledger is beside it), or nothing at all for
+`npx`.
+
+`traj` keeps the ledger in `~/.traj/traj.db`, or in `traj.db` inside `TRAJ_HOME` when that is
+set, the same path on Linux, macOS and Windows. Beside it is the disposable `bin/` download
+cache; deleting the data directory deletes the ledger. Take a lossless copy with:
+
+```bash
+traj export --format jsonl --out backup
+```
+
+`--out` names a directory that must not exist yet, and JSONL is the only lossless export
+format.
 
 ## Development
 
