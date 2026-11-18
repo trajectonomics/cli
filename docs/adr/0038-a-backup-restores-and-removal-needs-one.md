@@ -88,7 +88,8 @@ removes what it cannot read. Recovery from a corrupt database is the operator's 
 
 Two CLI-owned codes join the registry with a trigger in the contract test: `backup_unreadable`
 at exit 1 and `backup_stale` at exit 3, beside `restore_target_not_empty` at exit 5, which the
-store raises. `doctor`'s checks are prose in a Result, so a new check is a new entry in its
+store raises. None of the three is retryable: the same command cannot succeed until the caller
+takes a fresh backup, restores somewhere else, or fixes the file it named (ADR-0037). `doctor`'s checks are prose in a Result, so a new check is a new entry in its
 output schema and no new code.
 
 The README section that names these four commands carries the release marker
