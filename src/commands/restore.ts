@@ -39,6 +39,8 @@ export const restore: Leaf = defineCommand({
 			description: "Restore the file itself and describe what was written.",
 		},
 	],
+	// Every code a stored row can fail with: the interchange reader's, the restore's own, and
+	// the ledger core's per-transaction validation (the ledger read's assembly codes cannot fire).
 	errorCodes: [
 		"backup_unreadable",
 		"database_busy",
@@ -48,19 +50,13 @@ export const restore: Leaf = defineCommand({
 		"not_found",
 		"restore_target_not_empty",
 		"unsupported_currency",
-		"AMOUNT_OVERFLOW",
 		"CURRENCY_MISMATCH",
-		"DUPLICATE_TRANSACTION_ID",
 		"INVALID_ACCOUNT_HIERARCHY",
 		"INVALID_AMOUNT",
 		"INVALID_CURRENCY",
 		"INVALID_DATE",
 		"INVALID_DIMENSION",
-		"INVALID_PERIOD",
-		"NEGATIVE_AMOUNT",
-		"NON_EQUITY_CONTRA",
 		"NON_LEAF_ACCOUNT",
-		"REVERSAL_BEFORE_ORIGINAL",
 		"SINGLE_POSTING",
 		"UNBALANCED_TRANSACTION",
 		"UNKNOWN_ACCOUNT",
