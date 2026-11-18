@@ -15,7 +15,10 @@ import type {
 
 /** The live Scenario this id or name names; an id is read first (ADR-0018). */
 export function getScenario(ctx: Ctx, idOrName: string): ScenarioRow | null | AppError {
-	return guard(() => liveScenario(ctx, "id", idOrName) ?? liveScenario(ctx, "name", idOrName))
+	return guard(
+		() => liveScenario(ctx, "id", idOrName) ?? liveScenario(ctx, "name", idOrName),
+		ctx.db.filename,
+	)
 }
 
 /** Creates the named scenario, or versions it when the canonical document changed. */
@@ -49,12 +52,14 @@ export function listScenarios(
 	ctx: Ctx,
 	options: ListOptions<ScenarioSort>,
 ): ScenarioRow[] | AppError {
-	return guard(() =>
-		ctx.db
-			.query<ScenarioRow, [string]>(
-				`SELECT ${SCENARIO_COLUMNS} FROM scenario WHERE entity_id = ?1
+	return guard(
+		() =>
+			ctx.db
+				.query<ScenarioRow, [string]>(
+					`SELECT ${SCENARIO_COLUMNS} FROM scenario WHERE entity_id = ?1
 				${liveOnly(options.includeDeleted)} ORDER BY ${SCENARIO_ORDER[options.sort]}`,
-			)
-			.all(ctx.entityId),
+				)
+				.all(ctx.entityId),
+		ctx.db.filename,
 	)
 }

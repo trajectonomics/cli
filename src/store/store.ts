@@ -23,8 +23,8 @@ export function storeOver(path: string, ctx: Ctx): Store {
 	return {
 		path,
 		entityId: ctx.entityId,
-		schemaVersion: () => guard(() => userVersion(ctx.db)),
-		chart: () => guard(() => chartOf(ctx)),
+		schemaVersion: () => guard(() => userVersion(ctx.db), ctx.db.filename),
+		chart: () => guard(() => chartOf(ctx), ctx.db.filename),
 		ledger: () => readLedger(ctx),
 		listEntities: (options) => listEntities(ctx, options),
 		createAccount: (input, options) => createAccount(ctx, input, options),

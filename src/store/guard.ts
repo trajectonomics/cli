@@ -1,6 +1,7 @@
 import { type Database, SQLiteError } from "bun:sqlite"
 import { LedgerValidationError } from "@trajectonomics/ledger"
 import { type AppError, fail, isAppError } from "../errors"
+import { databaseFailure } from "./io-errors"
 import { fromLedgerError } from "./ledger-errors"
 import type { WriteOptions } from "./types"
 
@@ -35,7 +36,11 @@ function isBusy(error: unknown): boolean {
  * built by `fail()`, and never throws for an expected failure. Anything else is a bug and is
  * rethrown, so `run()` reports it as `internal`.
  */
-export function guard<T>(work: () => T | AppError): T | AppError {
+function failureAt(path: string | undefined, error: unknown): AppError | undefined {
+	return path === undefined ? undefined : databaseFailure(path, error)
+}
+
+export function guard<T>(work: () => T | AppError, path?: string): T | AppError {
 	try {
 		return work()
 	} catch (error) {
@@ -47,6 +52,8 @@ export function guard<T>(work: () => T | AppError): T | AppError {
 				hint: "Another traj process is writing; retry the command.",
 			})
 		}
+		const failure = failureAt(path, error)
+		if (failure !== undefined) return failure
 		throw error
 	}
 }
@@ -72,5 +79,5 @@ export function write<T>(
 			if (error instanceof Rollback) return error.value as T
 			throw error
 		}
-	})
+	}, db.filename)
 }

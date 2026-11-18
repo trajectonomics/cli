@@ -97,5 +97,5 @@ function assemble(ctx: Ctx): Ledger | AppError {
 
 /** One read of the whole Ledger, in the store's own orders; every query's rules re-validate it. */
 export function readLedger(ctx: Ctx): Ledger | AppError {
-	return guard(() => assemble(ctx))
+	return guard(() => assemble(ctx), ctx.db.filename)
 }

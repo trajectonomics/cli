@@ -1,16 +1,12 @@
 import { mkdir, rm } from "node:fs/promises"
 import { dirname, join, resolve } from "node:path"
+import { errorCodeOf } from "../error-code"
 import { type AppError, fail } from "../errors"
 import type { ExportFile } from "./files"
 
-function codeOf(error: unknown): string | undefined {
-	const code = (error as { code?: unknown } | null)?.code
-	return typeof code === "string" ? code : undefined
-}
-
 /** Never the OS's own message: a stable code, the path, and whether a partial directory remains. */
 function failed(target: string, error: unknown, cleaned: boolean): AppError {
-	const code = codeOf(error)
+	const code = errorCodeOf(error)
 	const hint = cleaned
 		? "Nothing was written; the database is unchanged."
 		: "A partial directory may remain; remove it before retrying."
@@ -54,7 +50,7 @@ async function makeTarget(target: string): Promise<AppError | null> {
 		await mkdir(target)
 		return null
 	} catch (error) {
-		if (codeOf(error) === "EEXIST") return outputExists(target)
+		if (errorCodeOf(error) === "EEXIST") return outputExists(target)
 		return failed(target, error, await removeQuietly(target))
 	}
 }

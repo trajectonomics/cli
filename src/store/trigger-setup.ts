@@ -2,8 +2,8 @@ import { Database } from "bun:sqlite"
 import { chmodSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { capture } from "../test-support"
+import { guard } from "./guard"
 import { openStore } from "./index"
-import { databaseFailure } from "./io-errors"
 import { mustOpen, steppingClock, tempHome } from "./testing"
 
 /** A trigger returns what the store returned; the contract test asserts it is an AppError. */
@@ -63,9 +63,12 @@ export function corruptHome(): unknown {
 	return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
 }
 
-/** The envelope the store returns on a full disk, without needing a full disk. */
+/** The envelope `guard` returns on a full disk, without needing a full disk. */
 export function fullDisk(): unknown {
-	const failure = databaseFailure(join(tempHome(), "traj.db"), { code: "SQLITE_FULL" })
-	if (failure === undefined) throw new Error("expected disk_full")
-	return failure
+	return guard(
+		() => {
+			throw Object.assign(new Error("database or disk is full"), { code: "SQLITE_FULL" })
+		},
+		join(tempHome(), "traj.db"),
+	)
 }

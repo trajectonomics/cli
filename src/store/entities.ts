@@ -6,12 +6,14 @@ import type { EntityRow, EntitySort, ListOptions } from "./types"
 
 /** Every entity row, or only the live ones, in the one declared order. */
 export function listEntities(ctx: Ctx, options: ListOptions<EntitySort>): EntityRow[] | AppError {
-	return guard(() =>
-		ctx.db
-			.query<EntityRow, []>(
-				`SELECT ${ENTITY_COLUMNS} FROM entity WHERE 1 = 1 ${liveOnly(options.includeDeleted)}
+	return guard(
+		() =>
+			ctx.db
+				.query<EntityRow, []>(
+					`SELECT ${ENTITY_COLUMNS} FROM entity WHERE 1 = 1 ${liveOnly(options.includeDeleted)}
 				ORDER BY ${ENTITY_ORDER[options.sort]}`,
-			)
-			.all(),
+				)
+				.all(),
+		ctx.db.filename,
 	)
 }

@@ -1,7 +1,7 @@
 import type { Database } from "bun:sqlite"
 import { type AppError, fail } from "../errors"
 import { abort, write } from "./guard"
-import { databaseFailure } from "./io-errors"
+import { isFileFailure } from "./io-errors"
 import { schemaV1 } from "./schema-v1"
 import { schemaV2 } from "./schema-v2"
 
@@ -23,13 +23,12 @@ export function tooNew(version: number): AppError {
 	})
 }
 
-function runStep(db: Database, version: number, step: (db: Database) => void, path: string): void {
+function runStep(db: Database, version: number, step: (db: Database) => void): void {
 	try {
 		step(db)
 	} catch (error) {
-		// A refused write is the environment's failure, not a broken step: name its cause.
-		const environment = databaseFailure(path, error)
-		if (environment !== undefined) abort(environment)
+		// A refused write is the environment's failure, not a broken step: let `write` name it.
+		if (isFileFailure(error)) throw error
 		// SQLite's own text varies by runtime and version, so only the stable fields are kept.
 		const to = version + 1
 		const message = `Migrating the database from schema version ${version} to ${to} failed; it was left at ${version}.`
@@ -43,13 +42,13 @@ function runStep(db: Database, version: number, step: (db: Database) => void, pa
  * a concurrent opener that migrated first is never migrated over. A database already at head
  * takes no write lock at all.
  */
-export function migrate(db: Database, path: string): undefined | AppError {
+export function migrate(db: Database): undefined | AppError {
 	while (userVersion(db) < HEAD) {
 		const outcome = write(db, () => {
 			const version = userVersion(db)
 			if (version > HEAD) return tooNew(version)
 			const step = STEPS[version]
-			if (step !== undefined) runStep(db, version, step, path)
+			if (step !== undefined) runStep(db, version, step)
 			return undefined
 		})
 		if (outcome !== undefined) return outcome

@@ -11,19 +11,21 @@ export function listTransactions(
 	options: { sort: TxSort } & TxFilter,
 ): TxRow[] | AppError {
 	const where = whereOf(options)
-	return guard(() =>
-		ctx.db
-			.query<TxRow, string[]>(
-				`SELECT ${TX_COLUMNS} FROM tx WHERE entity_id = ? ${where.sql}
+	return guard(
+		() =>
+			ctx.db
+				.query<TxRow, string[]>(
+					`SELECT ${TX_COLUMNS} FROM tx WHERE entity_id = ? ${where.sql}
 				ORDER BY ${TX_ORDER[options.sort]}`,
-			)
-			.all(ctx.entityId, ...where.params),
+				)
+				.all(ctx.entityId, ...where.params),
+		ctx.db.filename,
 	)
 }
 
 /** The transaction with this id in the personal entity, or null. */
 export function getTransaction(ctx: Ctx, id: string): TxRow | null | AppError {
-	return guard(() => txById(ctx, id))
+	return guard(() => txById(ctx, id), ctx.db.filename)
 }
 
 export function listPostings(
@@ -31,14 +33,16 @@ export function listPostings(
 	options: { sort: PostingSort; filter?: TxFilter },
 ): PostingRow[] | AppError {
 	const where = whereOf(options.filter ?? {})
-	return guard(() =>
-		ctx.db
-			.query<Parameters<typeof parsePosting>[0], string[]>(
-				`SELECT ${POSTING_COLUMNS} FROM posting
+	return guard(
+		() =>
+			ctx.db
+				.query<Parameters<typeof parsePosting>[0], string[]>(
+					`SELECT ${POSTING_COLUMNS} FROM posting
 				WHERE tx_id IN (SELECT id FROM tx WHERE entity_id = ? ${where.sql})
 				ORDER BY ${POSTING_ORDER[options.sort]}`,
-			)
-			.all(ctx.entityId, ...where.params)
-			.map(parsePosting),
+				)
+				.all(ctx.entityId, ...where.params)
+				.map(parsePosting),
+		ctx.db.filename,
 	)
 }

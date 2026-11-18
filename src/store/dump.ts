@@ -29,14 +29,16 @@ function readAll(ctx: Ctx): RestoreRows | AppError {
  * of them cannot produce a posting whose transaction is missing from the same dump.
  */
 export function dumpRows(ctx: Ctx): RestoreRows | AppError {
-	return guard(() =>
-		ctx.db
-			.transaction(() => {
-				const rows = readAll(ctx)
-				if (isAppError(rows)) abort(rows)
-				return rows
-			})
-			.deferred(),
+	return guard(
+		() =>
+			ctx.db
+				.transaction(() => {
+					const rows = readAll(ctx)
+					if (isAppError(rows)) abort(rows)
+					return rows
+				})
+				.deferred(),
+		ctx.db.filename,
 	)
 }
 
@@ -57,5 +59,6 @@ export function dumpCounts(ctx: Ctx): RestoreCounts | AppError {
 					(SELECT count(*) FROM scenario WHERE entity_id = ?1) AS scenario`,
 				)
 				.get(ctx.entityId)!,
+		ctx.db.filename,
 	)
 }

@@ -39,7 +39,7 @@ function liveByName(ctx: Ctx, name: string): AccountRow | null {
  * never compete (ADR-0018); archived accounts still resolve, because history keeps them (ADR-0016).
  */
 export function getAccount(ctx: Ctx, idOrName: string): AccountRow | null | AppError {
-	return guard(() => liveAccount(ctx, idOrName) ?? liveByName(ctx, idOrName))
+	return guard(() => liveAccount(ctx, idOrName) ?? liveByName(ctx, idOrName), ctx.db.filename)
 }
 
 function insert(ctx: Ctx, input: NewAccount): AccountRow {
@@ -99,25 +99,29 @@ export function createAccount(
 }
 
 export function listAccounts(ctx: Ctx, options: ListOptions<AccountSort>): AccountRow[] | AppError {
-	return guard(() =>
-		ctx.db
-			.query<AccountRow, [string]>(
-				`SELECT ${ACCOUNT_COLUMNS} FROM account WHERE entity_id = ?1
+	return guard(
+		() =>
+			ctx.db
+				.query<AccountRow, [string]>(
+					`SELECT ${ACCOUNT_COLUMNS} FROM account WHERE entity_id = ?1
 				${liveOnly(options.includeDeleted)} ORDER BY ${ACCOUNT_ORDER[options.sort]}`,
-			)
-			.all(ctx.entityId),
+				)
+				.all(ctx.entityId),
+		ctx.db.filename,
 	)
 }
 
 /** Direct children of one account, by name; archived children stay, tombstones never appear. */
 export function listChildAccounts(ctx: Ctx, parentId: string): AccountRow[] | AppError {
-	return guard(() =>
-		ctx.db
-			.query<AccountRow, [string, string]>(
-				`SELECT ${ACCOUNT_COLUMNS} FROM account
+	return guard(
+		() =>
+			ctx.db
+				.query<AccountRow, [string, string]>(
+					`SELECT ${ACCOUNT_COLUMNS} FROM account
 				WHERE entity_id = ?1 AND parent_id = ?2 AND deleted_at IS NULL
 				ORDER BY ${ACCOUNT_ORDER.name}`,
-			)
-			.all(ctx.entityId, parentId),
+				)
+				.all(ctx.entityId, parentId),
+		ctx.db.filename,
 	)
 }
