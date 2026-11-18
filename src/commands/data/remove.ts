@@ -55,6 +55,7 @@ export const remove: Leaf = defineCommand({
 		"backup_stale",
 		"backup_unreadable",
 		"database_busy",
+		"database_corrupt",
 		"database_too_new",
 		"disk_full",
 		"invalid_input",

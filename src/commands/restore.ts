@@ -44,6 +44,10 @@ export const restore: Leaf = defineCommand({
 	errorCodes: [
 		"backup_unreadable",
 		"database_busy",
+		"database_corrupt",
+		"disk_full",
+		"not_a_directory",
+		"permission_denied",
 		"database_too_new",
 		"invalid_input",
 		"migration_failed",
