@@ -64,6 +64,16 @@ describe("restore", () => {
 		expect(existsSync(join(home, "traj.db"))).toBe(false)
 	})
 
+	it("refuses a directory of CSV exports: only the canonical JSONL restores", async () => {
+		const out = backupPath()
+		const home = await goldenHome()
+		await capture(["export", "--format", "csv", "--out", out, "--json"], { TRAJ_HOME: home })
+		const res = await capture(["restore", out, "--json"], { TRAJ_HOME: tempHome() })
+		expect(res.code).toBe(4)
+		expect(errorOf(res)).toMatchObject({ code: "not_found", path: "source" })
+		expect(errorOf(res).message).toContain("traj.jsonl")
+	})
+
 	it("refuses a backup this build's schema version cannot read, at its header line", async () => {
 		const backup = await goldenBackup()
 		const file = Bun.file(join(backup, "traj.jsonl"))
