@@ -4,10 +4,10 @@ import { errorCodeOf } from "../error-code"
 import { type AppError, fail } from "../errors"
 
 /** The one file a backup holds and a restore reads: the canonical JSONL dump (ADR-0028). */
-export const BACKUP_FILE = "traj.jsonl"
+const BACKUP_FILE = "traj.jsonl"
 
 /** The file a backup path names: the path itself when it is a file, else `traj.jsonl` inside it. */
-export function backupFileOf(path: string): string {
+function backupFileOf(path: string): string {
 	const stat = statSync(path, { throwIfNoEntry: false })
 	return stat?.isDirectory() === true ? join(path, BACKUP_FILE) : path
 }
