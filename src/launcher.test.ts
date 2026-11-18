@@ -1,4 +1,7 @@
 import { describe, expect, it } from "bun:test"
+import { existsSync } from "node:fs"
+import { join } from "node:path"
+import { install } from "../bin/install.js"
 import {
 	assetName,
 	checksumFor,
@@ -8,6 +11,7 @@ import {
 	verifyChecksum,
 	writeProblem,
 } from "../bin/launcher.js"
+import { tempDir } from "./launcher-test-support"
 
 describe("asset naming", () => {
 	it("maps every shipped platform and architecture to its release asset", () => {
@@ -108,5 +112,13 @@ describe("a failed install", () => {
 		expect(writeProblem(new Error("unknown error, write"), "/h/.traj/bin")).toContain(
 			"unknown error, write",
 		)
+	})
+})
+
+describe("install", () => {
+	it("removes the bin directory it created when the file cannot be written", () => {
+		const directory = join(tempDir(), "bin")
+		expect(() => install(new Uint8Array([1]), join(directory, "tr\0aj"))).toThrow()
+		expect(existsSync(directory)).toBe(false)
 	})
 })

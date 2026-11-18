@@ -11,6 +11,21 @@ import {
 import { dirname, join } from "node:path"
 import { writeProblem } from "./launcher.js"
 
+/** Removes the temp file, then the directory this run created when it is empty. */
+function cleanFailedInstall(temp, directory, created) {
+	try {
+		rmSync(temp, { force: true })
+	} catch {
+		// The temp file was never written.
+	}
+	if (!created) return
+	try {
+		rmdirSync(directory)
+	} catch {
+		// Another run put a file there first; keep its directory.
+	}
+}
+
 /** A complete file at the cache path, never a half-written one: same directory, then a rename. */
 export function install(bytes, dest) {
 	const directory = dirname(dest)
@@ -25,13 +40,7 @@ export function install(bytes, dest) {
 		// A concurrent run may have won the race with a complete file; use it and drop ours.
 		if (existsSync(dest)) return
 		// A first run that cannot install leaves no empty bin/ behind for the next run to trust.
-		if (created) {
-			try {
-				rmdirSync(directory)
-			} catch {
-				// Another run put a file there first; keep its directory.
-			}
-		}
+		cleanFailedInstall(temp, directory, created)
 		throw new Error(writeProblem(error, directory))
 	} finally {
 		try {
