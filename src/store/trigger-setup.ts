@@ -1,6 +1,8 @@
 import { Database } from "bun:sqlite"
+import { chmodSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { capture } from "../test-support"
+import { guardAt } from "./guard"
 import { openStore } from "./index"
 import { mustOpen, steppingClock, tempHome } from "./testing"
 
@@ -31,4 +33,39 @@ export function busy(): unknown {
 	holder.run("ROLLBACK")
 	holder.close()
 	return outcome
+}
+
+/** An `openStore` on a TRAJ_HOME that is a file, never a directory. */
+export function fileHome(): unknown {
+	const home = tempHome()
+	mkdirSync(join(home, ".."), { recursive: true })
+	writeFileSync(home, "")
+	return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+}
+
+/** An `openStore` on a data directory the user cannot write. */
+export function readonlyHome(): unknown {
+	const home = tempHome()
+	mkdirSync(home, { recursive: true })
+	chmodSync(home, 0o500)
+	try {
+		return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+	} finally {
+		chmodSync(home, 0o700)
+	}
+}
+
+/** An `openStore` on a file that is not a SQLite database. */
+export function corruptHome(): unknown {
+	const home = tempHome()
+	mkdirSync(home, { recursive: true })
+	writeFileSync(join(home, "traj.db"), "not a sqlite database")
+	return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+}
+
+/** The envelope `guardAt` returns on a full disk, without needing a full disk. */
+export function fullDisk(): unknown {
+	return guardAt(join(tempHome(), "traj.db"), () => {
+		throw Object.assign(new Error("database or disk is full"), { code: "SQLITE_FULL" })
+	})
 }

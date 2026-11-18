@@ -3,7 +3,7 @@ import { type AppError, fail } from "../errors"
 import { chartOf } from "./chart"
 import { ACCOUNT_COLUMNS, ACCOUNT_ORDER, liveOnly } from "./columns"
 import type { Ctx } from "./context"
-import { guard, write } from "./guard"
+import { read, write } from "./guard"
 import { iso, newId } from "./ids"
 import { supportedCurrency } from "./money"
 import type {
@@ -39,7 +39,7 @@ function liveByName(ctx: Ctx, name: string): AccountRow | null {
  * never compete (ADR-0018); archived accounts still resolve, because history keeps them (ADR-0016).
  */
 export function getAccount(ctx: Ctx, idOrName: string): AccountRow | null | AppError {
-	return guard(() => liveAccount(ctx, idOrName) ?? liveByName(ctx, idOrName))
+	return read(ctx.db, () => liveAccount(ctx, idOrName) ?? liveByName(ctx, idOrName))
 }
 
 function insert(ctx: Ctx, input: NewAccount): AccountRow {
@@ -99,7 +99,7 @@ export function createAccount(
 }
 
 export function listAccounts(ctx: Ctx, options: ListOptions<AccountSort>): AccountRow[] | AppError {
-	return guard(() =>
+	return read(ctx.db, () =>
 		ctx.db
 			.query<AccountRow, [string]>(
 				`SELECT ${ACCOUNT_COLUMNS} FROM account WHERE entity_id = ?1
@@ -111,7 +111,7 @@ export function listAccounts(ctx: Ctx, options: ListOptions<AccountSort>): Accou
 
 /** Direct children of one account, by name; archived children stay, tombstones never appear. */
 export function listChildAccounts(ctx: Ctx, parentId: string): AccountRow[] | AppError {
-	return guard(() =>
+	return read(ctx.db, () =>
 		ctx.db
 			.query<AccountRow, [string, string]>(
 				`SELECT ${ACCOUNT_COLUMNS} FROM account

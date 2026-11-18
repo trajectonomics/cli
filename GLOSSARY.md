@@ -187,7 +187,7 @@ The coarse class of a finished run: 0 ok, 1 unexpected, 2 invalid input, 3 domai
 _Avoid_: Status, return code
 
 **Error code**:
-The stable string name of one failure, belonging to exactly one exit code. Many error codes share one exit code; one error code never spans two.
+The stable string name of one failure, belonging to exactly one exit code. Many error codes share one exit code; one error code never spans two. A code also says whether the same command may be retried (`retryable`), because one exit class holds both retryable and permanent failures (ADR-0037).
 _Avoid_: Error id, reason, cause
 
 **Command**:

@@ -34,9 +34,9 @@ describe("the publishable manifest", () => {
 		expect(existsSync(join(ROOT, manifest.bin["traj"] ?? ""))).toBe(true)
 	})
 
-	it("has no runtime dependencies, because both launcher files import only node: and each other", () => {
+	it("has no runtime dependencies, because every launcher file imports only node: and each other", () => {
 		expect(manifest.dependencies ?? {}).toEqual({})
-		for (const file of ["launcher.js", "traj.js"]) {
+		for (const file of ["launcher.js", "traj.js", "install.js"]) {
 			const source = readFileSync(join(ROOT, "bin", file), "utf8")
 			for (const [, specifier] of source.matchAll(/from "([^"]+)"/g)) {
 				expect(specifier?.startsWith("node:") || specifier?.startsWith("./")).toBe(true)

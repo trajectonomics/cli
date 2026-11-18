@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite"
 import { describe, expect, it } from "bun:test"
-import { readFileSync } from "node:fs"
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { isAppError } from "../errors"
 import { capture } from "../test-support"
@@ -103,6 +103,90 @@ describe("openStore", () => {
 		expect(store.body.details).toEqual({ version: HEAD + 1, head: HEAD })
 		expect(readFileSync(join(home, "traj.db")).equals(before)).toBe(true)
 	})
+	it("names a data directory path that is a file as not a directory", () => {
+		const home = tempHome()
+		mkdirSync(join(home, ".."), { recursive: true })
+		writeFileSync(home, "")
+		const store = openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+		if (!isAppError(store)) throw new Error("expected not_a_directory")
+		expect(store.body).toMatchObject({
+			code: "not_a_directory",
+			exitCode: 1,
+			details: { path: home },
+		})
+		expect(store.body.message).toContain(home)
+		if (store.body.hint === undefined) throw new Error("expected a hint")
+	})
+
+	it("names a data directory it cannot write as permission denied", () => {
+		const home = tempHome()
+		mkdirSync(home, { recursive: true })
+		chmodSync(home, 0o500)
+		try {
+			const store = openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+			if (!isAppError(store)) throw new Error("expected permission_denied")
+			expect(store.body).toMatchObject({
+				code: "permission_denied",
+				exitCode: 1,
+				details: { path: join(home, "traj.db") },
+			})
+			if (store.body.hint === undefined) throw new Error("expected a hint")
+		} finally {
+			chmodSync(home, 0o700)
+		}
+	})
+
+	it("names a file that is not a database as corrupt", () => {
+		const home = tempHome()
+		mkdirSync(home, { recursive: true })
+		writeFileSync(join(home, "traj.db"), "not a sqlite database")
+		const store = openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+		if (!isAppError(store)) throw new Error("expected database_corrupt")
+		expect(store.body).toMatchObject({
+			code: "database_corrupt",
+			exitCode: 1,
+			details: { path: join(home, "traj.db") },
+		})
+		expect(store.body.message).toContain(join(home, "traj.db"))
+		if (store.body.hint === undefined) throw new Error("expected a hint")
+	})
+
+	it("names a read-only database as permission denied before migrating it", async () => {
+		const home = tempHome()
+		await capture(["init"], { TRAJ_HOME: home })
+		chmodSync(join(home, "traj.db"), 0o444)
+		try {
+			const store = openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })
+			if (!isAppError(store)) throw new Error("expected permission_denied")
+			expect(store.body).toMatchObject({
+				code: "permission_denied",
+				exitCode: 1,
+				details: { path: join(home, "traj.db") },
+			})
+		} finally {
+			chmodSync(join(home, "traj.db"), 0o600)
+		}
+	})
+
+	it("names a read-only database when a write is refused", async () => {
+		const home = tempHome()
+		mustOpen(home).close()
+		chmodSync(join(home, "traj.db"), 0o444)
+		try {
+			const res = await capture(
+				["account", "add", "Cash", "--type", "asset", "--currency", "THB", "--json"],
+				{ TRAJ_HOME: home },
+			)
+			expect(res.code).toBe(1)
+			const { error } = JSON.parse(res.err)
+			expect(error.code).toBe("permission_denied")
+			expect(error.message).toContain(join(home, "traj.db"))
+			expect(error.details).toEqual({ path: join(home, "traj.db") })
+		} finally {
+			chmodSync(join(home, "traj.db"), 0o600)
+		}
+	})
+
 	it("reports a failed step with fixed text and only the stable version fields", async () => {
 		const home = tempHome()
 		await capture(["init"], { TRAJ_HOME: home })

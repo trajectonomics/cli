@@ -2,7 +2,7 @@ import { type AppError, fail } from "../errors"
 import { contentHash } from "./canonical"
 import { liveOnly, SCENARIO_COLUMNS, SCENARIO_ORDER } from "./columns"
 import type { Ctx } from "./context"
-import { guard, write } from "./guard"
+import { read, write } from "./guard"
 import { canonicalDocument, insertScenario, liveScenario, replaceDocument } from "./scenario-rows"
 import type {
 	ListOptions,
@@ -15,7 +15,10 @@ import type {
 
 /** The live Scenario this id or name names; an id is read first (ADR-0018). */
 export function getScenario(ctx: Ctx, idOrName: string): ScenarioRow | null | AppError {
-	return guard(() => liveScenario(ctx, "id", idOrName) ?? liveScenario(ctx, "name", idOrName))
+	return read(
+		ctx.db,
+		() => liveScenario(ctx, "id", idOrName) ?? liveScenario(ctx, "name", idOrName),
+	)
 }
 
 /** Creates the named scenario, or versions it when the canonical document changed. */
@@ -49,7 +52,7 @@ export function listScenarios(
 	ctx: Ctx,
 	options: ListOptions<ScenarioSort>,
 ): ScenarioRow[] | AppError {
-	return guard(() =>
+	return read(ctx.db, () =>
 		ctx.db
 			.query<ScenarioRow, [string]>(
 				`SELECT ${SCENARIO_COLUMNS} FROM scenario WHERE entity_id = ?1

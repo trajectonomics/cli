@@ -4,7 +4,7 @@ import { chartOf } from "./chart"
 import type { Ctx } from "./context"
 import { dumpCounts, dumpRows } from "./dump"
 import { listEntities } from "./entities"
-import { guard } from "./guard"
+import { read } from "./guard"
 import { readLedger } from "./ledger"
 import { userVersion } from "./migrations"
 import { restore } from "./restore"
@@ -23,8 +23,8 @@ export function storeOver(path: string, ctx: Ctx): Store {
 	return {
 		path,
 		entityId: ctx.entityId,
-		schemaVersion: () => guard(() => userVersion(ctx.db)),
-		chart: () => guard(() => chartOf(ctx)),
+		schemaVersion: () => read(ctx.db, () => userVersion(ctx.db)),
+		chart: () => read(ctx.db, () => chartOf(ctx)),
 		ledger: () => readLedger(ctx),
 		listEntities: (options) => listEntities(ctx, options),
 		createAccount: (input, options) => createAccount(ctx, input, options),

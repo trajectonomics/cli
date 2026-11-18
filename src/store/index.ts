@@ -5,6 +5,7 @@ import { dataDirectory } from "../data-directory"
 import { type AppError, isAppError } from "../errors"
 import { connect } from "./connection"
 import { PERSONAL_ENTITY_ID } from "./ids"
+import { directoryStep } from "./io-errors"
 import { storeOver } from "./store"
 import type { Clock, Store } from "./types"
 
@@ -33,7 +34,8 @@ export type StoreOptions = {
  */
 export function openStore(options: StoreOptions): Store | AppError {
 	const directory = dataDirectory(options.env)
-	mkdirSync(directory, { recursive: true })
+	const made = directoryStep(directory, () => mkdirSync(directory, { recursive: true }))
+	if (isAppError(made)) return made
 	const path = join(directory, "traj.db")
 	const db = connect(path, options.busyTimeoutMs ?? 5000)
 	if (isAppError(db)) return db

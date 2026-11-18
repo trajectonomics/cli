@@ -28,7 +28,7 @@ export type Package = { launcher: string; version: string }
 export function packageCopy(version: string = RELEASE_VERSION): Package {
 	const dir = tempDir("traj-pkg-")
 	mkdirSync(join(dir, "bin"), { recursive: true })
-	for (const file of ["launcher.js", "traj.js"]) {
+	for (const file of ["launcher.js", "traj.js", "install.js"]) {
 		copyFileSync(join(ROOT, "bin", file), join(dir, "bin", file))
 	}
 	writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "@trajectonomics/cli", version }))

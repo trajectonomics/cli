@@ -141,6 +141,25 @@ describe("the launcher's download", () => {
 		}
 	})
 
+	it("names a TRAJ_HOME that is a file as not a directory, not UNKNOWN", async () => {
+		const home = join(tempDir(), "home")
+		writeFileSync(home, "")
+		const server = release()
+		try {
+			const ran = await launch(["--version"], {
+				TRAJ_HOME: home,
+				TRAJ_DOWNLOAD_BASE_URL: server.url,
+			})
+			expect(ran.code).toBe(1)
+			expect(ran.out).toBe("")
+			expect(ran.err).toContain("not a directory")
+			expect(ran.err).toContain(join(home, "bin"))
+			expect(ran.err).not.toContain("UNKNOWN")
+		} finally {
+			server.stop()
+		}
+	})
+
 	it("runs the binary TRAJ_BINARY_PATH names without a request", async () => {
 		const binaryPath = join(tempDir(), "traj")
 		writeFileSync(binaryPath, artifact.bytes, { mode: 0o755 })

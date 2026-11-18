@@ -1,18 +1,11 @@
 #!/usr/bin/env node
 /** The npm package's command: install the release binary for this package's version, then run it. */
 import { spawn } from "node:child_process"
-import {
-	chmodSync,
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	renameSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { homedir } from "node:os"
-import { dirname, join } from "node:path"
+import { join } from "node:path"
 import { setTimeout as sleep } from "node:timers/promises"
+import { install } from "./install.js"
 import { assetName, exitStatus, releaseUrl, verifyChecksum } from "./launcher.js"
 
 const RETRY_MS = 5 * 60 * 1000
@@ -52,24 +45,6 @@ async function download(url) {
 			process.stderr.write(`traj: ${url} is not there yet; retrying for up to five minutes.\n`)
 		}
 		await sleep(wait)
-	}
-}
-
-/** A complete file at the cache path, never a half-written one: same directory, then a rename. */
-function install(bytes, dest) {
-	mkdirSync(dirname(dest), { recursive: true })
-	const temp = join(dirname(dest), `.traj-${process.pid}-${Date.now()}`)
-	try {
-		writeFileSync(temp, bytes, { mode: 0o755 })
-		chmodSync(temp, 0o755)
-		try {
-			renameSync(temp, dest)
-		} catch (error) {
-			// A concurrent run won the race; its file is complete, so use it and drop ours.
-			if (!existsSync(dest)) throw error
-		}
-	} finally {
-		rmSync(temp, { force: true })
 	}
 }
 

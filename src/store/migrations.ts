@@ -1,6 +1,7 @@
 import type { Database } from "bun:sqlite"
 import { type AppError, fail } from "../errors"
 import { abort, write } from "./guard"
+import { isFileFailure } from "./io-errors"
 import { schemaV1 } from "./schema-v1"
 import { schemaV2 } from "./schema-v2"
 
@@ -25,7 +26,9 @@ export function tooNew(version: number): AppError {
 function runStep(db: Database, version: number, step: (db: Database) => void): void {
 	try {
 		step(db)
-	} catch {
+	} catch (error) {
+		// A refused write is the environment's failure, not a broken step: let `write` name it.
+		if (isFileFailure(error)) throw error
 		// SQLite's own text varies by runtime and version, so only the stable fields are kept.
 		const to = version + 1
 		const message = `Migrating the database from schema version ${version} to ${to} failed; it was left at ${version}.`

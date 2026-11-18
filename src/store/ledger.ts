@@ -5,7 +5,7 @@ import { isAppError } from "../errors"
 import { listAccounts } from "./accounts"
 import { type ChartRow, chartFrom, chartRows } from "./chart"
 import type { Ctx } from "./context"
-import { guard } from "./guard"
+import { read } from "./guard"
 import { ledgerFailure } from "./ledger-errors"
 import { coreTransaction } from "./tx-core"
 import { listPostings, listTransactions } from "./tx-reads"
@@ -97,5 +97,5 @@ function assemble(ctx: Ctx): Ledger | AppError {
 
 /** One read of the whole Ledger, in the store's own orders; every query's rules re-validate it. */
 export function readLedger(ctx: Ctx): Ledger | AppError {
-	return guard(() => assemble(ctx))
+	return read(ctx.db, () => assemble(ctx))
 }

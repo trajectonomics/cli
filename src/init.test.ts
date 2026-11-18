@@ -1,9 +1,15 @@
 import { Database } from "bun:sqlite"
 import { describe, expect, it } from "bun:test"
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
+import {
+	chmodSync,
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { registry } from "./errors"
 import { capture } from "./test-support"
 
 describe("init", () => {
@@ -39,16 +45,51 @@ describe("init", () => {
 		expect(readdirSync(home)).toEqual(listing)
 	})
 
-	it("reports an unexpected failure as the fixed internal envelope", async () => {
+	it("names a TRAJ_HOME that is a file as not a directory", async () => {
 		const file = join(mkdtempSync(join(tmpdir(), "traj-test-")), "afile")
 		writeFileSync(file, "")
 		const res = await capture(["init", "--json"], { TRAJ_HOME: file })
 		expect(res.code).toBe(1)
 		expect(res.out).toBe("")
-		expect(JSON.parse(res.err)).toEqual({
-			error: { code: "internal", exitCode: 1, message: registry.internal.message },
-		})
-		expect(res.err).not.toContain(file)
-		expect(res.err).not.toContain("at ")
+		const { error } = JSON.parse(res.err)
+		expect(error.code).toBe("not_a_directory")
+		expect(error.exitCode).toBe(1)
+		expect(error.message).toContain(file)
+		expect(error.hint).toContain("TRAJ_HOME")
+		expect(error.details).toEqual({ path: file })
+	})
+
+	it("names a data directory it cannot write as permission denied", async () => {
+		const home = tempHome()
+		mkdirSync(home, { recursive: true })
+		chmodSync(home, 0o500)
+		try {
+			const res = await capture(["init", "--json"], { TRAJ_HOME: home })
+			expect(res.code).toBe(1)
+			expect(res.out).toBe("")
+			const { error } = JSON.parse(res.err)
+			expect(error.code).toBe("permission_denied")
+			expect(error.exitCode).toBe(1)
+			expect(error.message).toContain(join(home, "traj.db"))
+			expect(error.hint).toContain("permission")
+			expect(error.details).toEqual({ path: join(home, "traj.db") })
+		} finally {
+			chmodSync(home, 0o700)
+		}
+	})
+
+	it("names a file that is not a database as corrupt", async () => {
+		const home = tempHome()
+		mkdirSync(home, { recursive: true })
+		writeFileSync(join(home, "traj.db"), "not a sqlite database")
+		const res = await capture(["init", "--json"], { TRAJ_HOME: home })
+		expect(res.code).toBe(1)
+		expect(res.out).toBe("")
+		const { error } = JSON.parse(res.err)
+		expect(error.code).toBe("database_corrupt")
+		expect(error.exitCode).toBe(1)
+		expect(error.message).toContain(join(home, "traj.db"))
+		expect(error.hint).toContain("traj init")
+		expect(error.details).toEqual({ path: join(home, "traj.db") })
 	})
 })

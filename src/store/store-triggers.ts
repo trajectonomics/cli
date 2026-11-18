@@ -3,7 +3,15 @@ import type { ErrorCode } from "../errors"
 import { coreOnly } from "./core-triggers"
 import { HEAD } from "./migrations"
 import { must, mustOpen, tempHome } from "./testing"
-import { busy, openAt, type Trigger } from "./trigger-setup"
+import {
+	busy,
+	corruptHome,
+	fileHome,
+	fullDisk,
+	openAt,
+	readonlyHome,
+	type Trigger,
+} from "./trigger-setup"
 import type { NewPosting, NewTransaction } from "./types"
 
 export type { Trigger } from "./trigger-setup"
@@ -62,8 +70,11 @@ export const storeTriggers: Record<StoreRaised, Trigger> = {
 		return add([postingTo(food, 2), postingTo(cash, -2)], { externalRef: "r" })
 	}),
 	database_busy: busy,
+	database_corrupt: corruptHome,
 	database_too_new: openAt((db) => db.run(`PRAGMA user_version = ${HEAD + 1}`)),
-	// A file someone else already put an `account` table in cannot take step 1.
+	disk_full: fullDisk,
+	not_a_directory: fileHome,
+	permission_denied: readonlyHome,
 	migration_failed: openAt((db) => db.run("CREATE TABLE account (x)")),
 	SINGLE_POSTING: posting(({ add, postingTo, cash }) => add([postingTo(cash, 1)])),
 	INVALID_AMOUNT: posting(({ add, postingTo, cash, food }) =>
