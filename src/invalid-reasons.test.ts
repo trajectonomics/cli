@@ -76,9 +76,12 @@ describe("one case per validation reason", () => {
 		expect(error).toMatchObject({ path: "--word", message: SENTENCES.range })
 	})
 
-	it("gives a value off the list the choice sentence", async () => {
+	it("gives a value off the list the choice sentence, naming the allowed values", async () => {
 		const error = errorOf(await runProbe(["choice", "--kind", "c"]))
-		expect(error).toMatchObject({ path: "--kind", message: SENTENCES.choice })
+		expect(error).toMatchObject({
+			path: "--kind",
+			message: "The value is not one of the allowed choices: a, b.",
+		})
 	})
 
 	it("gives a missing required enum the required-flag sentence, not a choice", async () => {

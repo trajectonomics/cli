@@ -85,15 +85,46 @@ nominal and real (monthly rows with `--monthly`); `traj projection compare`
 puts two Scenarios side by side, or one against a `--set` what-if, with the
 deltas in FI date, net worth at the ages you name and run-out year; and
 `traj fi` reports the survival FI date beside the 25× rule of thumb as a
-labelled reference. Every result states its As-of, the engine version, the
+labelled reference. Every date flag is a Gregorian year between 1900 and
+2100, so a Buddhist year is refused instead of read as 543 years later. Every result states its As-of, the engine version, the
 Scenario's hashes, the Overrides it applied, and its tax status.
 `traj schema <command>` describes each one.
+
+Each result also says what every tax year owes: `taxYears` in JSON, and the
+`taxYears` table in the human format. A row names its Levy, the period and the
+day it settles, what it owed before Prepayment, what was already paid at source,
+and the `owed` figure — due minus prepaid, so a refund is negative. `settled`
+says whether the settlement date falls inside the Projection, and `partial`
+whether the Projection ended before the period did, so a figure that is still
+ahead of you is never mistaken for one already charged.
 
 Tax is the Scenario's. `traj scenario tax <name> --tax th-2026` writes Thailand's
 2026 personal income tax into it, and `--label salary=income.section40_1` says
 which Section 40 class each income Flow belongs to, because a Levy tallies
-labels and never guesses them; `--none` takes both out again. A Scenario
-without the Levy is projected pre-tax, and every result says which it is.
+labels and never guesses them; `--none` takes both out again, with the
+Prepayments that named the Levy. A Scenario without the Levy is projected
+pre-tax, and every result says which it is.
+
+A real employee's profile goes in on the same command: `--filing-status`,
+`--children`, `--parents`, `--disabled-care`, `--social-security`,
+`--life-insurance`, `--health-insurance`, `--parent-health-insurance`,
+`--spouse-life-insurance`, `--mortgage-interest`, `--donation2x` and
+`--donation1x`, each in THB except the counts. `@trajectonomics/tax` applies
+every statutory ceiling; the CLI holds no amount of its own. The write reports
+which deduction classes the flags stated and which they left out, so a
+deduction nobody stated is visible rather than assumed to be zero. It states
+what the flags said, never what tax-core applied: a premium the statute does
+not allow for the filing status is still stated, and the Levy zeroes it.
+
+```json
+{
+  "status": "updated",
+  "allowances": {
+    "stated": ["lifeInsurance"],
+    "notStated": ["children", "socialSecurity", "mortgageInterest", "donation1x"]
+  }
+}
+```
 
 A Projection that starts inside a tax period also needs what that period had
 already taken: `--carry-in carry-in.json` states it, one record per Scenario,

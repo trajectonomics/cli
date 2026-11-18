@@ -1,5 +1,6 @@
 import { amend, LedgerValidationError, type Transaction } from "@trajectonomics/ledger"
 import { type AppError, isAppError } from "../errors"
+import { yearFailure } from "../year"
 import { chartOf } from "./chart"
 import type { Ctx } from "./context"
 import { write } from "./guard"
@@ -26,6 +27,8 @@ function amendmentOf(
 	input: NewAmendment,
 	ids: { reversal: string; replacement: string },
 ): readonly [Transaction, Transaction] | AppError {
+	const year = input.voidDate === undefined ? null : yearFailure(input.voidDate, "voidDate")
+	if (year !== null) return year
 	const chart = chartOf(ctx)
 	const stored = coreTransaction(original, postingsOf(ctx, original.id), chart)
 	const replacement = input.replacement

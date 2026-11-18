@@ -1,4 +1,5 @@
 import { netWorth, type Transaction } from "@trajectonomics/ledger"
+import { checkedDate } from "../date"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
 import type { Ledger } from "../store"
@@ -38,6 +39,8 @@ function firstTransactionDateOf(transactions: readonly Transaction[]): string | 
 
 /** Assembles net worth from one assembled read; the Command only renders it. */
 export function netWorthOf(ledger: Ledger, asOf: string): NetWorthResult | AppError {
+	const date = checkedDate(asOf, "asOf")
+	if (isAppError(date)) return date
 	const index = accountIndex(ledger.accounts)
 	const result = query(() => netWorth(ledger.transactions, asOf, ledger.chart), fieldOf)
 	if (isAppError(result)) return result

@@ -1,5 +1,6 @@
 import type { ProfitAndLossOptions } from "@trajectonomics/ledger"
 import { profitAndLoss } from "@trajectonomics/ledger"
+import { checkedDate } from "../date"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
 import type { Ledger } from "../store"
@@ -43,6 +44,10 @@ export function pnlOf(
 	ledger: Ledger,
 	input: { since?: string | undefined; until: string; project?: string | undefined },
 ): PnlResult | AppError {
+	const since = input.since === undefined ? null : checkedDate(input.since, "since")
+	if (isAppError(since)) return since
+	const until = checkedDate(input.until, "until")
+	if (isAppError(until)) return until
 	const index = accountIndex(ledger.accounts)
 	const result = query(
 		() => profitAndLoss(ledger.transactions, optionsOf(input), ledger.chart),

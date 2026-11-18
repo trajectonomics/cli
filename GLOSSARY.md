@@ -166,6 +166,22 @@ _Avoid_: Opening balance, prior year
 The Section 40 income class, or the retirement allowance, an income or contribution Flow is tallied under. A Flow with no label is not tax-free income; it is income no Levy is told about.
 _Avoid_: Category, tag, tax code
 
+**Tax year**:
+One period of a Tax Levy and its Settlement: what it owed, what was prepaid, and what settles. A result reports one row per Tax year, a year that began before the As-of included.
+_Avoid_: Tax period, fiscal year, assessment year
+
+**Prepayment**:
+Money already taken at source against a Tax year, such as payroll withholding. It reduces what the year owes at its Settlement but is not an expense.
+_Avoid_: Withholding tax, advance payment
+
+**Tax owed**:
+The amount a Tax year settles: its due less its Prepayment. A negative figure is a refund.
+_Avoid_: Tax bill, balance due, refund amount
+
+**Stated allowance**:
+A deduction class the flags of a tax write named, such as life insurance or home-loan interest. `scenario tax` reports the classes it stated and the ones it left out, so a deduction nobody named is visible instead of read as zero; what the Levy then allows is tax-core's rule, not the CLI's.
+_Avoid_: Modelled allowance, applied allowance, tax relief
+
 ### Packages
 
 **Core**:

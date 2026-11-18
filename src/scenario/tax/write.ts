@@ -7,12 +7,15 @@ import { view, type WrittenScenario } from "../view"
 import { type TaxFlags, type TaxRequest, taxRequestOf } from "./flags"
 import { type FlowLabel, flowLabelOf } from "./labels"
 import { withTaxLevy } from "./levy"
+import { type TaxProfileView, taxProfileOf } from "./profile"
 import { withoutTaxLevy } from "./remove"
 
 /** What `scenario tax` returns: the row it wrote, and whether the write was rolled back. */
 export type TaxWritten = {
 	dryRun: boolean
 	status: "created" | "updated" | "unchanged"
+	/** The allowance classes the flags stated; absent when --none wrote no Levy. */
+	allowances?: TaxProfileView | undefined
 	scenario: WrittenScenario
 }
 
@@ -67,6 +70,7 @@ function save(
 	name: string,
 	document: ScenarioDocument,
 	dryRun: boolean,
+	profile: TaxProfileView | undefined,
 ): Result<TaxWritten> | AppError {
 	const refused = scenarioDocumentError(document)
 	if (refused !== null) return refused
@@ -74,7 +78,12 @@ function save(
 	if (isAppError(outcome)) return outcome
 	const scenario = view(outcome.scenario)
 	const id = dryRun && outcome.status === "created" ? null : scenario.id
-	return ok({ dryRun, status: outcome.status, scenario: { ...scenario, id } })
+	return ok({
+		dryRun,
+		status: outcome.status,
+		...(profile === undefined ? {} : { allowances: profile }),
+		scenario: { ...scenario, id },
+	})
 }
 
 /** The one write `scenario tax` makes, with every refusal ahead of it. */
@@ -95,6 +104,7 @@ export function writeTax(input: TaxInput, ctx: Context): Result<TaxWritten> | Ap
 		const next = nextOf(document, request, labels)
 		if (isAppError(next)) return next
 		if (next === null) return ok({ dryRun, status: "unchanged" as const, scenario: view(row) })
-		return save(store, row.name, next, dryRun)
+		const profile = request === null ? undefined : taxProfileOf(request, next)
+		return save(store, row.name, next, dryRun, profile)
 	})
 }

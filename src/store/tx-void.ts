@@ -1,4 +1,5 @@
 import type { AppError } from "../errors"
+import { yearFailure } from "../year"
 import type { Ctx } from "./context"
 import { write } from "./guard"
 import { insertTransaction } from "./transactions"
@@ -32,6 +33,8 @@ export function voidTransaction(
 					postings: postingsOf(ctx, correction.id),
 				}
 			}
+			const year = yearFailure(input.date, "date")
+			if (year !== null) return year
 			const reversal = reversalOf(ctx, original, input.date)
 			const failure = storeChecks(ctx, reversal)
 			if (failure) return failure

@@ -3,7 +3,7 @@ import type { Baseline, TallyBasis } from "@trajectonomics/sim"
 import { check, type Scenario, type Timeline } from "@trajectonomics/sim"
 import { isAppError } from "../errors"
 import type { ScenarioDocument } from "../scenario/document"
-import { withTaxLevy } from "../scenario/tax"
+import { taxRequestOf, withTaxLevy } from "../scenario/tax"
 import { TH_CLASSES } from "./carry-in-support"
 import type { CarryInRecordForm } from "./carryin"
 import { placeCarryIn } from "./carryin-place"
@@ -50,14 +50,12 @@ const DOCUMENT = {
 
 /** The document with this build's tax Levy, the only one whose scope record the CLI can write. */
 function taxed(): Scenario {
-	const written = withTaxLevy(
-		DOCUMENT,
-		{ jurisdiction: "th-2026", filingStatus: "single", children: 0, childrenAtHigherRate: 0 },
-		[
-			{ flow: "salary", label: "income.section40_1" },
-			{ flow: "rmf", label: "allowance.retirement.rmf" },
-		],
-	)
+	const request = taxRequestOf({ tax: "th-2026", filingStatus: "single" })
+	if (request === null || isAppError(request)) throw new Error("the tax request was refused")
+	const written = withTaxLevy(DOCUMENT, request, [
+		{ flow: "salary", label: "income.section40_1" },
+		{ flow: "rmf", label: "allowance.retirement.rmf" },
+	])
 	if (!("levies" in (written as object))) throw new Error("the tax Levy was refused")
 	return written as unknown as Scenario
 }

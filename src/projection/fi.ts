@@ -1,52 +1,13 @@
-import {
-	type FiBestCase,
-	financialIndependence,
-	type RuleOfThumbReference,
-} from "@trajectonomics/sim"
+import { financialIndependence, project } from "@trajectonomics/sim"
 import type { AppError } from "../errors"
 import { isAppError } from "../errors"
 import type { Placed } from "./carryin-apply"
 import { echoOf } from "./echo"
 import { refusal } from "./engine"
-import type { BestCaseView, FiAnswer, FiView, RuleOfThumbView } from "./fi-view"
-import { moneyOf } from "./money"
-
-function referenceView(reference: RuleOfThumbReference, currency: string): RuleOfThumbView {
-	const money = moneyOf(currency)
-	return {
-		label: reference.label,
-		date: reference.date,
-		multiplier: reference.multiplier,
-		basis: reference.basis,
-		window: reference.window,
-		terms: reference.terms,
-		unlockedAssets: money(reference.unlockedAssets),
-		numerator: money(reference.numerator),
-		annualExpenses: money(reference.annualExpenses),
-		threshold: money(reference.threshold),
-		multipleBps: reference.multipleBps ?? null,
-		partial: reference.partial,
-		met: reference.met,
-	}
-}
-
-function bestCaseView(bestCase: FiBestCase, currency: string): BestCaseView {
-	const money = moneyOf(currency)
-	if ("runsOut" in bestCase) {
-		return {
-			month: bestCase.month,
-			runsOut: { date: bestCase.runsOut.date, unmet: money(bestCase.runsOut.unmet) },
-		}
-	}
-	return {
-		month: bestCase.month,
-		bufferBreach: {
-			date: bestCase.bufferBreach.date,
-			required: money(bestCase.bufferBreach.required),
-			accessible: money(bestCase.bufferBreach.accessible),
-		},
-	}
-}
+import { bestCaseView, referenceView } from "./fi-figures"
+import type { FiAnswer, FiView } from "./fi-view"
+import { fundingNotes } from "./funding"
+import { taxYearsOf } from "./tax-view"
 
 /** The engine's survival answer in the CLI's money, with its own definition echo (ADR-0008). */
 export type FiSolution = {
@@ -91,12 +52,21 @@ export function fiAnswerOf(prepared: Placed): FiSolution | AppError {
 export function independenceOf(prepared: Placed): FiView | AppError {
 	const solution = fiAnswerOf(prepared)
 	if (isAppError(solution)) return solution
+	// The FI answer does not carry a Projection, so the tax it implies is read from one run of the
+	// same inputs the survival scan used (ADR-0036).
+	const result = project(prepared.baseline, prepared.document, prepared.timeline)
+	if (!result.ok) return refusal(result.problems)
 	return {
 		...echoOf(prepared),
+		notes: [
+			...prepared.notes,
+			...fundingNotes(result.projection.unfundedContributions, prepared.currency),
+		],
 		horizon: prepared.timeline.horizon,
 		currency: prepared.currency,
 		method: solution.definition.method,
 		definition: solution.definition,
 		fi: solution.fi,
+		taxYears: taxYearsOf(result.projection.levies, prepared.currency),
 	}
 }

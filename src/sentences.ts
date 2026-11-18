@@ -34,6 +34,13 @@ function requiredSentence(kind: InputKind): string {
 	return kind === "argument" ? SENTENCES.requiredArgument : SENTENCES.requiredField
 }
 
+/** The choice sentence with the allowed values named, so a reader can fix it from the error. */
+function choiceSentence(issue: Issue): string {
+	const values = "values" in issue && Array.isArray(issue.values) ? issue.values : []
+	if (values.length === 0) return SENTENCES.choice
+	return `${SENTENCES.choice.slice(0, -1)}: ${values.map(String).join(", ")}.`
+}
+
 function rangeSentence(issue: Issue): string {
 	const empty = issue.code === "too_small" && issue.origin === "string" && issue.minimum === 1
 	return empty ? SENTENCES.empty : SENTENCES.range
@@ -48,7 +55,7 @@ function typeSentence(issue: Issue): string | undefined {
 
 /** The sentence for an issue kind this table knows, or `undefined` when it knows none. */
 function knownSentence(issue: Issue): string | undefined {
-	if (issue.code === "invalid_value") return SENTENCES.choice
+	if (issue.code === "invalid_value") return choiceSentence(issue)
 	if (issue.code === "too_small" || issue.code === "too_big") return rangeSentence(issue)
 	return typeSentence(issue)
 }
