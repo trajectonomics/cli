@@ -11,6 +11,7 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { ACCOUNT_HINT } from "./hint"
 import { fileMode, mustOpen, tempHome } from "./store/testing"
 import { capture } from "./test-support"
 
@@ -23,6 +24,7 @@ describe("init", () => {
 			directory: home,
 			database: join(home, "traj.db"),
 			created: true,
+			hint: ACCOUNT_HINT,
 		})
 		const db = new Database(join(home, "traj.db"), { readonly: true })
 		expect(db.query("PRAGMA journal_mode").get()).toEqual({ journal_mode: "wal" })
@@ -38,9 +40,25 @@ describe("init", () => {
 		const listing = readdirSync(home)
 		const res = await capture(["init", "--json"], { TRAJ_HOME: home })
 		expect(res.code).toBe(0)
-		expect(JSON.parse(res.out).created).toBe(false)
+		expect(JSON.parse(res.out)).toEqual({
+			directory: home,
+			database: join(home, "traj.db"),
+			created: false,
+		})
 		expect(readFileSync(join(home, "traj.db")).equals(before)).toBe(true)
 		expect(readdirSync(home)).toEqual(listing)
+	})
+
+	it("ends by naming the first account in the human Format too", async () => {
+		const home = tempHome()
+		const res = await capture(["init"], { TRAJ_HOME: home })
+		expect(res.code).toBe(0)
+		expect(res.out.split("\n")).toEqual([
+			`directory: ${home}`,
+			`database: ${join(home, "traj.db")}`,
+			"created: true",
+			`hint: ${ACCOUNT_HINT}`,
+		])
 	})
 
 	it("creates the directory 0700 and the ledger 0600, because it is plaintext money", async () => {
@@ -105,6 +123,7 @@ describe("init", () => {
 		const detail = JSON.parse((await capture(["schema", "init", "--json"])).out)
 		expect(detail.output.properties.directory.description).toContain("0700")
 		expect(detail.output.properties.database.description).toContain("0600")
+		expect(detail.output.properties.hint.description).toContain("first account")
 	})
 
 	it("names a TRAJ_HOME that is a file as not a directory", async () => {
