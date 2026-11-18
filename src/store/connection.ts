@@ -6,7 +6,7 @@ import { HEAD, migrate, tooNew, userVersion } from "./migrations"
 /**
  * Opens one connection with the pragmas every connection needs, refusing a database newer than
  * head before anything could write to it, then migrates to head. It never creates the file: the
- * caller has proved the ledger exists, because only `traj init` creates one.
+ * caller has proved the ledger exists, because only `traj init` and `traj restore` create one.
  */
 export function connect(path: string, busyTimeoutMs: number): Database | AppError {
 	let db: Database | undefined

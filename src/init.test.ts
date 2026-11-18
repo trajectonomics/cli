@@ -60,7 +60,7 @@ describe("init", () => {
 		store.close()
 	})
 
-	it("is the only command that creates a ledger, so a read names the path instead", async () => {
+	it("creates the only empty ledger, so a read names the path instead", async () => {
 		const home = tempHome()
 		const res = await capture(["balance", "--as-of", "2026-01-01", "--json"], {
 			TRAJ_HOME: home,
@@ -93,7 +93,7 @@ describe("init", () => {
 		expect((await capture(["scenario", "list", "--json"], { TRAJ_HOME: empty })).code).toBe(0)
 	})
 
-	it("says in the schema and the help that no other command creates a ledger", async () => {
+	it("says in the schema and the help who creates a ledger", async () => {
 		const listing = JSON.parse((await capture(["schema", "--json"])).out) as {
 			commands: { name: string; summary: string }[]
 		}

@@ -22,10 +22,10 @@ export { importRejections } from "./tx-import"
 export type * from "./types"
 
 /**
- * Every code opening the ledger can raise, for the leaves whose subject is the data directory:
- * `inspect` and `export` list it; `init` and `restore`, which create a ledger, list the four codes
- * that create step raises. A Command that only needs the ledger declares none of them: its failure
- * is the same one whether the ledger is missing, unwritable or corrupt.
+ * Every code that opening an existing ledger can raise, for the leaves whose subject is the data
+ * directory: `inspect`, `export` and `backup` declare it whole. A Command that only needs the
+ * ledger declares none of them: its failure is the same one whether the ledger is missing,
+ * unwritable or corrupt.
  */
 export const LEDGER_OPEN_CODES: readonly ErrorCode[] = [
 	"ledger_missing",
@@ -55,8 +55,9 @@ function ledgerMissing(database: string): AppError {
 
 /**
  * Opens `traj.db` in the data directory and migrates it to head. It never creates one: `traj init`
- * is the only creator, so a Command that finds no ledger fails with `ledger_missing` instead of
- * answering from an empty database. The returned store owns the connection until `close()`.
+ * and `traj restore` are the only creators, so a Command that finds no ledger fails with
+ * `ledger_missing` instead of answering from an empty database. The store owns the connection
+ * until `close()`.
  */
 export function openStore(options: StoreOptions): Store | AppError {
 	const paths = ledgerPaths(options.env)
