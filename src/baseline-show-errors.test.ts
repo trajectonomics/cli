@@ -9,7 +9,7 @@ import {
 	withOne,
 } from "./baseline/testing"
 import { FIXTURE_ACCOUNTS, FIXTURE_AS_OF, fixtureHome, seededHome } from "./ledger-fixture"
-import { tempHome } from "./store/testing"
+import { ledgerHome } from "./store/testing"
 
 describe("baseline show failures", () => {
 	it("refuses an overdrawn asset as NEGATIVE_AMOUNT with both amounts in details", async () => {
@@ -110,7 +110,7 @@ describe("baseline show failures", () => {
 
 describe("baseline show surface", () => {
 	it("requires --as-of, from the input layer", async () => {
-		const res = await cli(tempHome())(["baseline", "show", "--json"])
+		const res = await cli(ledgerHome())(["baseline", "show", "--json"])
 		expect(res.code).toBe(2)
 		expect(JSON.parse(res.err).error).toMatchObject({
 			code: "invalid_input",
@@ -126,7 +126,7 @@ describe("baseline show surface", () => {
 	})
 
 	it("renders an empty Ledger as no rows at exit 0, still stating THB", async () => {
-		const res = await show(tempHome())
+		const res = await show(ledgerHome())
 		expect(res.code).toBe(0)
 		expect(JSON.parse(res.out)).toEqual({ asOf: FIXTURE_AS_OF, currency: "THB", rows: [] })
 	})

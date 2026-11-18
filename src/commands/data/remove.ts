@@ -15,7 +15,7 @@ import {
 import { inventoryOf, remainingOf } from "../../data/inventory"
 import { DATABASE_FILE, dataDirectory } from "../../data-directory"
 import { isAppError } from "../../errors"
-import { directoryStep } from "../../store/io-errors"
+import { directoryStep } from "../../store/io-steps"
 import { withStore } from "../../with-store"
 
 const removedOutput = z.strictObject({
@@ -66,7 +66,7 @@ export const remove: Leaf = defineCommand({
 	],
 	run: (input, ctx) => {
 		const database = join(dataDirectory(ctx.env), DATABASE_FILE)
-		// A read would create the database, and a removal must never create what it removes.
+		// It reports what it would delete, including nothing, rather than the store's ledger_missing.
 		if (!existsSync(database)) return noStoredData(database)
 		const read = withStore(ctx, (store) => {
 			const inventory = inventoryOf(store)

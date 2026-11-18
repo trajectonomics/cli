@@ -5,7 +5,7 @@ import type { RegistryEntry } from "./error-listing"
 import { SENTENCES } from "./sentences"
 import { capture, type ErrorBody, errorOf } from "./test-support"
 import { leavesOf } from "./tree"
-import { tempHome } from "./tx-test-support"
+import { ledgerHome } from "./tx-test-support"
 
 /** The validation library's vocabulary, which never reaches the envelope (ADR-0013). */
 const PROSE = /Invalid input|Too small|Too big|Invalid option|Unrecognized key|expected .+ received/
@@ -33,12 +33,12 @@ const SUCCEEDING = new Set([
 ])
 
 /**
- * Leaves whose first no-argument answer is about what is on disk rather than about the command
- * line. `data remove` reads the ledger before it asks for `--confirm`, so it can print what the
- * removal would lose; with no database there is nothing to confirm and nothing to lose.
+ * Leaves whose first no-argument answer is about what is on disk rather than the command line:
+ * `data remove` names what a removal would lose before it asks for `--confirm`, so its message
+ * is that report and not one of the registry's sentences (ADR-0038).
  */
 const STATE_FIRST: Record<string, { code: string; exit: number }> = {
-	"data remove": { code: "not_found", exit: 4 },
+	"data remove": { code: "invalid_input", exit: 2 },
 }
 
 /** A command may raise its own CLI sentence for a missing input, outside the table. */
@@ -79,7 +79,7 @@ describe("every leaf with no arguments", () => {
 	it("names the caller's input in a CLI sentence, or succeeds", async () => {
 		for (const { path, leaf } of leavesOf(root)) {
 			const name = path.join(" ")
-			const res = await capture([...path, "--json"], { TRAJ_HOME: tempHome() })
+			const res = await capture([...path, "--json"], { TRAJ_HOME: ledgerHome() })
 			if (SUCCEEDING.has(name)) {
 				expect({ name, code: res.code }).toEqual({ name, code: 0 })
 				continue
@@ -102,7 +102,7 @@ describe("every leaf with no arguments", () => {
 	})
 
 	it("keeps one invalid_input row in the registry listing", async () => {
-		const res = await capture(["schema", "--json"], { TRAJ_HOME: tempHome() })
+		const res = await capture(["schema", "--json"], { TRAJ_HOME: ledgerHome() })
 		const errors = JSON.parse(res.out).errors as RegistryEntry[]
 		expect(errors.find((entry) => entry.code === "invalid_input")).toEqual({
 			code: "invalid_input",

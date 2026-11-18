@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
-import { databaseFailure, directoryFailure } from "./io-errors"
+import { databaseFailure, directoryFailure, fileFailure } from "./io-errors"
+import { fileStep } from "./io-steps"
 
 describe("the store's I/O failure mapping", () => {
 	it("names a full disk as a typed disk_full", () => {
@@ -21,6 +22,22 @@ describe("the store's I/O failure mapping", () => {
 			details: { path: "/home/traj/traj.db" },
 		})
 		expect(failure?.body.hint).toContain("Free space")
+	})
+
+	it("names a refused chmod on the ledger as permission denied for that file", () => {
+		const failure = fileStep("/home/traj/traj.db", () => {
+			throw Object.assign(new Error("nope"), { code: "EPERM" })
+		})
+		expect(failure?.body).toMatchObject({
+			code: "permission_denied",
+			exitCode: 1,
+			details: { path: "/home/traj/traj.db" },
+		})
+		expect(failure?.body.hint).toContain("permissions")
+		expect(fileFailure("/home/traj/traj.db", { code: "EPERM" })?.body.code).toBe(
+			"permission_denied",
+		)
+		expect(fileStep("/home/traj/traj.db", () => undefined)).toBeUndefined()
 	})
 
 	it("leaves an error it does not recognise to the internal envelope", () => {

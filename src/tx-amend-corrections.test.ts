@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test"
-import { amend, cli, json, ledgerSize, lunch, tempHome } from "./tx-test-support"
+import { amend, cli, json, ledgerHome, ledgerSize, lunch } from "./tx-test-support"
 
 describe("tx amend corrections", () => {
 	it("names the reversal and the replacement on the original", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const data = json(await amend(traj, original.id))
 		const shown = await traj(["tx", "show", original.id, "--json"])
@@ -34,7 +34,7 @@ describe("tx amend corrections", () => {
 	})
 
 	it("exits 5 as external_ref_conflict when the replacement reuses the original's reference", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj, "kbank:2026-03-01:0001")
 		const res = await amend(traj, original.id, ["--external-ref", "kbank:2026-03-01:0001"])
 		expect(res.code).toBe(5)
@@ -48,7 +48,7 @@ describe("tx amend corrections", () => {
 	})
 
 	it("accepts a new reference on the replacement", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj, "kbank:2026-03-01:0001")
 		const data = json(await amend(traj, original.id, ["--external-ref", "kbank:2026-03-02:0001"]))
 		expect(data.replacement?.externalRef).toBe("kbank:2026-03-02:0001")
@@ -56,7 +56,7 @@ describe("tx amend corrections", () => {
 	})
 
 	it("exits 0 as already_corrected when the transaction is already corrected", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const first = json(await amend(traj, original.id))
 		const again = await amend(traj, original.id, ["--amount", "999"])
@@ -73,7 +73,7 @@ describe("tx amend corrections", () => {
 	})
 
 	it("writes neither row when the replacement is invalid", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const res = await amend(traj, original.id, ["--to", "Nope"])
 		expect(res.code).toBe(3)
@@ -82,7 +82,7 @@ describe("tx amend corrections", () => {
 	})
 
 	it("rejects a reversal dated before its original as REVERSAL_BEFORE_ORIGINAL on --void-date", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const res = await amend(traj, original.id, ["--void-date", "2026-02-28"])
 		expect(res.code).toBe(3)

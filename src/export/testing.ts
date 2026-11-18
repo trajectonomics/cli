@@ -1,7 +1,7 @@
 import { mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { tempHome } from "../store/testing"
+import { ledgerHome } from "../store/testing"
 import { capture } from "../test-support"
 
 /** A directory path that does not exist yet, so the command is the one that creates it. */
@@ -46,7 +46,7 @@ export async function memoTransaction(
  * in one memo, a markup-and-pipe memo beside it, and an empty memo beside a missing one.
  */
 export async function edgeHome(): Promise<string> {
-	const home = tempHome()
+	const home = ledgerHome()
 	await account("Cash", "asset", home)
 	await account("Food", "expense", home)
 	await memoTransaction(home, 'comma, quote " and\nnewline', "2026-03-01", "edge:1")

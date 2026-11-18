@@ -3,13 +3,13 @@ import { applyScenario, scenarioHome } from "./scenario-test-support"
 import { SENTENCES } from "./sentences"
 import { SCENARIO_DOCUMENT } from "./store/testing"
 import { capture, type ErrorBody, errorOf } from "./test-support"
-import { accounts, cli, tempHome } from "./tx-test-support"
+import { accounts, cli, ledgerHome } from "./tx-test-support"
 
 const BANK = { account: "Bank", amount: "1.00", currency: "THB" }
 const SALARY = { account: "Salary", amount: "-1.00", currency: "THB" }
 
 async function documentOf(body: unknown): Promise<ErrorBody> {
-	const home = tempHome()
+	const home = ledgerHome()
 	const traj = cli(home)
 	await accounts(traj, [
 		["Bank", "asset"],
@@ -61,7 +61,7 @@ describe("document-form failures", () => {
 	})
 
 	it("names the document flag when the file cannot be read, with the help hint", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		await accounts(cli(home), [
 			["Bank", "asset"],
 			["Salary", "income"],
@@ -97,7 +97,7 @@ describe("a core owns its own codes and sentences", () => {
 
 describe("object details pass through untouched", () => {
 	it("keeps inspect's table list", async () => {
-		const error = errorOf(await capture(["inspect", "nope", "--json"], { TRAJ_HOME: tempHome() }))
+		const error = errorOf(await capture(["inspect", "nope", "--json"], { TRAJ_HOME: ledgerHome() }))
 		expect(error.path).toBe("table")
 		expect(error.details).toHaveProperty("tables")
 		expect(Array.isArray((error.details as { tables?: unknown }).tables)).toBe(true)

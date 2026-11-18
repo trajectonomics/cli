@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite"
 import { describe, expect, it, setSystemTime } from "bun:test"
-import { must, mustOpen, tempHome } from "../store/testing"
+import { ledgerHome, must, mustOpen } from "../store/testing"
 import { exportJsonl, FIELDS, RECORD_ORDER } from "./index"
 import { goldenJsonl, goldenStore } from "./testing"
 
@@ -10,7 +10,7 @@ const SEEDED =
 
 describe("exportJsonl", () => {
 	it("writes the header and the seeded personal entity for a fresh database", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		expect(must(exportJsonl(store))).toBe(
 			`{"record":"header","formatVersion":1,"schemaVersion":2}\n${SEEDED}\n`,
 		)
@@ -37,7 +37,7 @@ describe("exportJsonl", () => {
 	it("declares every column of every table, in column order", () => {
 		// A column added to the schema but to neither FIELDS nor the golden fixture fails here.
 		const snake = (key: string) => key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)
-		const db = new Database(mustOpen(tempHome()).path, { readonly: true })
+		const db = new Database(mustOpen(ledgerHome()).path, { readonly: true })
 		for (const type of RECORD_ORDER) {
 			const columns = db.query<{ name: string }, []>(`PRAGMA table_info(${type})`).all()
 			expect({ type, columns: columns.map((c) => c.name) }).toEqual({

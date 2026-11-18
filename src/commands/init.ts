@@ -1,21 +1,17 @@
-import { Database } from "bun:sqlite"
-import { existsSync, mkdirSync } from "node:fs"
-import { join } from "node:path"
 import { z } from "zod"
 import type { Leaf } from "../command"
 import { defineCommand, ok } from "../command"
-import { DATABASE_FILE, dataDirectory } from "../data-directory"
 import { isAppError } from "../errors"
-import { databaseStep, directoryStep } from "../store/io-errors"
+import { createLedger } from "../store/ledger-file"
 
 export const init: Leaf = defineCommand({
 	name: "init",
-	summary: "Create the data directory and an empty database",
+	summary: "Create an empty ledger; only restore may also create one",
 	positionals: [],
 	input: z.strictObject({}),
 	output: z.strictObject({
-		directory: z.string().describe("The data directory."),
-		database: z.string().describe("The path of traj.db."),
+		directory: z.string().describe("The data directory, created 0700."),
+		database: z.string().describe("The path of traj.db, created 0600."),
 		created: z.boolean().describe("True when this run created the database."),
 	}),
 	examples: [
@@ -24,23 +20,7 @@ export const init: Leaf = defineCommand({
 	],
 	errorCodes: ["database_corrupt", "disk_full", "not_a_directory", "permission_denied"],
 	run: (_input, ctx) => {
-		const directory = dataDirectory(ctx.env)
-		const database = join(directory, DATABASE_FILE)
-		const created = !existsSync(database)
-		const made = directoryStep(directory, () => mkdirSync(directory, { recursive: true }))
-		if (isAppError(made)) return made
-		// Deliberately an empty database at `user_version` 0: the first `openStore()` migrates it
-		// to head, so `init` never needs to know the schema. Setting WAL on a database that already
-		// has it is a no-op, so a half-finished earlier run is repaired.
-		const opened = databaseStep(database, () => {
-			const db = new Database(database, { create: true })
-			try {
-				db.run("PRAGMA journal_mode = WAL")
-			} finally {
-				db.close()
-			}
-		})
-		if (isAppError(opened)) return opened
-		return ok({ directory, database, created })
+		const ledger = createLedger(ctx.env)
+		return isAppError(ledger) ? ledger : ok(ledger)
 	},
 })

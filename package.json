@@ -31,7 +31,7 @@
 		"typecheck": "tsc --noEmit",
 		"lint": "biome ci --error-on-warnings .",
 		"format": "biome check --write .",
-		"build": "bun build src/index.ts --compile --outfile dist/traj",
+		"build": "bun build src/index.ts --compile --no-compile-autoload-bunfig --no-compile-autoload-dotenv --outfile dist/traj",
 		"check": "bun run lint && bun run typecheck && bun test && bun run build",
 		"update:skills": "bunx skills@latest update -p -y"
 	},

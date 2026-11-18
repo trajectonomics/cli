@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test"
 import { isAppError } from "../errors"
-import { must, mustOpen, tempHome } from "./testing"
+import { ledgerHome, must, mustOpen } from "./testing"
 import type { NewAccount, NewTransaction, Store } from "./types"
 
 function setup() {
-	const store = mustOpen(tempHome())
+	const store = mustOpen(ledgerHome())
 	const open = (input: NewAccount) => must(store.createAccount(input)).account.id
 	const cash = open({ name: "Cash", type: "asset", currency: "THB" })
 	const food = open({ name: "Food", type: "expense", currency: "THB" })

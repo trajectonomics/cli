@@ -7,15 +7,15 @@ import {
 	csv,
 	errorOf,
 	HEADER,
+	ledgerHome,
 	ledgerSize,
 	row,
 	seeded,
-	tempHome,
 } from "./tx-import-test-support"
 
 describe("tx import currency", () => {
 	it("rejects a currency mismatch at the row's from column", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		// v1's CLI and store create THB accounts only, so the second currency comes from the DB.

@@ -1,10 +1,7 @@
 /** The coarse class of a finished run. Closed: nothing outside this union can be constructed. */
 export type ExitCode = 0 | 1 | 2 | 3 | 4 | 5
 
-/**
- * Every registered failure name, never reused: CLI-owned codes are snake_case, the ledger core's
- * verbatim in upper case, so a caller sees the core's own name for a rule.
- */
+/** Every registered failure name, never reused: CLI codes are snake_case, core codes verbatim. */
 export type ErrorCode =
 	| "internal"
 	| "invalid_input"
@@ -12,6 +9,7 @@ export type ErrorCode =
 	| "unknown_flag"
 	| "unknown_format"
 	| "not_found"
+	| "ledger_missing"
 	| "account_name_taken"
 	| "scenario_name_taken"
 	| "unsupported_currency"
@@ -49,23 +47,19 @@ export type ErrorCode =
 	| "INVALID_PERIOD"
 	| "AMOUNT_OVERFLOW"
 
-export type ErrorSpec = { exit: ExitCode; message: string }
-
-/** Codes a caller may retry unchanged; every other code is permanent. */
-export const RETRYABLE_CODES: readonly ErrorCode[] = ["database_busy", "disk_full"]
-
 /**
  * The single source of truth for failures. The envelope's `exitCode`, `run()`'s return value,
  * `traj schema` and the tests all read this table. A code carries exactly one class; a case that
  * seems to need two classes is two codes.
  */
-export const registry: Record<ErrorCode, ErrorSpec> = {
+export const registry: Record<ErrorCode, { exit: ExitCode; message: string }> = {
 	internal: { exit: 1, message: "Unexpected internal error." },
 	invalid_input: { exit: 2, message: "The input is invalid." },
 	unknown_command: { exit: 2, message: "Unknown command." },
 	unknown_flag: { exit: 2, message: "Unknown flag." },
 	unknown_format: { exit: 2, message: "Unknown output format." },
 	not_found: { exit: 4, message: "The requested resource was not found." },
+	ledger_missing: { exit: 4, message: "The data directory holds no ledger." },
 	account_name_taken: { exit: 5, message: "An account with this name already exists." },
 	scenario_name_taken: { exit: 5, message: "A scenario with this name already exists." },
 	unsupported_currency: { exit: 3, message: "The currency is not supported in v1." },

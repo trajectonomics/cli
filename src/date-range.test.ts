@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { fixtureHome } from "./ledger-fixture"
 import { capture } from "./test-support"
-import { amend, cli, lunch, tempHome } from "./tx-test-support"
+import { amend, cli, ledgerHome, lunch } from "./tx-test-support"
 
 /** The error `error` object of a captured failure. */
 function errorOf(res: { err: string }): { code: string; path?: string; message: string } {
@@ -10,7 +10,7 @@ function errorOf(res: { err: string }): { code: string; path?: string; message: 
 
 describe("a date outside the supported Gregorian years", () => {
 	it("refuses the date of a transaction write, so a Buddhist year is not stored", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await traj([
 			"tx",
 			"add",
@@ -30,7 +30,7 @@ describe("a date outside the supported Gregorian years", () => {
 	})
 
 	it("refuses a void reversal date and an amend reversal date", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const voided = await traj(["tx", "void", original.id, "--date", "2569-03-02", "--json"])
 		expect(voided.code).toBe(3)

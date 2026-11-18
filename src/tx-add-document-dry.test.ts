@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { accounts, cli, tempHome } from "./tx-test-support"
+import { accounts, cli, ledgerHome } from "./tx-test-support"
 
 const document = {
 	date: "2026-03-31",
@@ -12,7 +12,7 @@ const document = {
 
 describe("tx add document dry run and replay", () => {
 	it("rolls a document dry run back and returns the generated id as null", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const opened = await accounts(cli(home), [
 			["Bank", "asset"],
 			["Salary", "income"],
@@ -38,7 +38,7 @@ describe("tx add document dry run and replay", () => {
 	})
 
 	it("replays an identical document as a duplicate", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		await accounts(cli(home), [
 			["Bank", "asset"],
 			["Salary", "income"],
@@ -53,7 +53,7 @@ describe("tx add document dry run and replay", () => {
 	})
 
 	it("keeps the existing id when a dry run finds a duplicate", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		await accounts(cli(home), [
 			["Bank", "asset"],
 			["Salary", "income"],

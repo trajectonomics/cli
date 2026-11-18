@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test"
 import { errorOf } from "./test-support"
-import { accounts, cli, tempHome } from "./tx-test-support"
+import { accounts, cli, ledgerHome } from "./tx-test-support"
 
 describe("tx add --opening", () => {
 	it("refuses a positive opening on a liability, in the real run and the dry run alike", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Opening", "equity"],
 			["Student loan", "liability"],
@@ -43,7 +43,7 @@ describe("tx add --opening", () => {
 	})
 
 	it("opens a liability with a negative amount, so net worth falls by the debt", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Opening", "equity"],
 			["Student loan", "liability"],
@@ -75,7 +75,7 @@ describe("tx add --opening", () => {
 	})
 
 	it("keeps the core's header-account refusal ahead of the sign rule", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Opening", "equity"],
 			["Loans", "liability"],

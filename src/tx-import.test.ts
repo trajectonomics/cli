@@ -7,6 +7,7 @@ import {
 	errorOf,
 	HEADER,
 	imported,
+	ledgerHome,
 	ledgerSize,
 	row,
 	seeded,
@@ -46,7 +47,7 @@ describe("tx import --template", () => {
 
 describe("tx import FILE.csv", () => {
 	it("adds one two-posting transaction per row, in file order, and counts them", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		const opened = await seeded(traj)
 		const file = csv(home, "rows.csv", [
@@ -90,7 +91,7 @@ describe("tx import FILE.csv", () => {
 	})
 
 	it("resolves an account by id as well as by name, and keeps a memo's commas and quotes", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		const opened = await seeded(traj)
 		const byId = opened["Cash"]?.id ?? ""
@@ -110,7 +111,7 @@ describe("tx import FILE.csv", () => {
 	})
 
 	it("keeps a quoted empty cell absent and a quoted space present", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "quoted-empty.csv", [
@@ -126,7 +127,7 @@ describe("tx import FILE.csv", () => {
 	})
 
 	it("imports a header-only file as a no-op", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const res = await traj(["tx", "import", csv(home, "empty.csv", [HEADER]), "--json"])
@@ -141,7 +142,7 @@ describe("tx import FILE.csv", () => {
 	})
 
 	it("adds nothing when the same file is imported twice", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "twice.csv", [
@@ -163,7 +164,7 @@ describe("tx import FILE.csv", () => {
 	})
 
 	it("keeps a re-import of a voided row a duplicate and does not re-add it", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "voided.csv", [
@@ -182,7 +183,7 @@ describe("tx import FILE.csv", () => {
 	})
 
 	it("writes nothing under --dry-run and nulls every id it minted", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		await seeded(traj)
 		const file = csv(home, "dry.csv", [

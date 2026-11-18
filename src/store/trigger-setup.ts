@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { capture } from "../test-support"
 import { guardAt } from "./guard"
 import { openStore } from "./index"
-import { mustOpen, steppingClock, tempHome } from "./testing"
+import { ledgerHome, mustOpen, steppingClock, tempHome } from "./testing"
 
 /** A trigger returns what the store returned; the contract test asserts it is an AppError. */
 export type Trigger = () => unknown | Promise<unknown>
@@ -23,7 +23,7 @@ export function openAt(prepare: (db: Database) => void): Trigger {
 
 /** A writer that holds the lock past a one-millisecond busy timeout. */
 export function busy(): unknown {
-	const home = tempHome()
+	const home = ledgerHome()
 	mustOpen(home).close()
 	const holder = new Database(join(home, "traj.db"))
 	holder.run("BEGIN IMMEDIATE")
@@ -45,8 +45,7 @@ export function fileHome(): unknown {
 
 /** An `openStore` on a data directory the user cannot write. */
 export function readonlyHome(): unknown {
-	const home = tempHome()
-	mkdirSync(home, { recursive: true })
+	const home = ledgerHome()
 	chmodSync(home, 0o500)
 	try {
 		return openStore({ env: { TRAJ_HOME: home }, clock: steppingClock() })

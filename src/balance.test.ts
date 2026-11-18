@@ -9,7 +9,7 @@ import {
 	seededHome,
 } from "./ledger-fixture"
 import { golden } from "./report/testing"
-import { tempHome } from "./store/testing"
+import { ledgerHome } from "./store/testing"
 import { capture } from "./test-support"
 
 function cli(home: string) {
@@ -78,7 +78,7 @@ describe("balance", () => {
 	})
 
 	it("renders an empty Ledger as empty arrays at exit 0", async () => {
-		const res = await balance(tempHome())
+		const res = await balance(ledgerHome())
 		expect(res.code).toBe(0)
 		expect(JSON.parse(res.out)).toEqual({ asOf: FIXTURE_AS_OF, rows: [], netWorth: [] })
 	})
@@ -96,7 +96,7 @@ describe("balance", () => {
 	})
 
 	it("rejects a missing --as-of as invalid_input at asOf", async () => {
-		const res = await cli(tempHome())(["balance", "--json"])
+		const res = await cli(ledgerHome())(["balance", "--json"])
 		expect(res.code).toBe(2)
 		const { error } = JSON.parse(res.err)
 		expect(error).toMatchObject({ code: "invalid_input", exitCode: 2, path: "--as-of" })
@@ -159,7 +159,7 @@ describe("balance", () => {
 	})
 
 	it("describes the leaf through the schema command", async () => {
-		const res = await cli(tempHome())(["schema", "balance", "--json"])
+		const res = await cli(ledgerHome())(["schema", "balance", "--json"])
 		expect(res.code).toBe(0)
 		const data = JSON.parse(res.out)
 		expect(data.name).toBe("balance")

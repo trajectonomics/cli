@@ -2,8 +2,9 @@ import { writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { type Account, accounts, type Traj, type Written } from "./tx-test-support"
 
+export { tempHome } from "./store/testing"
 export type { Account, Traj } from "./tx-test-support"
-export { accounts, cli, ledgerSize, tempHome } from "./tx-test-support"
+export { accounts, cli, ledgerHome, ledgerSize } from "./tx-test-support"
 
 export const HEADER = "date,from,to,amount,memo,external_ref,project"
 

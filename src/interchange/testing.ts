@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite"
 import { expect } from "bun:test"
 import { type AppError, isAppError } from "../errors"
 import type { Clock, Store } from "../store"
-import { mustOpen, steppingClock, tempHome } from "../store/testing"
+import { ledgerHome, mustOpen, steppingClock } from "../store/testing"
 import { importJsonl } from "./read"
 
 const FIXTURES = new URL("./fixtures/", import.meta.url)
@@ -17,7 +17,7 @@ export function goldenJsonl(): Promise<string> {
  * is the same on every run and owes nothing to the reader under test.
  */
 export async function goldenStore(clock: Clock = steppingClock()): Promise<Store> {
-	const store = mustOpen(tempHome(), clock)
+	const store = mustOpen(ledgerHome(), clock)
 	await applyGolden(store)
 	return store
 }
@@ -27,7 +27,7 @@ export async function goldenStore(clock: Clock = steppingClock()): Promise<Store
  * opens it itself. `capture()` then sees the same bytes on every run.
  */
 export async function goldenHome(): Promise<string> {
-	const home = tempHome()
+	const home = ledgerHome()
 	const store = mustOpen(home)
 	await applyGolden(store)
 	store.close()
@@ -63,7 +63,7 @@ export function tableDump(store: Store): Record<string, unknown[]> {
 }
 
 /** Imports into a fresh store and asserts the refusal left every table as it was. */
-export function refused(text: string, store: Store = mustOpen(tempHome())): AppError["body"] {
+export function refused(text: string, store: Store = mustOpen(ledgerHome())): AppError["body"] {
 	const before = tableDump(store)
 	const outcome = importJsonl(text, store)
 	if (!isAppError(outcome)) throw new Error("the import was accepted")

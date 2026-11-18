@@ -1,7 +1,10 @@
 import { type ErrorCode, type ExitCode, registry } from "./registry"
 
-export type { ErrorCode, ErrorSpec, ExitCode } from "./registry"
+export type { ErrorCode, ExitCode } from "./registry"
 export { registry }
+
+/** Codes a caller may retry unchanged; every other code is permanent (ADR-0037). */
+export const RETRYABLE_CODES: readonly ErrorCode[] = ["database_busy", "disk_full"]
 
 export type FailOptions = {
 	/** Replaces the registry message with a more specific one. */

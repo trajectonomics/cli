@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test"
 import { addTx } from "./tx-read-test-support"
-import { accounts, cli, tempHome } from "./tx-test-support"
+import { accounts, cli, ledgerHome } from "./tx-test-support"
 
 describe("tx list filters", () => {
 	it("matches the project dimension's value with --project", async () => {
-		const home = tempHome()
+		const home = ledgerHome()
 		const traj = cli(home)
 		const opened = await accounts(traj, [
 			["Cash", "asset"],
@@ -55,7 +55,7 @@ describe("tx list filters", () => {
 	})
 
 	it("rejects a date bound that is not a real calendar date", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		for (const [flag, value] of [
 			["--since", "garbage"],
 			["--since", "2026-3-1"],
@@ -72,7 +72,7 @@ describe("tx list filters", () => {
 	})
 
 	it("rejects a period that starts after it ends", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const res = await traj([
 			"tx",
 			"list",

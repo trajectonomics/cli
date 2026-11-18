@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { capture } from "./test-support"
-import { accounts, amend, cli, json, lunch, type Traj, tempHome } from "./tx-test-support"
+import { accounts, amend, cli, json, ledgerHome, lunch, type Traj } from "./tx-test-support"
 
 /** A `tx add` flag write of 10.00 from Cash to Food, with `extra` appended before `--json`. */
 function add(traj: Traj, extra: string[]) {
@@ -22,7 +22,7 @@ function add(traj: Traj, extra: string[]) {
 
 describe("tx memo flag", () => {
 	it("writes the memo --memo gives, and tx show reads it back", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -36,7 +36,7 @@ describe("tx memo flag", () => {
 	})
 
 	it("makes the memo part of what an external ref replays as a duplicate", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		await accounts(traj, [
 			["Cash", "asset"],
 			["Food", "expense"],
@@ -61,7 +61,7 @@ describe("tx memo flag", () => {
 	})
 
 	it("writes the memo onto the amend's replacement, and none onto its reversal", async () => {
-		const traj = cli(tempHome())
+		const traj = cli(ledgerHome())
 		const { original } = await lunch(traj)
 		const res = await amend(traj, original.id, ["--memo", "corrected"])
 		expect(res.code).toBe(0)

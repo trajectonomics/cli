@@ -5,6 +5,7 @@ import { isAppError } from "../errors"
 import { EXPORT_FORMATS } from "../export/files"
 import { exportOutput } from "../export/output"
 import { writeDumpExport } from "../export/run"
+import { LEDGER_OPEN_CODES } from "../store"
 
 export const exportCommand: Leaf = defineCommand({
 	name: "export",
@@ -25,14 +26,8 @@ export const exportCommand: Leaf = defineCommand({
 			description: "Describe what was written, per table.",
 		},
 	],
-	// Opening a fresh or older database creates or migrates it, like every command (ADR-0014).
-	errorCodes: [
-		"output_exists",
-		"export_failed",
-		"database_busy",
-		"database_too_new",
-		"migration_failed",
-	],
+	// Opening the ledger is this leaf's subject, so every code it can fail with is listed (ADR-0039).
+	errorCodes: ["output_exists", "export_failed", ...LEDGER_OPEN_CODES],
 	run: async (input, ctx) => {
 		const written = await writeDumpExport(ctx, input.format, input.out, "export")
 		return isAppError(written) ? written : ok({ format: input.format, ...written })

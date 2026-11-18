@@ -88,7 +88,12 @@ export type Command<
 	examples: readonly Example[]
 	/** How a table-shaped result renders in the human Format; JSON ignores it. */
 	render?: RenderHint
-	/** Codes this command raises itself. Global codes such as `unknown_flag` are not listed. */
+	/**
+	 * Codes this command raises itself. Global codes such as `unknown_flag` are not listed, and
+	 * neither are the ones opening or creating the ledger raises, except on the leaves whose
+	 * subject is the data directory itself: `init`, `inspect`, `export`, `backup`, `restore` and
+	 * `data remove`.
+	 */
 	errorCodes: readonly ErrorCode[]
 	run: (...args: RunArgs<I, D>) => Outcome<z.input<O>>
 }

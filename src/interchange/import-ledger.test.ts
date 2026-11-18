@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { must, mustOpen, tempHome } from "../store/testing"
+import { ledgerHome, must, mustOpen } from "../store/testing"
 import { importJsonl } from "./index"
 import { edit, goldenJsonl, refused } from "./testing"
 
@@ -39,7 +39,7 @@ describe("importJsonl ledger validation", () => {
 	})
 
 	it("imports the golden postings to an archived account, because history stays valid", async () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		must(importJsonl(await goldenJsonl(), store))
 		const wallet = must(store.listAccounts({ sort: "id" })).find((a) => a.id === OLD_WALLET)
 		expect(wallet?.archivedAt).not.toBeNull()

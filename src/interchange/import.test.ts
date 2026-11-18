@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test"
-import { must, mustOpen, tempHome } from "../store/testing"
+import { ledgerHome, must, mustOpen } from "../store/testing"
 import { exportJsonl, importJsonl } from "./index"
 import { goldenJsonl, goldenStore, tableDump } from "./testing"
 
 describe("importJsonl", () => {
 	it("restores the golden export into a fresh database and exports it byte for byte", async () => {
 		const golden = await goldenJsonl()
-		const restored = mustOpen(tempHome())
+		const restored = mustOpen(ledgerHome())
 		expect(must(importJsonl(golden, restored))).toEqual({
 			entity: 1,
 			account: 7,
@@ -19,7 +19,7 @@ describe("importJsonl", () => {
 
 	it("restores every column of every table, not only the serialised text", async () => {
 		const source = await goldenStore()
-		const restored = mustOpen(tempHome())
+		const restored = mustOpen(ledgerHome())
 		must(importJsonl(must(exportJsonl(source)), restored))
 		const dump = tableDump(restored)
 		expect(dump).toEqual(tableDump(source))
@@ -27,7 +27,7 @@ describe("importJsonl", () => {
 	})
 
 	it("restores each transaction's correction kind unchanged", () => {
-		const source = mustOpen(tempHome())
+		const source = mustOpen(ledgerHome())
 		const cash = must(source.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 			.account.id
 		const food = must(source.createAccount({ name: "Food", type: "expense", currency: "THB" }))
@@ -52,7 +52,7 @@ describe("importJsonl", () => {
 				},
 			}),
 		)
-		const restored = mustOpen(tempHome())
+		const restored = mustOpen(ledgerHome())
 		must(importJsonl(must(exportJsonl(source)), restored))
 		const kinds = (store: ReturnType<typeof mustOpen>) =>
 			must(store.listTransactions({ sort: "date" }))
@@ -75,7 +75,7 @@ describe("importJsonl", () => {
 		for (const target of [assets, lunch, base]) {
 			expect(golden.indexOf(`"${target}"`)).toBeLessThan(lineOf(target))
 		}
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		must(importJsonl(golden, store))
 		const accounts = must(store.listAccounts({ sort: "id", includeDeleted: true }))
 		expect(accounts[0]).toMatchObject({ name: "ธนาคารกสิกร", parentId: assets })

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { type ErrorCode, registry } from "./errors"
-import { RETRYABLE_CODES } from "./registry"
+import { type ErrorCode, RETRYABLE_CODES, registry } from "./errors"
 import { scenarioHome } from "./scenario-test-support"
 import { capture } from "./test-support"
 

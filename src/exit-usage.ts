@@ -1,5 +1,4 @@
-import type { ExitCode } from "./registry"
-import { RETRYABLE_CODES } from "./registry"
+import { type ExitCode, RETRYABLE_CODES } from "./errors"
 import { table } from "./usage-labels"
 
 /** What each exit class means (ADR-0010), so help and the registry cannot drift apart. */

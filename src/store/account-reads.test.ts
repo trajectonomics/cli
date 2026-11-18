@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test"
-import { must, mustOpen, tempHome } from "./testing"
+import { ledgerHome, must, mustOpen } from "./testing"
 
 describe("getAccount", () => {
 	it("resolves a live id first, then a live name, and never a tombstone", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const cash = must(store.createAccount({ name: "Cash", type: "asset", currency: "THB" }))
 		const aliased = must(
 			store.createAccount({ name: cash.account.id, type: "asset", currency: "THB" }),
@@ -22,7 +22,7 @@ describe("getAccount", () => {
 
 describe("listChildAccounts", () => {
 	it("lists direct non-tombstoned children by name, archived included", () => {
-		const store = mustOpen(tempHome())
+		const store = mustOpen(ledgerHome())
 		const bank = must(store.createAccount({ name: "Bank", type: "asset", currency: "THB" }))
 		const savings = must(
 			store.createAccount({

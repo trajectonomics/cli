@@ -5,7 +5,7 @@ import { fail } from "./errors"
 import { applyScenario, scenarioHome } from "./scenario-test-support"
 import { SCENARIO_DOCUMENT } from "./store/testing"
 import { capture, errorOf } from "./test-support"
-import { cli, tempHome } from "./tx-test-support"
+import { cli, ledgerHome } from "./tx-test-support"
 
 const hint = (path: string) => `Run "traj help ${path}" to see its flags.`
 
@@ -13,7 +13,7 @@ const projectionFlags = ["--as-of", "2026-03-31", "--horizon", "2027-03-30"]
 
 describe("a command-raised failure names the input the caller typed", () => {
 	it("drops tx import's file: prefix and carries the help hint", async () => {
-		const error = errorOf(await cli(tempHome())(["tx", "import", "/nope.csv", "--json"]))
+		const error = errorOf(await cli(ledgerHome())(["tx", "import", "/nope.csv", "--json"]))
 		expect(error).toEqual({
 			code: "invalid_input",
 			exitCode: 2,
@@ -25,7 +25,7 @@ describe("a command-raised failure names the input the caller typed", () => {
 
 	it("drops a file: prefix from an exclusive form and keeps the positional", async () => {
 		const error = errorOf(
-			await cli(tempHome())(["tx", "import", "rows.csv", "--template", "--json"]),
+			await cli(ledgerHome())(["tx", "import", "rows.csv", "--template", "--json"]),
 		)
 		expect(error).toMatchObject({
 			path: "file",
@@ -36,7 +36,7 @@ describe("a command-raised failure names the input the caller typed", () => {
 
 	it("names --dry-run when --template refuses a dry run", async () => {
 		const error = errorOf(
-			await cli(tempHome())(["tx", "import", "--template", "--dry-run", "--json"]),
+			await cli(ledgerHome())(["tx", "import", "--template", "--dry-run", "--json"]),
 		)
 		expect(error).toMatchObject({
 			path: "--dry-run",
@@ -47,7 +47,7 @@ describe("a command-raised failure names the input the caller typed", () => {
 
 	it("names --all and keeps its own hint", async () => {
 		const error = errorOf(
-			await capture(["inspect", "tx", "--all", "--json"], { TRAJ_HOME: tempHome() }),
+			await capture(["inspect", "tx", "--all", "--json"], { TRAJ_HOME: ledgerHome() }),
 		)
 		expect(error).toMatchObject({
 			path: "--all",
@@ -59,7 +59,7 @@ describe("a command-raised failure names the input the caller typed", () => {
 	it("names --none beside the flags that write a Levy, keeping its words", async () => {
 		const error = errorOf(
 			await capture(["scenario", "tax", "base", "--none", "--tax", "th-2026", "--json"], {
-				TRAJ_HOME: tempHome(),
+				TRAJ_HOME: ledgerHome(),
 			}),
 		)
 		expect(error).toMatchObject({
@@ -72,7 +72,7 @@ describe("a command-raised failure names the input the caller typed", () => {
 	it("names the positional b when compare has neither a second Scenario nor --set", async () => {
 		const error = errorOf(
 			await capture(["projection", "compare", "base", ...projectionFlags, "--json"], {
-				TRAJ_HOME: tempHome(),
+				TRAJ_HOME: ledgerHome(),
 			}),
 		)
 		expect(error).toMatchObject({
@@ -96,7 +96,7 @@ describe("a command-raised failure names the input the caller typed", () => {
 					"45",
 					"--json",
 				],
-				{ TRAJ_HOME: tempHome() },
+				{ TRAJ_HOME: ledgerHome() },
 			),
 		)
 		expect(error).toMatchObject({
@@ -126,7 +126,7 @@ describe("a command-raised failure names the input the caller typed", () => {
 	it("leaves a dotted document path alone and gives it no hint", async () => {
 		const csv = 'date,from,to,amount,memo,external_ref,project\n2026-03-01,a"b,Cash,1.00,,,\n'
 		const error = errorOf(
-			await capture(["tx", "import", "-", "--json"], { TRAJ_HOME: tempHome() }, undefined, csv),
+			await capture(["tx", "import", "-", "--json"], { TRAJ_HOME: ledgerHome() }, undefined, csv),
 		)
 		expect(error).toMatchObject({
 			path: "line.2",

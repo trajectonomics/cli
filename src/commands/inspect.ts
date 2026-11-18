@@ -4,6 +4,7 @@ import { defineCommand, ok } from "../command"
 import { DUMP_TABLES, isDumpTable, viewDump } from "../dump/view"
 import { type AppError, fail, isAppError } from "../errors"
 import { inspectHint, inspectOutput } from "../inspect/output"
+import { LEDGER_OPEN_CODES } from "../store"
 import { withStore } from "../with-store"
 
 function unknownTable(table: string): AppError {
@@ -35,8 +36,8 @@ export const inspect: Leaf = defineCommand({
 		{ command: "traj inspect --all", description: "Show every table's rows in record order." },
 		{ command: "traj inspect --json", description: "Show each table's name and row count." },
 	],
-	// Opening a fresh or older database creates or migrates it, like every command (ADR-0014).
-	errorCodes: ["invalid_input", "database_busy", "database_too_new", "migration_failed"],
+	// Opening the ledger is this leaf's subject, so every code it can fail with is listed (ADR-0039).
+	errorCodes: ["invalid_input", ...LEDGER_OPEN_CODES],
 	run: (input, ctx) => {
 		if (input.all && input.table !== undefined) {
 			return fail("invalid_input", {

@@ -1,11 +1,11 @@
-import { mkdirSync } from "node:fs"
-import { join } from "node:path"
+import { existsSync, statSync } from "node:fs"
 import type { Env } from "../command"
-import { DATABASE_FILE, dataDirectory } from "../data-directory"
-import { type AppError, isAppError } from "../errors"
+import { type AppError, type ErrorCode, fail, isAppError } from "../errors"
 import { connect } from "./connection"
 import { PERSONAL_ENTITY_ID } from "./ids"
-import { directoryStep } from "./io-errors"
+import { notADirectory } from "./io-errors"
+import { directoryStep } from "./io-steps"
+import { ledgerPaths, privateLedger } from "./ledger-file"
 import { storeOver } from "./store"
 import type { Clock, Store } from "./types"
 
@@ -21,6 +21,23 @@ export { canonicalScenarioDocument } from "./scenario-rows"
 export { importRejections } from "./tx-import"
 export type * from "./types"
 
+/**
+ * Every code that opening an existing ledger can raise, for the leaves whose subject is the data
+ * directory: `inspect`, `export` and `backup` declare it whole. A Command that only needs the
+ * ledger declares none of them: its failure is the same one whether the ledger is missing,
+ * unwritable or corrupt.
+ */
+export const LEDGER_OPEN_CODES: readonly ErrorCode[] = [
+	"ledger_missing",
+	"not_a_directory",
+	"permission_denied",
+	"database_corrupt",
+	"database_too_new",
+	"database_busy",
+	"disk_full",
+	"migration_failed",
+]
+
 export type StoreOptions = {
 	env: Env
 	clock: Clock
@@ -28,16 +45,38 @@ export type StoreOptions = {
 	busyTimeoutMs?: number
 }
 
+/** The one failure for a data directory that holds no ledger, naming the file `init` creates. */
+function ledgerMissing(database: string): AppError {
+	return fail("ledger_missing", {
+		message: `No ledger at ${database}.`,
+		hint: 'Run "traj init" to create one.',
+	})
+}
+
 /**
- * Opens `traj.db` in the data directory, creating the directory if needed, and migrates it to
- * head. The returned store owns the connection until `close()`.
+ * Opens `traj.db` in the data directory and migrates it to head. It never creates one: `traj init`
+ * and `traj restore` are the only creators, so a Command that finds no ledger fails with
+ * `ledger_missing` instead of answering from an empty database. The store owns the connection
+ * until `close()`.
  */
 export function openStore(options: StoreOptions): Store | AppError {
-	const directory = dataDirectory(options.env)
-	const made = directoryStep(directory, () => mkdirSync(directory, { recursive: true }))
-	if (isAppError(made)) return made
-	const path = join(directory, DATABASE_FILE)
-	const db = connect(path, options.busyTimeoutMs ?? 5000)
+	const paths = ledgerPaths(options.env)
+	const kind = directoryStep(paths.directory, () =>
+		statSync(paths.directory, { throwIfNoEntry: false }),
+	)
+	if (isAppError(kind)) return kind
+	if (kind !== undefined && !kind.isDirectory()) return notADirectory(paths.directory)
+	if (!existsSync(paths.database)) return ledgerMissing(paths.database)
+	const db = connect(paths.database, options.busyTimeoutMs ?? 5000)
 	if (isAppError(db)) return db
-	return storeOver(path, { db, clock: options.clock, entityId: PERSONAL_ENTITY_ID })
+	const restricted = privateLedger(paths)
+	if (isAppError(restricted)) {
+		db.close()
+		return restricted
+	}
+	return storeOver(paths.database, {
+		db,
+		clock: options.clock,
+		entityId: PERSONAL_ENTITY_ID,
+	})
 }

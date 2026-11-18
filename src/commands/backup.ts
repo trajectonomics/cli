@@ -4,6 +4,7 @@ import type { Leaf } from "../command"
 import { defineCommand, ok } from "../command"
 import { isAppError } from "../errors"
 import { writeDumpExport } from "../export/run"
+import { LEDGER_OPEN_CODES } from "../store"
 
 export const backup: Leaf = defineCommand({
 	name: "backup",
@@ -21,17 +22,7 @@ export const backup: Leaf = defineCommand({
 		},
 	],
 	// The canonical JSONL export is a backup and nothing else is: CSV and Markdown do not restore.
-	errorCodes: [
-		"output_exists",
-		"export_failed",
-		"database_busy",
-		"database_corrupt",
-		"disk_full",
-		"not_a_directory",
-		"permission_denied",
-		"database_too_new",
-		"migration_failed",
-	],
+	errorCodes: ["output_exists", "export_failed", ...LEDGER_OPEN_CODES],
 	run: async (input, ctx) => {
 		const written = await writeDumpExport(ctx, "jsonl", input.out, "backup")
 		return isAppError(written) ? written : ok(written)

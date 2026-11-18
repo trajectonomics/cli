@@ -6,6 +6,7 @@ import { defineCommand, ok } from "../command"
 import { countsSchema } from "../counts"
 import { isAppError } from "../errors"
 import { importJsonl } from "../interchange"
+import { createLedger } from "../store/ledger-file"
 import { withStore } from "../with-store"
 
 /** What `traj restore` describes: the backup it read and the rows it wrote. */
@@ -67,9 +68,13 @@ export const restore: Leaf = defineCommand({
 		"ZERO_AMOUNT_POSTING",
 	],
 	run: (input, ctx) => {
-		// The backup is read before the store opens, so a missing one creates no data directory.
+		// The backup is read before anything is created, so a missing one creates no data directory.
 		const backup = readBackup(input.source, "source")
 		if (isAppError(backup)) return backup
+		// Restore is the one command beside `init` that creates a ledger: `data remove` deletes the
+		// database on purpose, and the backup that guarded it is what puts it back (ADR-0038).
+		const made = createLedger(ctx.env)
+		if (isAppError(made)) return made
 		return withStore(ctx, (store) => {
 			const rows = importJsonl(backup.text, store)
 			return isAppError(rows)
