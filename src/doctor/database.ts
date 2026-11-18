@@ -50,7 +50,7 @@ function readOpened(
 ): DatabaseRead | AppError {
 	const version = store.schemaVersion()
 	if (isAppError(version)) {
-		return unreadable(factsOf(database, null), sentenceOf(version), "it could not be read.")
+		return unreadable(factsOf(database, null), sentenceOf(version), "It could not be read.")
 	}
 	const facts = factsOf(database, version)
 	const opened = step(
@@ -64,7 +64,7 @@ function readOpened(
 		return {
 			facts,
 			rows: { ...NO_ROWS },
-			checks: [opened, failed, skipped("trialBalance", "it could not be read.")],
+			checks: [opened, failed, skipped("trialBalance", "It could not be read.")],
 		}
 	}
 	const checks = storeChecks(store, asOf)
@@ -84,10 +84,10 @@ export function databaseChecks(
 	const facts = factsOf(database, null)
 	if (!facts.exists) {
 		const detail = `No database at ${database}; run "traj init" or "traj restore".`
-		return unreadable(facts, detail, "the database does not exist.")
+		return unreadable(facts, detail, "The database does not exist.")
 	}
 	const store = openStore({ env: ctx.env, clock: () => new Date() })
-	if (isAppError(store)) return unreadable(facts, sentenceOf(store), "it could not be opened.")
+	if (isAppError(store)) return unreadable(facts, sentenceOf(store), "It could not be opened.")
 	try {
 		return readOpened(store, database, asOf)
 	} finally {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { mkdtempSync } from "node:fs"
+import { existsSync, mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { goldenHome, goldenJsonl } from "./interchange/testing"
@@ -61,7 +61,7 @@ describe("restore", () => {
 		const res = await capture(["restore", join(home, "nope"), "--json"], { TRAJ_HOME: home })
 		expect(res.code).toBe(4)
 		expect(errorOf(res)).toMatchObject({ code: "not_found", path: "source" })
-		expect(Bun.file(join(home, "traj.db")).size).toBe(0)
+		expect(existsSync(join(home, "traj.db"))).toBe(false)
 	})
 
 	it("refuses a backup this build's schema version cannot read, at its header line", async () => {

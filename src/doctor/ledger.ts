@@ -55,7 +55,7 @@ export function storeChecks(
 		return { checks: [...checks, skipped("trialBalance", NO_TRIAL)] }
 	}
 	if (ledger.ledger === undefined) {
-		return { checks: [...checks, skipped("trialBalance", "the ledger could not be validated.")] }
+		return { checks: [...checks, skipped("trialBalance", "The ledger could not be validated.")] }
 	}
 	const trial = trialCheck(ledger.ledger, asOf)
 	if (isAppError(trial)) return trial

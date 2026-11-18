@@ -2,7 +2,7 @@ import type { AppError } from "../errors"
 import type { DoctorCheck, DoctorCheckName, DoctorStatus } from "./output"
 
 /** The one skipped sentence every check that needs a date shares. */
-export const NO_TRIAL = "no --as-of given; a Trial Balance is stated at a date."
+export const NO_TRIAL = "No --as-of given; a Trial Balance is stated at a date."
 
 export function step(name: DoctorCheckName, status: DoctorStatus, detail: string): DoctorCheck {
 	return { name, status, detail }
